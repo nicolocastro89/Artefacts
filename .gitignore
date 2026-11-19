@@ -1,0 +1,43 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+TestResults/
+*.trx
+coverage/
+
+# Node / frontend
+node_modules/
+dist/
+*.tsbuildinfo
+.vite/
+
+# IDE / OS
+.vs/
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+appsettings.*.local.json
+
+# Local data
+.data/
+media-local/
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
+.beads/proxieddb/
+*.gate.lock*
