@@ -27,6 +27,17 @@ public class MoneyTests
         Assert.Contains("currency", ex.Errors.Keys);
     }
 
+    [Theory]
+    [InlineData("ITL")]
+    [InlineData("dem")]
+    [InlineData("FRF")]
+    public void Accepts_withdrawn_currencies_for_historical_prices(string code)
+    {
+        var money = Money.Create(350_000_000m, code);
+        Assert.Equal(code.ToUpperInvariant(), money.Currency);
+        Assert.True(Iso4217.IsWithdrawn(money.Currency));
+    }
+
     [Fact]
     public void Rejects_more_than_four_decimals()
     {

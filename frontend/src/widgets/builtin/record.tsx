@@ -57,6 +57,26 @@ defineWidget({
   },
 })
 
+// ---------- text list: an ordered list of free-text entries (e.g. exhibitions) ----------
+defineWidget({
+  id: 'text-list',
+  label: 'Text list',
+  slots: { items: { type: 'any', required: true } },
+  config: { emptyText: '' },
+  print: { keepTogether: true },
+  component: ({ values, config }) => {
+    const items = (Array.isArray(values.items?.value) ? values.items.value : []).map((v) => formatValue(v)).filter((t) => t !== '')
+    if (items.length === 0) return config.emptyText ? <p className="muted">{config.emptyText}</p> : null
+    return (
+      <ol className="text-list">
+        {items.map((text, i) => (
+          <li key={i}>{text}</li>
+        ))}
+      </ol>
+    )
+  },
+})
+
 // ---------- list row: one step in an ordered sequence (e.g. provenance) ----------
 defineWidget({
   id: 'list-row',

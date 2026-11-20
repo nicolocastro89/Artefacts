@@ -1,4 +1,5 @@
 import type { PageDefinition } from '../../widgets/core/page'
+import { acquisitionFields, acquisitionNote, catalogueEntrySection, classificationSection, exhibitionsSection, holdingSection } from './recordSections'
 
 /**
  * The printed artefact record. Same widgets as the detail page, arranged for paper:
@@ -43,19 +44,16 @@ export const artefactPrintPage: PageDefinition = {
               { type: 'widget', id: 'description', widgetId: 'text-block', bindings: { text: 'description' } },
             ],
           },
+          classificationSection,
+          holdingSection,
           {
             type: 'layout',
             id: 'acquisition',
             layout: 'section',
             title: 'Acquisition',
             children: [
-              {
-                type: 'widget',
-                id: 'acquisition-fields',
-                widgetId: 'field-list',
-                bindings: { method: 'acquisition.method', date: 'acquisition.date', source: 'acquisition.source', price: 'acquisition.price' },
-                config: { labels: { method: 'Method', date: 'Date', source: 'Source', price: 'Price' } },
-              },
+              acquisitionFields,
+              acquisitionNote,
             ],
           },
           {
@@ -80,6 +78,8 @@ export const artefactPrintPage: PageDefinition = {
               },
             ],
           },
+          exhibitionsSection,
+          catalogueEntrySection,
           {
             type: 'layout',
             id: 'images',

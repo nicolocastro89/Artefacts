@@ -108,6 +108,13 @@
               "type": "integer",
               "format": "int32"
             }
+          },
+          {
+            "name": "group",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/ArtefactGrouping"
+            }
           }
         ],
         "responses": {
@@ -116,7 +123,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PagedResultOfArtefactListItem"
+                  "$ref": "#/components/schemas/ArtefactListPage"
                 }
               }
             }
@@ -791,6 +798,228 @@
           }
         }
       }
+    },
+    "/api/object-types": {
+      "get": {
+        "tags": [
+          "Object types"
+        ],
+        "operationId": "listObjectTypes",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ObjectTypeDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Object types"
+        ],
+        "operationId": "addObjectType",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddObjectTypeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectTypeDto"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectTypeDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/object-types/{id}": {
+      "get": {
+        "tags": [
+          "Object types"
+        ],
+        "operationId": "getObjectType",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectTypeDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Object types"
+        ],
+        "operationId": "renameObjectType",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenameObjectTypeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectTypeDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Object types"
+        ],
+        "operationId": "deleteObjectType",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -829,6 +1058,18 @@
                 "$ref": "#/components/schemas/MoneyDto"
               }
             ]
+          },
+          "lot": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "note": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -866,6 +1107,18 @@
                 "$ref": "#/components/schemas/MoneyDto"
               }
             ]
+          },
+          "lot": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "note": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -877,6 +1130,20 @@
           "transfer",
           "other"
         ]
+      },
+      "AddObjectTypeRequest": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
       },
       "AddRegionRequest": {
         "required": [
@@ -912,7 +1179,16 @@
           "acquisition",
           "provenance",
           "primaryImage",
-          "images"
+          "images",
+          "objectType",
+          "collectionGroup",
+          "placeOfProduction",
+          "dynasty",
+          "exhibitions",
+          "catalogueEntryEn",
+          "holder",
+          "storageLocation",
+          "valuation"
         ],
         "type": "object",
         "properties": {
@@ -991,8 +1267,110 @@
             "items": {
               "$ref": "#/components/schemas/ArtefactImageDto"
             }
+          },
+          "objectType": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/NamedRefDto"
+              }
+            ]
+          },
+          "collectionGroup": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "placeOfProduction": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PlaceOfProductionDto"
+              }
+            ]
+          },
+          "dynasty": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "exhibitions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "catalogueEntryEn": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "holder": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "storageLocation": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "valuation": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
           }
         }
+      },
+      "ArtefactGroupDto": {
+        "required": [
+          "key",
+          "label",
+          "count"
+        ],
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "label": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ArtefactGrouping": {
+        "enum": [
+          "none",
+          "objectType",
+          "collectionGroup",
+          "origin",
+          "century",
+          "dynasty"
+        ]
       },
       "ArtefactImageDto": {
         "required": [
@@ -1048,7 +1426,13 @@
           "creationDate",
           "medium",
           "primaryImage",
-          "imageCount"
+          "imageCount",
+          "objectType",
+          "collectionGroup",
+          "placeOfProduction",
+          "dynasty",
+          "groupKey",
+          "groupLabel"
         ],
         "type": "object",
         "properties": {
@@ -1097,6 +1481,78 @@
           "imageCount": {
             "type": "integer",
             "format": "int32"
+          },
+          "objectType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "collectionGroup": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "placeOfProduction": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "dynasty": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "groupKey": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "groupLabel": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "ArtefactListPage": {
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize",
+          "groups"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ArtefactListItem"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ArtefactGroupDto"
+            }
           }
         }
       },
@@ -1178,6 +1634,72 @@
             "items": {
               "$ref": "#/components/schemas/ProvenanceEntryInput"
             }
+          },
+          "objectTypeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "collectionGroup": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "placeOfProduction": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PlaceOfProductionInput"
+              }
+            ]
+          },
+          "dynasty": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "exhibitions": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "catalogueEntryEn": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "holder": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "storageLocation": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "valuation": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
           }
         }
       },
@@ -1439,32 +1961,86 @@
           }
         }
       },
-      "PagedResultOfArtefactListItem": {
+      "NamedRefDto": {
         "required": [
-          "items",
-          "total",
-          "page",
-          "pageSize"
+          "id",
+          "name"
         ],
         "type": "object",
         "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ArtefactListItem"
-            }
+          "id": {
+            "type": "string",
+            "format": "uuid"
           },
-          "total": {
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "ObjectTypeDto": {
+        "required": [
+          "id",
+          "name",
+          "artefactCount"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "artefactCount": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "PlaceOfProductionDto": {
+        "required": [
+          "text",
+          "region"
+        ],
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": [
+              "null",
+              "string"
+            ]
           },
-          "page": {
-            "type": "integer",
-            "format": "int32"
+          "region": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/NamedRefDto"
+              }
+            ]
+          }
+        }
+      },
+      "PlaceOfProductionInput": {
+        "required": [
+          "text"
+        ],
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": [
+              "null",
+              "string"
+            ]
           },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32"
+          "regionId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
           }
         }
       },
@@ -1592,6 +2168,20 @@
           }
         }
       },
+      "RenameObjectTypeRequest": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "RenameRegionRequest": {
         "required": [
           "name"
@@ -1658,6 +2248,9 @@
     },
     {
       "name": "Regions"
+    },
+    {
+      "name": "Object types"
     }
   ]
 }

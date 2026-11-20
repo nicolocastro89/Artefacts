@@ -1,5 +1,6 @@
 using Artefacts.Application.Contracts;
 using Artefacts.Domain.Catalogue;
+using Artefacts.Domain.Classification;
 using Artefacts.Domain.Common;
 using Artefacts.Domain.Media;
 using Artefacts.Domain.Regions;
@@ -11,7 +12,22 @@ public interface IArtefactRepository
     Task<Artefact?> GetAsync(ArtefactId id, CancellationToken ct);
     void Add(Artefact artefact);
     Task<bool> InventoryNumberExistsAsync(string inventoryNumber, ArtefactId? excluding, CancellationToken ct);
-    Task<bool> AnyProvenanceReferencesAsync(RegionId regionId, CancellationToken ct);
+
+    /// <summary>True when a provenance entry or a place of production references the region.</summary>
+    Task<bool> AnyReferencesAsync(RegionId regionId, CancellationToken ct);
+
+    Task<bool> AnyReferencesAsync(ObjectTypeId objectTypeId, CancellationToken ct);
+
+    Task<IReadOnlyDictionary<ObjectTypeId, int>> CountByObjectTypeAsync(CancellationToken ct);
+}
+
+public interface IObjectTypeRepository
+{
+    Task<ObjectType?> GetAsync(ObjectTypeId id, CancellationToken ct);
+    Task<ObjectType?> FindByNormalizedNameAsync(string normalizedName, CancellationToken ct);
+    Task<IReadOnlyList<ObjectType>> SearchAsync(string? text, CancellationToken ct);
+    void Add(ObjectType objectType);
+    void Remove(ObjectType objectType);
 }
 
 public interface IRegionRepository
@@ -54,10 +70,10 @@ public interface IImageUrlBuilder
     ImageUrls Build(string storageKey);
 }
 
-/// <summary>Read-side artefact listing (search, sort, paging) over the read model.</summary>
+/// <summary>Read-side artefact listing (search, sort, grouping, paging) over the read model.</summary>
 public interface IArtefactListQuery
 {
-    Task<PagedResult<ArtefactListItem>> ListAsync(ArtefactListRequest request, CancellationToken ct);
+    Task<ArtefactListPage> ListAsync(ArtefactListRequest request, CancellationToken ct);
 }
 
 /// <summary>The field catalog describing the read model.</summary>

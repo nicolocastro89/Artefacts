@@ -2,6 +2,7 @@ using Artefacts.Application.Abstractions;
 using Artefacts.Application.Artefacts;
 using Artefacts.Application.Contracts;
 using Artefacts.Application.Media;
+using Artefacts.Application.ObjectTypes;
 using Artefacts.Application.Regions;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -17,7 +18,7 @@ internal static class Endpoints
     {
         var g = app.MapGroup("/api/artefacts").WithTags("Artefacts");
 
-        g.MapGet("/", async Task<Results<Ok<PagedResult<ArtefactListItem>>, ValidationProblem>> (
+        g.MapGet("/", async Task<Results<Ok<ArtefactListPage>, ValidationProblem>> (
                 [AsParameters] ListArtefactsParameters p, IArtefactListQuery query, CancellationToken ct) =>
             {
                 var errors = new Dictionary<string, string[]>();
@@ -25,10 +26,12 @@ internal static class Endpoints
                     errors["sort"] = [$"Must be one of: {string.Join(", ", QueryEnum.AllowedValues<ArtefactSort>())}."];
                 if (!QueryEnum.TryParse(p.Direction, SortDirection.Asc, out var direction))
                     errors["direction"] = [$"Must be one of: {string.Join(", ", QueryEnum.AllowedValues<SortDirection>())}."];
+                if (!QueryEnum.TryParse(p.Group, ArtefactGrouping.None, out var group))
+                    errors["group"] = [$"Must be one of: {string.Join(", ", QueryEnum.AllowedValues<ArtefactGrouping>())}."];
                 if (errors.Count > 0) return TypedResults.ValidationProblem(errors);
 
                 return TypedResults.Ok(await query.ListAsync(
-                    new ArtefactListRequest(p.Search, sort, direction, p.Page ?? 1, p.PageSize ?? 25), ct));
+                    new ArtefactListRequest(p.Search, sort, direction, p.Page ?? 1, p.PageSize ?? 25, group), ct));
             })
             .WithName("listArtefacts");
 
@@ -127,6 +130,45 @@ internal static class Endpoints
             .ProducesProblem(StatusCodes.Status409Conflict);
     }
 
+    public static void MapObjectTypeEndpoints(this IEndpointRouteBuilder app)
+    {
+        var g = app.MapGroup("/api/object-types").WithTags("Object types");
+
+        g.MapGet("/", async (string? search, ObjectTypeHandler h, CancellationToken ct) =>
+                TypedResults.Ok(await h.SearchAsync(search, ct)))
+            .WithName("listObjectTypes");
+
+        g.MapGet("/{id:guid}", async (Guid id, ObjectTypeHandler h, CancellationToken ct) =>
+                TypedResults.Ok(await h.GetAsync(id, ct)))
+            .WithName("getObjectType")
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
+        g.MapPost("/", async Task<Results<Created<ObjectTypeDto>, Ok<ObjectTypeDto>>> (AddObjectTypeRequest request, ObjectTypeHandler h, CancellationToken ct) =>
+            {
+                var result = await h.AddAsync(request, ct);
+                return result.Created
+                    ? TypedResults.Created($"/api/object-types/{result.ObjectType.Id}", result.ObjectType)
+                    : TypedResults.Ok(result.ObjectType);
+            })
+            .WithName("addObjectType")
+            .ProducesValidationProblem();
+
+        g.MapPut("/{id:guid}", async (Guid id, RenameObjectTypeRequest request, ObjectTypeHandler h, CancellationToken ct) =>
+                TypedResults.Ok(await h.RenameAsync(id, request, ct)))
+            .WithName("renameObjectType")
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
+        g.MapDelete("/{id:guid}", async (Guid id, ObjectTypeHandler h, CancellationToken ct) =>
+            {
+                await h.DeleteAsync(id, ct);
+                return TypedResults.NoContent();
+            })
+            .WithName("deleteObjectType")
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+    }
+
     public static void MapSupportEndpoints(this IEndpointRouteBuilder app)
     {
         app.MapPost("/api/historical-dates/parse", (HistoricalDateInput input, HistoricalDateParseHandler h) =>
@@ -151,4 +193,5 @@ internal sealed record ListArtefactsParameters(
     [FromQuery(Name = "sort"), QueryEnum(typeof(ArtefactSort))] string? Sort,
     [FromQuery(Name = "direction"), QueryEnum(typeof(SortDirection))] string? Direction,
     [FromQuery(Name = "page")] int? Page,
-    [FromQuery(Name = "pageSize")] int? PageSize);
+    [FromQuery(Name = "pageSize")] int? PageSize,
+    [FromQuery(Name = "group"), QueryEnum(typeof(ArtefactGrouping))] string? Group);

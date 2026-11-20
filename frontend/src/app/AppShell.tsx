@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Archive, Map as MapIcon, Monitor, Moon, Sun } from 'lucide-react'
-import { NavLink, Outlet } from 'react-router'
+import { NavLink, Outlet, useLocation } from 'react-router'
 import { api } from '../api/client'
 import { useTheme, type ThemeChoice } from './theme'
 import './AppShell.css'
@@ -16,7 +16,13 @@ function useCounts() {
     queryFn: async () => (await api.GET('/api/regions')).data?.length ?? null,
     staleTime: 30_000,
   })
-  return { artefacts: artefacts.data, regions: regions.data }
+  const objectTypes = useQuery({
+    queryKey: ['count', 'object-types'],
+    queryFn: async () => (await api.GET('/api/object-types')).data?.length ?? null,
+    staleTime: 30_000,
+  })
+  const reference = regions.data != null && objectTypes.data != null ? regions.data + objectTypes.data : null
+  return { artefacts: artefacts.data, reference }
 }
 
 const THEMES: { value: ThemeChoice; label: string; Icon: typeof Sun }[] = [
@@ -27,6 +33,7 @@ const THEMES: { value: ThemeChoice; label: string; Icon: typeof Sun }[] = [
 
 export function AppShell() {
   const counts = useCounts()
+  const { pathname } = useLocation()
   const [theme, setTheme] = useTheme()
 
   return (
@@ -45,10 +52,10 @@ export function AppShell() {
             </NavLink>
           </li>
           <li>
-            <NavLink to="/regions" className="rail__link">
+            <NavLink to="/reference/regions" className={() => `rail__link${pathname.startsWith('/reference/') ? ' active' : ''}`}>
               <MapIcon aria-hidden="true" />
-              <span>Regions</span>
-              {counts.regions != null && <span className="rail__count">{counts.regions.toLocaleString()}</span>}
+              <span>Reference lists</span>
+              {counts.reference != null && <span className="rail__count">{counts.reference.toLocaleString()}</span>}
             </NavLink>
           </li>
         </ul>

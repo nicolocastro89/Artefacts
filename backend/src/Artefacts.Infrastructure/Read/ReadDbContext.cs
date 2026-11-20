@@ -18,6 +18,7 @@ public sealed class ReadDbContext(DbContextOptions<ReadDbContext> options) : DbC
             b.HasNoKey();
             b.ToView("v_artefact");
             b.Property(r => r.AcquisitionPriceAmount).HasPrecision(19, 4);
+            b.Property(r => r.ValuationAmount).HasPrecision(19, 4);
         });
     }
 }

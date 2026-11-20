@@ -24,6 +24,13 @@ internal static class TestData
         return await response.ReadAsync<RegionDto>();
     }
 
+    public static async Task<ObjectTypeDto> AddObjectTypeAsync(this HttpClient client, string name)
+    {
+        var response = await client.PostJsonAsync("/api/object-types", new AddObjectTypeRequest(name));
+        response.EnsureSuccessStatusCode();
+        return await response.ReadAsync<ObjectTypeDto>();
+    }
+
     public static async Task<ArtefactDetail> UploadAsync(this HttpClient client, Guid artefactId, params (string Name, byte[] Bytes)[] files)
     {
         var response = await client.PostAsync($"/api/artefacts/{artefactId}/images", Multipart(files));

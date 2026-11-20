@@ -16,18 +16,27 @@ public enum AcquisitionMethod
 public sealed class Acquisition
 {
     public const int MaxSourceLength = 300;
+    public const int MaxLotLength = 100;
+    public const int MaxNoteLength = 2000;
 
     public AcquisitionMethod Method { get; private set; }
     public DateOnly? Date { get; private set; }
     public string? Source { get; private set; }
     public Money? Price { get; private set; }
 
+    /// <summary>Auction lot or similar reference, as written (e.g. "170").</summary>
+    public string? Lot { get; private set; }
+
+    /// <summary>Free remarks about the acquisition, as written.</summary>
+    public string? Note { get; private set; }
+
     // For EF Core.
     private Acquisition()
     {
     }
 
-    public static Acquisition Create(AcquisitionMethod method, DateOnly? date, string? source, Money? price)
+    public static Acquisition Create(
+        AcquisitionMethod method, DateOnly? date, string? source, Money? price, string? lot = null, string? note = null)
     {
         if (!Enum.IsDefined(method))
             throw new DomainValidationException("method", "Is not a valid acquisition method.");
@@ -37,6 +46,8 @@ public sealed class Acquisition
             Date = date,
             Source = Guard.Optional(source, "source", MaxSourceLength),
             Price = price,
+            Lot = Guard.Optional(lot, "lot", MaxLotLength),
+            Note = Guard.Optional(note, "note", MaxNoteLength),
         };
     }
 }

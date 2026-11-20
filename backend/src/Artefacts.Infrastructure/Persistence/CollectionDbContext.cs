@@ -1,4 +1,5 @@
 using Artefacts.Domain.Catalogue;
+using Artefacts.Domain.Classification;
 using Artefacts.Domain.Common;
 using Artefacts.Domain.Media;
 using Artefacts.Domain.Regions;
@@ -12,16 +13,19 @@ public sealed class CollectionDbContext(DbContextOptions<CollectionDbContext> op
 {
     public const string InventoryNumberIndex = "ux_artefacts_inventory_number";
     public const string RegionNameIndex = "ux_regions_normalized_name";
+    public const string ObjectTypeNameIndex = "ux_object_types_normalized_name";
 
     public DbSet<Artefact> Artefacts => Set<Artefact>();
     public DbSet<Region> Regions => Set<Region>();
     public DbSet<MediaAsset> MediaAssets => Set<MediaAsset>();
+    public DbSet<ObjectType> ObjectTypes => Set<ObjectType>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder builder)
     {
         builder.Properties<ArtefactId>().HaveConversion<ArtefactIdConverter>();
         builder.Properties<RegionId>().HaveConversion<RegionIdConverter>();
         builder.Properties<MediaAssetId>().HaveConversion<MediaAssetIdConverter>();
+        builder.Properties<ObjectTypeId>().HaveConversion<ObjectTypeIdConverter>();
     }
 
     protected override void OnModelCreating(ModelBuilder model)
@@ -36,6 +40,16 @@ public sealed class CollectionDbContext(DbContextOptions<CollectionDbContext> op
             b.HasIndex(r => r.NormalizedName).IsUnique().HasDatabaseName(RegionNameIndex);
             b.Property(r => r.ParentId).HasConversion(new RegionIdConverter());
             b.HasOne<Region>().WithMany().HasForeignKey(r => r.ParentId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        model.Entity<ObjectType>(b =>
+        {
+            b.ToTable("object_types");
+            b.HasKey(t => t.Id);
+            b.Property(t => t.Id).ValueGeneratedNever();
+            b.Property(t => t.Name).HasMaxLength(ObjectType.MaxNameLength).IsRequired();
+            b.Property(t => t.NormalizedName).HasMaxLength(ObjectType.MaxNameLength).IsRequired();
+            b.HasIndex(t => t.NormalizedName).IsUnique().HasDatabaseName(ObjectTypeNameIndex);
         });
 
         model.Entity<MediaAsset>(b =>
@@ -63,6 +77,39 @@ public sealed class CollectionDbContext(DbContextOptions<CollectionDbContext> op
             b.Property(a => a.Description).HasMaxLength(Artefact.MaxDescriptionLength);
             b.Ignore(a => a.PrimaryImage);
 
+            b.Property(a => a.ObjectTypeId).HasConversion(new ObjectTypeIdConverter());
+            b.HasOne<ObjectType>().WithMany().HasForeignKey(a => a.ObjectTypeId).OnDelete(DeleteBehavior.Restrict);
+            b.Property(a => a.CollectionGroup).HasMaxLength(Artefact.MaxShortTextLength);
+            b.Property(a => a.Dynasty).HasMaxLength(Artefact.MaxShortTextLength);
+            b.Property(a => a.CatalogueEntryEn).HasColumnName("catalogue_entry_en").HasMaxLength(Artefact.MaxCatalogueEntryLength);
+            b.Property(a => a.Holder).HasMaxLength(Artefact.MaxShortTextLength);
+            b.Property(a => a.StorageLocation).HasMaxLength(Artefact.MaxShortTextLength);
+
+            b.OwnsOne(a => a.PlaceOfProduction, p =>
+            {
+                p.Property(x => x.Text).HasColumnName("place_text").HasMaxLength(PlaceOfProduction.MaxTextLength);
+                p.Property(x => x.RegionId).HasColumnName("place_region_id").HasConversion(new RegionIdConverter());
+                p.HasOne<Region>().WithMany().HasForeignKey(x => x.RegionId).OnDelete(DeleteBehavior.Restrict);
+                p.HasIndex(x => x.RegionId);
+            });
+
+            b.OwnsOne(a => a.Valuation, m =>
+            {
+                m.Property(x => x.Amount).HasColumnName("valuation_amount").HasPrecision(19, 4);
+                m.Property(x => x.Currency).HasColumnName("valuation_currency").HasMaxLength(3).IsFixedLength();
+            });
+
+            b.OwnsMany(a => a.Exhibitions, e =>
+            {
+                e.ToTable("artefact_exhibitions");
+                e.WithOwner().HasForeignKey("ArtefactId");
+                e.Property<int>("Id").UseIdentityAlwaysColumn();
+                e.HasKey("Id");
+                e.Property(x => x.Position);
+                e.Property(x => x.Text).HasMaxLength(Exhibition.MaxTextLength).IsRequired();
+            });
+            b.Navigation(a => a.Exhibitions).HasField("_exhibitions").UsePropertyAccessMode(PropertyAccessMode.Field);
+
             b.OwnsOne(a => a.CreationDate, d =>
             {
                 d.Property(x => x.Display).HasColumnName("creation_date_display").HasMaxLength(200);
@@ -77,6 +124,8 @@ public sealed class CollectionDbContext(DbContextOptions<CollectionDbContext> op
                 q.Property(x => x.Method).HasColumnName("acquisition_method").HasConversion<string>().HasMaxLength(16);
                 q.Property(x => x.Date).HasColumnName("acquisition_date");
                 q.Property(x => x.Source).HasColumnName("acquisition_source").HasMaxLength(300);
+                q.Property(x => x.Lot).HasColumnName("acquisition_lot").HasMaxLength(Acquisition.MaxLotLength);
+                q.Property(x => x.Note).HasColumnName("acquisition_note").HasMaxLength(Acquisition.MaxNoteLength);
                 q.OwnsOne(x => x.Price, m =>
                 {
                     m.Property(x => x.Amount).HasColumnName("acquisition_price_amount").HasPrecision(19, 4);
@@ -121,5 +170,6 @@ public sealed class CollectionDbContext(DbContextOptions<CollectionDbContext> op
 
     private sealed class ArtefactIdConverter() : ValueConverter<ArtefactId, Guid>(id => id.Value, v => new ArtefactId(v));
     private sealed class RegionIdConverter() : ValueConverter<RegionId, Guid>(id => id.Value, v => new RegionId(v));
+    private sealed class ObjectTypeIdConverter() : ValueConverter<ObjectTypeId, Guid>(id => id.Value, v => new ObjectTypeId(v));
     private sealed class MediaAssetIdConverter() : ValueConverter<MediaAssetId, Guid>(id => id.Value, v => new MediaAssetId(v));
 }

@@ -23,3 +23,9 @@ public readonly record struct MediaAssetId(Guid Value) : IGuidId
     public static MediaAssetId New() => new(Guid.CreateVersion7());
     public override string ToString() => Value.ToString();
 }
+
+public readonly record struct ObjectTypeId(Guid Value) : IGuidId
+{
+    public static ObjectTypeId New() => new(Guid.CreateVersion7());
+    public override string ToString() => Value.ToString();
+}

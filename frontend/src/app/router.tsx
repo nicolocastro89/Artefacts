@@ -3,6 +3,7 @@ import { artefactDetailPage } from '../pages/definitions/artefactDetail'
 import { artefactEditPage, artefactNewPage } from '../pages/definitions/artefactEdit'
 import { artefactListPage } from '../pages/definitions/artefactList'
 import { PageRoute } from '../pages/PageRoute'
+import { ObjectTypesPage } from '../pages/ObjectTypesPage'
 import { RegionsPage } from '../pages/RegionsPage'
 import { PrintPreview } from '../print/PrintPreview'
 import { AppShell } from './AppShell'
@@ -30,7 +31,8 @@ export const routes = [
       { path: 'artefacts/new', element: <PageRoute page={artefactNewPage} /> },
       { path: 'artefacts/:id', element: <PageRoute key="detail" page={artefactDetailPage} /> },
       { path: 'artefacts/:id/edit', element: <PageRoute key="edit" page={artefactEditPage} /> },
-      { path: 'regions', element: <RegionsPage /> },
+      { path: 'reference/regions', element: <RegionsPage /> },
+      { path: 'reference/object-types', element: <ObjectTypesPage /> },
       { path: '*', element: <NotFound /> },
     ],
   },

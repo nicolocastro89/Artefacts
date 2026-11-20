@@ -2,6 +2,7 @@ using Artefacts.Application.Abstractions;
 using Artefacts.Application.Common;
 using Artefacts.Application.Contracts;
 using Artefacts.Domain.Catalogue;
+using Artefacts.Domain.Classification;
 using Artefacts.Domain.Common;
 using Artefacts.Domain.Dating;
 using Artefacts.Domain.Finance;
@@ -12,6 +13,7 @@ namespace Artefacts.Application.Artefacts;
 public sealed class ArtefactCommandHandler(
     IArtefactRepository artefacts,
     IRegionRepository regions,
+    IObjectTypeRepository objectTypes,
     IUnitOfWork unitOfWork,
     ArtefactDetailQueryHandler detail)
 {
@@ -56,13 +58,15 @@ public sealed class ArtefactCommandHandler(
         if (request.Acquisition is { } acq)
         {
             var price = acq.Price is { } p ? v.Try("acquisition.price", () => Money.Create(p.Amount, p.Currency)) : null;
-            var acquisition = v.Try("acquisition", () => Acquisition.Create(acq.Method, acq.Date, acq.Source, price));
+            var acquisition = v.Try("acquisition", () => Acquisition.Create(acq.Method, acq.Date, acq.Source, price, acq.Lot, acq.Note));
             if (acquisition is not null) artefact.SetAcquisition(acquisition);
         }
         else
         {
             artefact.SetAcquisition(null);
         }
+
+        await ApplyClassificationAsync(artefact, request, v, ct);
 
         var inputs = request.Provenance ?? [];
         var known = await regions.GetManyAsync(inputs.Select(p => new RegionId(p.RegionId)).Distinct(), ct);
@@ -84,6 +88,27 @@ public sealed class ArtefactCommandHandler(
         if (!v.HasErrors) artefact.ReplaceProvenance(entries);
     }
 
+    /// <summary>Object type, collection group, origin, exhibitions, catalogue entry and holding.</summary>
+    private async Task ApplyClassificationAsync(Artefact artefact, ArtefactWriteRequest request, ValidationCollector v, CancellationToken ct)
+    {
+        ObjectTypeId? objectTypeId = request.ObjectTypeId is { } t ? new ObjectTypeId(t) : null;
+        if (objectTypeId is { } typeId && await objectTypes.GetAsync(typeId, ct) is null)
+            v.Add("objectTypeId", "The object type does not exist.");
+        v.Try("", () => artefact.Classify(objectTypeId, request.CollectionGroup));
+
+        RegionId? placeRegion = request.PlaceOfProduction?.RegionId is { } r ? new RegionId(r) : null;
+        if (placeRegion is { } regionId && await regions.GetAsync(regionId, ct) is null)
+            v.Add("placeOfProduction.regionId", "The region does not exist.");
+        var place = v.Try("", () => PlaceOfProduction.Create(request.PlaceOfProduction?.Text, placeRegion));
+        v.Try("", () => artefact.SetOrigin(place, request.Dynasty));
+
+        v.Try("", () => artefact.ReplaceExhibitions(request.Exhibitions ?? []));
+        v.Try("", () => artefact.SetCatalogueEntry(request.CatalogueEntryEn));
+
+        var valuation = request.Valuation is { } val ? v.Try("valuation", () => Money.Create(val.Amount, val.Currency)) : null;
+        v.Try("", () => artefact.SetHolding(request.Holder, request.StorageLocation, valuation));
+    }
+
     private async Task EnsureUniqueInventoryNumberAsync(string inventoryNumber, ArtefactId? excluding, ValidationCollector v, CancellationToken ct)
     {
         if (await artefacts.InventoryNumberExistsAsync(inventoryNumber, excluding, ct))
@@ -95,6 +120,7 @@ public sealed class ArtefactCommandHandler(
 public sealed class ArtefactDetailQueryHandler(
     IArtefactRepository artefacts,
     IRegionRepository regions,
+    IObjectTypeRepository objectTypes,
     IMediaAssetRepository mediaAssets,
     IImageUrlBuilder imageUrls)
 {
@@ -102,7 +128,10 @@ public sealed class ArtefactDetailQueryHandler(
     {
         var a = await artefacts.GetAsync(new ArtefactId(id), ct) ?? throw new NotFoundException("Artefact", id);
 
-        var regionMap = await regions.GetManyAsync(a.Provenance.Select(p => p.RegionId).Distinct(), ct);
+        var regionIds = a.Provenance.Select(p => p.RegionId).ToList();
+        if (a.PlaceOfProduction?.RegionId is { } placeRegionId) regionIds.Add(placeRegionId);
+        var regionMap = await regions.GetManyAsync(regionIds.Distinct(), ct);
+        var objectType = a.ObjectTypeId is { } typeId ? await objectTypes.GetAsync(typeId, ct) : null;
         var assetMap = await mediaAssets.GetManyAsync(a.Images.Select(i => i.MediaAssetId), ct);
 
         var images = a.Images
@@ -126,7 +155,7 @@ public sealed class ArtefactDetailQueryHandler(
             a.Description,
             a.Acquisition is { } acq
                 ? new AcquisitionDto(acq.Method, acq.Date, acq.Source,
-                    acq.Price is { } p ? new MoneyDto(p.Amount, p.Currency) : null)
+                    acq.Price is { } p ? new MoneyDto(p.Amount, p.Currency) : null, acq.Lot, acq.Note)
                 : null,
             a.Provenance
                 .Select(p => new ProvenanceEntryDto(
@@ -136,7 +165,21 @@ public sealed class ArtefactDetailQueryHandler(
                     p.Note))
                 .ToList(),
             images.SingleOrDefault(i => i.IsPrimary),
-            images);
+            images,
+            objectType is null ? null : new NamedRefDto(objectType.Id.Value, objectType.Name),
+            a.CollectionGroup,
+            a.PlaceOfProduction is { } place
+                ? new PlaceOfProductionDto(place.Text,
+                    place.RegionId is { } pr && regionMap.TryGetValue(pr, out var placeRegion)
+                        ? new NamedRefDto(placeRegion.Id.Value, placeRegion.Name)
+                        : null)
+                : null,
+            a.Dynasty,
+            a.Exhibitions.Select(e => e.Text).ToList(),
+            a.CatalogueEntryEn,
+            a.Holder,
+            a.StorageLocation,
+            a.Valuation is { } val ? new MoneyDto(val.Amount, val.Currency) : null);
     }
 }
 

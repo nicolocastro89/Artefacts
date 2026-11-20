@@ -16,6 +16,22 @@
   padding: var(--s4);
 }
 
+/* Object types have only a name: input and button side by side. */
+.regions__add--single {
+  grid-template-columns: minmax(12rem, 1fr) auto;
+}
+
+.regions__count {
+  width: 1%;
+  white-space: nowrap;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.reference-tabs {
+  justify-self: start;
+}
+
 .regions__add-feedback {
   grid-column: 1 / -1;
   min-height: 1.25rem;

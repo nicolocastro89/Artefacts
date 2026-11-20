@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Artefacts.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(CollectionDbContext))]
-    [Migration("20261119203411_ArtefactReadView")]
-    partial class ArtefactReadView
+    [Migration("20261120172511_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -31,6 +31,16 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("CatalogueEntryEn")
+                        .HasMaxLength(20000)
+                        .HasColumnType("character varying(20000)")
+                        .HasColumnName("catalogue_entry_en");
+
+                    b.Property<string>("CollectionGroup")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("collection_group");
+
                     b.Property<string>("Description")
                         .HasMaxLength(10000)
                         .HasColumnType("character varying(10000)")
@@ -40,6 +50,16 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
                         .HasColumnName("dimensions");
+
+                    b.Property<string>("Dynasty")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("dynasty");
+
+                    b.Property<string>("Holder")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("holder");
 
                     b.Property<string>("InventoryNumber")
                         .IsRequired()
@@ -57,6 +77,15 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(500)")
                         .HasColumnName("medium");
 
+                    b.Property<Guid?>("ObjectTypeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("object_type_id");
+
+                    b.Property<string>("StorageLocation")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("storage_location");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -70,7 +99,38 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("ux_artefacts_inventory_number");
 
+                    b.HasIndex("ObjectTypeId")
+                        .HasDatabaseName("ix_artefacts_object_type_id");
+
                     b.ToTable("artefacts", (string)null);
+                });
+
+            modelBuilder.Entity("Artefacts.Domain.Classification.ObjectType", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("NormalizedName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("normalized_name");
+
+                    b.HasKey("Id")
+                        .HasName("pk_object_types");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasDatabaseName("ux_object_types_normalized_name");
+
+                    b.ToTable("object_types", (string)null);
                 });
 
             modelBuilder.Entity("Artefacts.Domain.Media.MediaAsset", b =>
@@ -152,6 +212,12 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Artefacts.Domain.Catalogue.Artefact", b =>
                 {
+                    b.HasOne("Artefacts.Domain.Classification.ObjectType", null)
+                        .WithMany()
+                        .HasForeignKey("ObjectTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_artefacts_object_types_object_type_id");
+
                     b.OwnsOne("Artefacts.Domain.Catalogue.Acquisition", "Acquisition", b1 =>
                         {
                             b1.Property<Guid>("ArtefactId")
@@ -162,11 +228,21 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                                 .HasColumnType("date")
                                 .HasColumnName("acquisition_date");
 
+                            b1.Property<string>("Lot")
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("acquisition_lot");
+
                             b1.Property<string>("Method")
                                 .IsRequired()
                                 .HasMaxLength(16)
                                 .HasColumnType("character varying(16)")
                                 .HasColumnName("acquisition_method");
+
+                            b1.Property<string>("Note")
+                                .HasMaxLength(2000)
+                                .HasColumnType("character varying(2000)")
+                                .HasColumnName("acquisition_note");
 
                             b1.Property<string>("Source")
                                 .HasMaxLength(300)
@@ -246,6 +322,69 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                                 .HasConstraintName("fk_artefacts_artefacts_id");
                         });
 
+                    b.OwnsOne("Artefacts.Domain.Finance.Money", "Valuation", b1 =>
+                        {
+                            b1.Property<Guid>("ArtefactId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("id");
+
+                            b1.Property<decimal>("Amount")
+                                .HasPrecision(19, 4)
+                                .HasColumnType("numeric(19,4)")
+                                .HasColumnName("valuation_amount");
+
+                            b1.Property<string>("Currency")
+                                .IsRequired()
+                                .HasMaxLength(3)
+                                .HasColumnType("character(3)")
+                                .HasColumnName("valuation_currency")
+                                .IsFixedLength();
+
+                            b1.HasKey("ArtefactId");
+
+                            b1.ToTable("artefacts");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ArtefactId")
+                                .HasConstraintName("fk_artefacts_artefacts_id");
+                        });
+
+                    b.OwnsMany("Artefacts.Domain.Catalogue.Exhibition", "Exhibitions", b1 =>
+                        {
+                            b1.Property<int>("Id")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("integer")
+                                .HasColumnName("id");
+
+                            NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b1.Property<int>("Id"));
+
+                            b1.Property<Guid>("ArtefactId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("artefact_id");
+
+                            b1.Property<int>("Position")
+                                .HasColumnType("integer")
+                                .HasColumnName("position");
+
+                            b1.Property<string>("Text")
+                                .IsRequired()
+                                .HasMaxLength(1000)
+                                .HasColumnType("character varying(1000)")
+                                .HasColumnName("text");
+
+                            b1.HasKey("Id")
+                                .HasName("pk_artefact_exhibitions");
+
+                            b1.HasIndex("ArtefactId")
+                                .HasDatabaseName("ix_artefact_exhibitions_artefact_id");
+
+                            b1.ToTable("artefact_exhibitions", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("ArtefactId")
+                                .HasConstraintName("fk_artefact_exhibitions_artefacts_artefact_id");
+                        });
+
                     b.OwnsMany("Artefacts.Domain.Catalogue.ImageAttachment", "Images", b1 =>
                         {
                             b1.Property<int>("Id")
@@ -298,6 +437,39 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                                 .OnDelete(DeleteBehavior.Restrict)
                                 .IsRequired()
                                 .HasConstraintName("fk_artefact_images_media_assets_media_asset_id");
+                        });
+
+                    b.OwnsOne("Artefacts.Domain.Catalogue.PlaceOfProduction", "PlaceOfProduction", b1 =>
+                        {
+                            b1.Property<Guid>("ArtefactId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("id");
+
+                            b1.Property<Guid?>("RegionId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("place_region_id");
+
+                            b1.Property<string>("Text")
+                                .HasMaxLength(300)
+                                .HasColumnType("character varying(300)")
+                                .HasColumnName("place_text");
+
+                            b1.HasKey("ArtefactId");
+
+                            b1.HasIndex("RegionId")
+                                .HasDatabaseName("ix_artefacts_place_region_id");
+
+                            b1.ToTable("artefacts");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ArtefactId")
+                                .HasConstraintName("fk_artefacts_artefacts_id");
+
+                            b1.HasOne("Artefacts.Domain.Regions.Region", null)
+                                .WithMany()
+                                .HasForeignKey("RegionId")
+                                .OnDelete(DeleteBehavior.Restrict)
+                                .HasConstraintName("fk_artefacts_regions_place_region_id");
                         });
 
                     b.OwnsMany("Artefacts.Domain.Catalogue.ProvenanceEntry", "Provenance", b1 =>
@@ -391,9 +563,15 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
 
                     b.Navigation("CreationDate");
 
+                    b.Navigation("Exhibitions");
+
                     b.Navigation("Images");
 
+                    b.Navigation("PlaceOfProduction");
+
                     b.Navigation("Provenance");
+
+                    b.Navigation("Valuation");
                 });
 
             modelBuilder.Entity("Artefacts.Domain.Regions.Region", b =>

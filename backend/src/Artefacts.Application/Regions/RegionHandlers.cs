@@ -62,9 +62,9 @@ public sealed class RegionHandler(IRegionRepository regions, IArtefactRepository
     public async Task DeleteAsync(Guid id, CancellationToken ct)
     {
         var region = await LoadAsync(id, ct);
-        if (await artefacts.AnyProvenanceReferencesAsync(region.Id, ct))
+        if (await artefacts.AnyReferencesAsync(region.Id, ct))
             throw new ConflictException("region_in_use",
-                $"\"{region.Name}\" is used in artefact provenance and cannot be deleted.");
+                $"\"{region.Name}\" is used by artefacts (provenance or place of production) and cannot be deleted.");
         if (await regions.HasChildrenAsync(region.Id, ct))
             throw new ConflictException("region_in_use",
                 $"\"{region.Name}\" has child regions and cannot be deleted.");

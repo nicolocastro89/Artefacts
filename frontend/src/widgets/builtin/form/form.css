@@ -130,9 +130,24 @@
 }
 
 /* Provenance editor */
-.provenance-editor {
+.provenance-editor,
+.exhibition-editor {
   display: grid;
   gap: var(--s3);
+}
+
+/* Exhibitions: number, one free-text entry, reorder/remove tools. */
+.exhibition-editor__row {
+  display: grid;
+  grid-template-columns: 1.5rem minmax(0, 1fr) auto;
+  gap: var(--s3);
+  align-items: start;
+  padding-bottom: var(--s3);
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.exhibition-editor:empty {
+  display: none;
 }
 
 .provenance-editor__row {

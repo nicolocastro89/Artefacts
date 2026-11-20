@@ -10,6 +10,26 @@
   max-width: 68ch;
 }
 
+/* Keep single line breaks as the curator wrote them (catalogue entries are set line by line). */
+.text-block p {
+  white-space: pre-line;
+}
+
+/* Ordered free-text entries, e.g. exhibitions. */
+.text-list {
+  display: grid;
+  gap: var(--s2);
+  max-width: 68ch;
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.text-list li::marker {
+  font-stretch: var(--stretch-condensed);
+  font-weight: 650;
+  color: var(--ink-muted);
+}
+
 /* Ordered steps: numbered by the enclosing .layout--steps counter. */
 .layout--steps {
   counter-reset: step;

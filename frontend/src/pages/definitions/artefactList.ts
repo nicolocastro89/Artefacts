@@ -1,4 +1,14 @@
+import type { GroupOption } from '../../widgets/builtin/collection'
 import type { PageDefinition } from '../../widgets/core/page'
+
+/** Ways to group the list; the values are the API's `group` parameter. */
+const groupOptions: GroupOption[] = [
+  { value: 'objectType', label: 'Object type', emptyLabel: 'No object type' },
+  { value: 'collectionGroup', label: 'Collection group', emptyLabel: 'No collection group' },
+  { value: 'origin', label: 'Origin (region)', emptyLabel: 'No linked region' },
+  { value: 'century', label: 'Century', emptyLabel: 'Undated' },
+  { value: 'dynasty', label: 'Dynasty or period', emptyLabel: 'No dynasty or period' },
+]
 
 /** The artefact list: toolbar, table or grid, the pull-out rack, and paging. All state lives in the URL. */
 export const artefactListPage: PageDefinition = {
@@ -14,6 +24,7 @@ export const artefactListPage: PageDefinition = {
         search: { from: 'search', name: 'search' },
         sort: { from: 'search', name: 'sort' },
         direction: { from: 'search', name: 'direction' },
+        group: { from: 'search', name: 'group' },
         page: { from: 'search', name: 'page' },
         pageSize: 25,
       },
@@ -33,9 +44,10 @@ export const artefactListPage: PageDefinition = {
               title: 'Artefacts',
               noun: 'artefact',
               searchLabel: 'Search artefacts',
-              searchPlaceholder: 'Search inventory number, title or maker',
+              searchPlaceholder: 'Search number, title, maker, place, group, location',
               newHref: '/artefacts/new',
               newLabel: 'New artefact',
+              groupOptions,
             },
           },
           {
@@ -52,8 +64,9 @@ export const artefactListPage: PageDefinition = {
                     type: 'widget',
                     id: 'table',
                     widgetId: 'record-table',
-                    bindings: { rows: 'items[]' },
+                    bindings: { rows: 'items[]', groups: 'groups[]' },
                     config: {
+                      groupOptions,
                       caption: 'Artefacts',
                       rowHref: '/artefacts/{id}',
                       emptyText: 'No artefacts match.',
@@ -71,8 +84,8 @@ export const artefactListPage: PageDefinition = {
                     type: 'widget',
                     id: 'grid',
                     widgetId: 'record-grid',
-                    bindings: { rows: 'items[]' },
-                    config: { rowHref: '/artefacts/{id}', metaPaths: ['maker', 'creationDate'], emptyText: 'No artefacts match.' },
+                    bindings: { rows: 'items[]', groups: 'groups[]' },
+                    config: { rowHref: '/artefacts/{id}', metaPaths: ['maker', 'creationDate'], emptyText: 'No artefacts match.', groupOptions },
                   },
                   { type: 'widget', id: 'pager', widgetId: 'pager', bindings: { total: 'total', page: 'page', pageSize: 'pageSize' } },
                 ],
@@ -86,6 +99,7 @@ export const artefactListPage: PageDefinition = {
                   openHref: '/artefacts/{id}',
                   editHref: '/artefacts/{id}/edit',
                   facts: [
+                    { path: 'objectType', label: 'Type' },
                     { path: 'maker', label: 'Maker' },
                     { path: 'creationDate', label: 'Date' },
                     { path: 'medium', label: 'Medium' },

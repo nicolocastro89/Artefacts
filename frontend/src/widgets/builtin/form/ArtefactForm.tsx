@@ -7,7 +7,8 @@ import { ApiError, unwrap } from '../../../api/problem'
 import { defineWidget } from '../../core/registry'
 import { isHistoricalDate, isMoney } from '../../format'
 import { HistoricalDateField } from './HistoricalDateField'
-import { RegionPicker, type PickedRegion } from './RegionPicker'
+import type { PickedRef } from './ReferencePicker'
+import { ObjectTypePicker, RegionPicker, type PickedRegion } from './RegionPicker'
 import './form.css'
 
 interface ProvenanceRow {
@@ -15,6 +16,11 @@ interface ProvenanceRow {
   region: PickedRegion | null
   period: HistoricalDateInput
   note: string
+}
+
+interface ExhibitionRow {
+  key: string
+  text: string
 }
 
 interface FormState {
@@ -30,7 +36,20 @@ interface FormState {
   source: string
   priceAmount: string
   priceCurrency: string
+  lot: string
+  acquisitionNote: string
   provenance: ProvenanceRow[]
+  objectType: PickedRef | null
+  collectionGroup: string
+  placeText: string
+  placeRegion: PickedRef | null
+  dynasty: string
+  exhibitions: ExhibitionRow[]
+  catalogueEntryEn: string
+  holder: string
+  storageLocation: string
+  valuationAmount: string
+  valuationCurrency: string
 }
 
 const METHODS: { value: AcquisitionMethod; label: string }[] = [
@@ -41,7 +60,7 @@ const METHODS: { value: AcquisitionMethod; label: string }[] = [
   { value: 'other', label: 'Other' },
 ]
 
-const COMMON_CURRENCIES = ['EUR', 'USD', 'GBP', 'CHF', 'JPY', 'SEK', 'DKK', 'NOK', 'CAD', 'AUD']
+const COMMON_CURRENCIES = ['EUR', 'USD', 'GBP', 'CHF', 'JPY', 'SEK', 'DKK', 'NOK', 'CAD', 'AUD', 'ITL', 'DEM', 'FRF']
 
 let rowSeq = 0
 const newRowKey = () => `row-${++rowSeq}`
@@ -54,8 +73,19 @@ function dateInput(v: unknown): HistoricalDateInput {
   return isHistoricalDate(v) ? { text: v.display, earliestYear: null, latestYear: null } : { text: '' }
 }
 
+function ref(id: unknown, name: unknown): PickedRef | null {
+  return typeof id === 'string' ? { id, name: str(name) } : null
+}
+
+/** Parses an amount typed with either decimal separator; null when blank. */
+function amountOf(text: string): number | null {
+  return text.trim() === '' ? null : Number(text.replace(',', '.'))
+}
+
 function initialState(values: Record<string, { value: unknown }>): FormState {
   const price = values.acquisitionPrice?.value
+  const valuation = values.valuation?.value
+  const exhibitions = Array.isArray(values.exhibitions?.value) ? (values.exhibitions.value as unknown[]) : []
   const provenance = Array.isArray(values.provenance?.value) ? (values.provenance.value as Record<string, unknown>[]) : []
   return {
     inventoryNumber: str(values.inventoryNumber?.value),
@@ -70,6 +100,19 @@ function initialState(values: Record<string, { value: unknown }>): FormState {
     source: str(values.acquisitionSource?.value),
     priceAmount: isMoney(price) ? String(price.amount) : '',
     priceCurrency: isMoney(price) ? price.currency : 'EUR',
+    lot: str(values.acquisitionLot?.value),
+    acquisitionNote: str(values.acquisitionNote?.value),
+    objectType: ref(values.objectTypeId?.value, values.objectTypeName?.value),
+    collectionGroup: str(values.collectionGroup?.value),
+    placeText: str(values.placeText?.value),
+    placeRegion: ref(values.placeRegionId?.value, values.placeRegionName?.value),
+    dynasty: str(values.dynasty?.value),
+    exhibitions: exhibitions.map((text) => ({ key: newRowKey(), text: str(text) })),
+    catalogueEntryEn: str(values.catalogueEntryEn?.value),
+    holder: str(values.holder?.value),
+    storageLocation: str(values.storageLocation?.value),
+    valuationAmount: isMoney(valuation) ? String(valuation.amount) : '',
+    valuationCurrency: isMoney(valuation) ? valuation.currency : 'EUR',
     provenance: provenance.map((p) => ({
       key: newRowKey(),
       region: typeof p.regionId === 'string' ? { id: p.regionId, name: str(p.regionName) } : null,
@@ -83,7 +126,8 @@ function toRequest(s: FormState): ArtefactWriteRequest {
   const opt = (v: string) => (v.trim() === '' ? null : v.trim())
   const dateOrNull = (d: HistoricalDateInput) =>
     (d.text ?? '').trim() === '' ? null : { text: d.text, earliestYear: d.earliestYear ?? null, latestYear: d.latestYear ?? null }
-  const amount = s.priceAmount.trim() === '' ? null : Number(s.priceAmount.replace(',', '.'))
+  const amount = amountOf(s.priceAmount)
+  const valuation = amountOf(s.valuationAmount)
   return {
     inventoryNumber: s.inventoryNumber,
     title: s.title,
@@ -98,8 +142,19 @@ function toRequest(s: FormState): ArtefactWriteRequest {
           date: opt(s.acquisitionDate),
           source: opt(s.source),
           price: amount === null ? null : { amount, currency: s.priceCurrency.trim().toUpperCase() },
+          lot: opt(s.lot),
+          note: opt(s.acquisitionNote),
         }
       : null,
+    objectTypeId: s.objectType?.id ?? null,
+    collectionGroup: opt(s.collectionGroup),
+    placeOfProduction: s.placeText.trim() || s.placeRegion ? { text: opt(s.placeText), regionId: s.placeRegion?.id ?? null } : null,
+    dynasty: opt(s.dynasty),
+    exhibitions: s.exhibitions.map((e) => e.text.trim()).filter((t) => t !== ''),
+    catalogueEntryEn: opt(s.catalogueEntryEn),
+    holder: opt(s.holder),
+    storageLocation: opt(s.storageLocation),
+    valuation: valuation === null ? null : { amount: valuation, currency: s.valuationCurrency.trim().toUpperCase() },
     provenance: s.provenance.map((p) => ({
       regionId: p.region?.id ?? '00000000-0000-0000-0000-000000000000',
       period: { text: p.period.text, earliestYear: p.period.earliestYear ?? null, latestYear: p.period.latestYear ?? null },
@@ -155,7 +210,21 @@ defineWidget({
     acquisitionDate: { type: 'date' },
     acquisitionSource: { type: 'text' },
     acquisitionPrice: { type: 'money' },
+    acquisitionLot: { type: 'text' },
+    acquisitionNote: { type: 'text' },
     provenance: { type: 'list' },
+    objectTypeId: { type: 'reference' },
+    objectTypeName: { type: 'text' },
+    collectionGroup: { type: 'text' },
+    placeText: { type: 'text' },
+    placeRegionId: { type: 'reference' },
+    placeRegionName: { type: 'text' },
+    dynasty: { type: 'text' },
+    exhibitions: { type: 'any' },
+    catalogueEntryEn: { type: 'text' },
+    holder: { type: 'text' },
+    storageLocation: { type: 'text' },
+    valuation: { type: 'money' },
   },
   config: { cancelHref: '/artefacts' },
   print: { hideInPrint: true },
@@ -177,6 +246,15 @@ defineWidget({
         const [row] = rows.splice(index, 1)
         rows.splice(index + by, 0, row!)
         return { ...s, provenance: rows }
+      })
+    const setExhibition = (index: number, text: string) =>
+      setState((s) => ({ ...s, exhibitions: s.exhibitions.map((r, i) => (i === index ? { ...r, text } : r)) }))
+    const moveExhibition = (index: number, by: number) =>
+      setState((s) => {
+        const rows = [...s.exhibitions]
+        const [row] = rows.splice(index, 1)
+        rows.splice(index + by, 0, row!)
+        return { ...s, exhibitions: rows }
       })
 
     const submit = async (e: FormEvent) => {
@@ -240,6 +318,17 @@ defineWidget({
         </fieldset>
 
         <fieldset className="form-section">
+          <legend>Classification and origin</legend>
+          <div className="form-grid">
+            <ObjectTypePicker label="Object type" value={state.objectType} onChange={(v) => set('objectType', v)} errors={errorsFor(errors, 'objectTypeId')} />
+            <TextField label="Collection group" value={state.collectionGroup} onChange={(v) => set('collectionGroup', v)} errors={errorsFor(errors, 'collectionGroup')} hint="As filed, e.g. CINA or LAMPASSI" />
+            <TextField label="Place of production" value={state.placeText} onChange={(v) => set('placeText', v)} errors={errorsFor(errors, 'placeOfProduction.text')} hint="As written, uncertainty included" />
+            <RegionPicker label="Region (optional)" value={state.placeRegion} onChange={(v) => set('placeRegion', v)} errors={errorsFor(errors, 'placeOfProduction.regionId')} />
+            <TextField label="Dynasty or period" value={state.dynasty} onChange={(v) => set('dynasty', v)} errors={errorsFor(errors, 'dynasty')} />
+          </div>
+        </fieldset>
+
+        <fieldset className="form-section">
           <legend>Acquisition</legend>
           <div className="form-grid">
             <SelectField label="Method" value={state.method} onChange={(v) => set('method', v as AcquisitionMethod | '')} errors={errorsFor(errors, 'acquisition.method')}>
@@ -260,7 +349,9 @@ defineWidget({
               onCurrency={(v) => set('priceCurrency', v)}
               errors={errorsFor(errors, 'acquisition.price')}
             />
+            <TextField label="Lot" value={state.lot} onChange={(v) => set('lot', v)} errors={errorsFor(errors, 'acquisition.lot')} />
           </div>
+          <TextField label="Acquisition note" multiline value={state.acquisitionNote} onChange={(v) => set('acquisitionNote', v)} errors={errorsFor(errors, 'acquisition.note')} />
           {!state.method && <p className="field__hint">Choose a method to record the acquisition date and price.</p>}
         </fieldset>
 
@@ -297,6 +388,55 @@ defineWidget({
           >
             <Plus aria-hidden="true" /> Add provenance step
           </button>
+        </fieldset>
+
+        <fieldset className="form-section">
+          <legend>Exhibitions</legend>
+          <ol className="exhibition-editor">
+            {state.exhibitions.map((row, i) => (
+              <li key={row.key} className="exhibition-editor__row">
+                <span className="provenance-editor__num" aria-hidden="true">
+                  {i + 1}
+                </span>
+                <TextField label={`Exhibition ${i + 1}`} value={row.text} onChange={(text) => setExhibition(i, text)} errors={errorsFor(errors, `exhibitions[${i}]`)} />
+                <div className="provenance-editor__tools">
+                  <button type="button" className="btn btn--icon btn--sm" aria-label={`Move exhibition ${i + 1} up`} disabled={i === 0} onClick={() => moveExhibition(i, -1)}>
+                    <ArrowUp aria-hidden="true" />
+                  </button>
+                  <button type="button" className="btn btn--icon btn--sm" aria-label={`Move exhibition ${i + 1} down`} disabled={i === state.exhibitions.length - 1} onClick={() => moveExhibition(i, 1)}>
+                    <ArrowDown aria-hidden="true" />
+                  </button>
+                  <button type="button" className="btn btn--icon btn--sm btn--danger" aria-label={`Remove exhibition ${i + 1}`} onClick={() => set('exhibitions', state.exhibitions.filter((_, j) => j !== i))}>
+                    <Trash2 aria-hidden="true" />
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ol>
+          <button type="button" className="btn" onClick={() => set('exhibitions', [...state.exhibitions, { key: newRowKey(), text: '' }])}>
+            <Plus aria-hidden="true" /> Add exhibition
+          </button>
+        </fieldset>
+
+        <fieldset className="form-section">
+          <legend>Catalogue entry (English)</legend>
+          <TextField label="Catalogue entry" multiline value={state.catalogueEntryEn} onChange={(v) => set('catalogueEntryEn', v)} errors={errorsFor(errors, 'catalogueEntryEn')} />
+        </fieldset>
+
+        <fieldset className="form-section">
+          <legend>Holding</legend>
+          <div className="form-grid">
+            <TextField label="Holder" value={state.holder} onChange={(v) => set('holder', v)} errors={errorsFor(errors, 'holder')} />
+            <TextField label="Storage location" value={state.storageLocation} onChange={(v) => set('storageLocation', v)} errors={errorsFor(errors, 'storageLocation')} hint="e.g. MI F3, cella 16" />
+            <MoneyField
+              label="Valuation"
+              amount={state.valuationAmount}
+              currency={state.valuationCurrency}
+              onAmount={(v) => set('valuationAmount', v)}
+              onCurrency={(v) => set('valuationCurrency', v)}
+              errors={errorsFor(errors, 'valuation')}
+            />
+          </div>
         </fieldset>
 
         <div className="record-form__actions">
@@ -348,12 +488,12 @@ function DateField({ label, value, onChange, errors, disabled }: { label: string
   )
 }
 
-function MoneyField({ amount, currency, onAmount, onCurrency, errors, disabled }: { amount: string; currency: string; onAmount: (v: string) => void; onCurrency: (v: string) => void; errors?: string[]; disabled?: boolean }) {
+function MoneyField({ label = 'Price', amount, currency, onAmount, onCurrency, errors, disabled }: { label?: string; amount: string; currency: string; onAmount: (v: string) => void; onCurrency: (v: string) => void; errors?: string[]; disabled?: boolean }) {
   const id = useId()
   return (
     <div className={`field money-field${errors ? ' field--invalid' : ''}`}>
       <label className="field__label" htmlFor={id}>
-        Price <span className="muted">(confidential)</span>
+        {label} <span className="muted">(confidential)</span>
       </label>
       <div className="money-field__inputs">
         <input id={id} className="input" inputMode="decimal" placeholder="0.00" value={amount} disabled={disabled} aria-invalid={!!errors} onChange={(e) => onAmount(e.target.value)} />

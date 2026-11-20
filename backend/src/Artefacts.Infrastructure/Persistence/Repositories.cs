@@ -1,5 +1,6 @@
 using Artefacts.Application.Abstractions;
 using Artefacts.Domain.Catalogue;
+using Artefacts.Domain.Classification;
 using Artefacts.Domain.Common;
 using Artefacts.Domain.Media;
 using Artefacts.Domain.Regions;
@@ -20,8 +21,43 @@ internal sealed class ArtefactRepository(CollectionDbContext db) : IArtefactRepo
             ? db.Artefacts.AnyAsync(a => a.InventoryNumber == inventoryNumber && a.Id != ex, ct)
             : db.Artefacts.AnyAsync(a => a.InventoryNumber == inventoryNumber, ct);
 
-    public Task<bool> AnyProvenanceReferencesAsync(RegionId regionId, CancellationToken ct) =>
-        db.Artefacts.AnyAsync(a => a.Provenance.Any(p => p.RegionId == regionId), ct);
+    public Task<bool> AnyReferencesAsync(RegionId regionId, CancellationToken ct) =>
+        db.Artefacts.AnyAsync(a =>
+            a.Provenance.Any(p => p.RegionId == regionId) ||
+            (a.PlaceOfProduction != null && a.PlaceOfProduction.RegionId == regionId), ct);
+
+    public Task<bool> AnyReferencesAsync(ObjectTypeId objectTypeId, CancellationToken ct) =>
+        db.Artefacts.AnyAsync(a => a.ObjectTypeId == objectTypeId, ct);
+
+    public async Task<IReadOnlyDictionary<ObjectTypeId, int>> CountByObjectTypeAsync(CancellationToken ct) =>
+        await db.Artefacts.Where(a => a.ObjectTypeId != null)
+            .GroupBy(a => a.ObjectTypeId!.Value)
+            .Select(g => new { g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Key, x => x.Count, ct);
+}
+
+internal sealed class ObjectTypeRepository(CollectionDbContext db) : IObjectTypeRepository
+{
+    public Task<ObjectType?> GetAsync(ObjectTypeId id, CancellationToken ct) =>
+        db.ObjectTypes.SingleOrDefaultAsync(t => t.Id == id, ct);
+
+    public Task<ObjectType?> FindByNormalizedNameAsync(string normalizedName, CancellationToken ct) =>
+        db.ObjectTypes.SingleOrDefaultAsync(t => t.NormalizedName == normalizedName, ct);
+
+    public async Task<IReadOnlyList<ObjectType>> SearchAsync(string? text, CancellationToken ct)
+    {
+        var query = db.ObjectTypes.AsQueryable();
+        if (!string.IsNullOrWhiteSpace(text))
+        {
+            var pattern = $"%{Like.Escape(text.Trim().ToLowerInvariant())}%";
+            query = query.Where(t => EF.Functions.Like(t.NormalizedName, pattern, Like.EscapeChar));
+        }
+
+        return await query.OrderBy(t => t.Name).ToListAsync(ct);
+    }
+
+    public void Add(ObjectType objectType) => db.ObjectTypes.Add(objectType);
+    public void Remove(ObjectType objectType) => db.ObjectTypes.Remove(objectType);
 }
 
 internal sealed class RegionRepository(CollectionDbContext db) : IRegionRepository
@@ -94,6 +130,11 @@ internal sealed class UnitOfWork(CollectionDbContext db) : IUnitOfWork
                     new DomainValidationException("inventoryNumber", "This inventory number is already used by another artefact."),
                 { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: CollectionDbContext.RegionNameIndex } =>
                     new DomainValidationException("name", "A region with this name already exists."),
+                { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: CollectionDbContext.ObjectTypeNameIndex } =>
+                    new DomainValidationException("name", "An object type with this name already exists."),
+                { SqlState: PostgresErrorCodes.ForeignKeyViolation } when pg.TableName == "object_types" ||
+                                                                          pg.ConstraintName?.Contains("object_types") == true =>
+                    new ConflictException("object_type_in_use", "The object type is in use and cannot be deleted."),
                 { SqlState: PostgresErrorCodes.ForeignKeyViolation } when pg.TableName == "regions" ||
                                                                           pg.ConstraintName?.Contains("regions") == true =>
                     new ConflictException("region_in_use", "The region is in use and cannot be deleted."),

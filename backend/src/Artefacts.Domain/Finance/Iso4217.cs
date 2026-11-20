@@ -1,7 +1,7 @@
 namespace Artefacts.Domain.Finance;
 
 /// <summary>
-/// Active ISO 4217 alphabetic currency codes (embedded statically so validation does not depend on
+/// ISO 4217 alphabetic currency codes, active and withdrawn (embedded statically so validation does not depend on
 /// the host's globalization data). Includes precious-metal and fund codes that appear in valuations.
 /// </summary>
 public static class Iso4217
@@ -23,7 +23,29 @@ public static class Iso4217
         "XPT", "YER", "ZAR", "ZMW", "ZWG",
     };
 
-    public static bool IsKnown(string code) => Codes.Contains(code);
+    /// <summary>
+    /// Withdrawn codes (ISO 4217 list three) that historical acquisitions and valuations were paid in,
+    /// e.g. ITL (Italian lira), DEM, FRF.
+    /// </summary>
+    private static readonly HashSet<string> WithdrawnCodes = new(StringComparer.Ordinal)
+    {
+        "ADP", "AFA", "ALK", "AOK", "AON", "AOR", "ARA", "ARP", "ARY", "ATS", "AYM", "AZM", "BAD", "BEC", "BEF",
+        "BEL", "BGJ", "BGK", "BGL", "BOP", "BRB", "BRC", "BRE", "BRN", "BRR", "BUK", "BYB", "BYR", "CHC", "CSD",
+        "CSJ", "CSK", "CYP", "DDM", "DEM", "ECS", "ECV", "EEK", "ESA", "ESB", "ESP", "FIM", "FRF", "GEK", "GHC",
+        "GHP", "GNE", "GNS", "GQE", "GRD", "GWE", "GWP", "HRD", "HRK", "IEP", "ILP", "ILR", "ISJ", "ITL", "LAJ",
+        "LSM", "LTL", "LTT", "LUC", "LUF", "LUL", "LVL", "LVR", "MGF", "MLF", "MRO", "MTL", "MTP", "MVQ", "MXP",
+        "MZE", "MZM", "NIC", "NLG", "PEH", "PEI", "PES", "PLZ", "PTE", "RHD", "ROK", "ROL", "RUR", "SDD", "SDP",
+        "SIT", "SKK", "SLL", "SRG", "STD", "SUR", "TJR", "TMM", "TPE", "TRL", "UAK", "UGS", "UGW", "USS", "UYN",
+        "UYP", "VEB", "VEF", "VNC", "XEU", "XFO", "XFU", "YDD", "YUD", "YUM", "YUN", "ZAL", "ZMK", "ZRN", "ZRZ",
+        "ZWC", "ZWD", "ZWL", "ZWN", "ZWR",
+    };
 
-    public static IReadOnlyCollection<string> All => Codes;
+    /// <summary>True for active and withdrawn ISO 4217 codes.</summary>
+    public static bool IsKnown(string code) => Codes.Contains(code) || WithdrawnCodes.Contains(code);
+
+    public static bool IsWithdrawn(string code) => WithdrawnCodes.Contains(code);
+
+    /// <summary>Every accepted code: active first, then withdrawn, each alphabetical.</summary>
+    public static IReadOnlyCollection<string> All { get; } =
+        [.. Codes.Order(StringComparer.Ordinal), .. WithdrawnCodes.Order(StringComparer.Ordinal)];
 }

@@ -4,9 +4,10 @@
 //
 // Usage (API running, e.g. `dotnet run --project backend/src/Artefacts.Api`):
 //   node scripts/seed/seed.mjs [--api http://localhost:5032]
-// The API URL can also come from ARTEFACTS_API_URL. Rerunning is safe: regions are matched by name
-// and artefacts whose inventory number already exists are skipped. To start again from empty, reset
-// the stack's volumes: docker compose -f docker/docker-compose.yml down -v
+// The API URL can also come from ARTEFACTS_API_URL. Rerunning is safe: regions and object types are
+// matched by name, and artefacts whose inventory number already exists are skipped.
+// To start again from empty, reset the stack's volumes: docker compose -f docker/docker-compose.yml down -v
+import { catalogue, objectTypes } from './data-catalogue.mjs'
 import { artefacts, regions } from './data.mjs'
 import { encodePng, encodeTiff, renderImage } from './images.mjs'
 
@@ -50,14 +51,52 @@ async function seedRegions() {
   return ids
 }
 
+async function seedObjectTypes() {
+  const ids = new Map()
+  let created = 0
+  for (const name of objectTypes) {
+    const { status, body } = await call('POST', '/api/object-types', { json: { name } })
+    if (status === 201) created++
+    ids.set(name, body.id)
+  }
+  console.log(`Object types: ${created} created, ${objectTypes.length - created} already present.`)
+  return ids
+}
+
 async function exists(inventoryNumber) {
   const query = new URLSearchParams({ search: inventoryNumber, pageSize: '100' })
   const { body } = await call('GET', `/api/artefacts?${query}`)
   return body.items.some((i) => i.inventoryNumber === inventoryNumber)
 }
 
-function toRequest(a, regionIds) {
+/** Classification, origin and holding from data-catalogue.mjs, as request fields. */
+function catalogueFields(a, regionIds, typeIds) {
+  const c = catalogue[a.inventoryNumber]
+  if (!c) return {}
+  const region = c.place?.region ? regionIds.get(c.place.region) : null
+  if (c.place?.region && !region) throw new Error(`${a.inventoryNumber}: unknown region "${c.place.region}" for the place of production.`)
+  const typeId = c.type ? typeIds.get(c.type) : null
+  if (c.type && !typeId) throw new Error(`${a.inventoryNumber}: unknown object type "${c.type}".`)
   return {
+    objectTypeId: typeId,
+    collectionGroup: c.group ?? null,
+    placeOfProduction: c.place ? { text: c.place.text ?? null, regionId: region } : null,
+    dynasty: c.dynasty ?? null,
+    exhibitions: c.exhibitions ?? [],
+    catalogueEntryEn: c.entry ?? null,
+    holder: c.holder ?? null,
+    storageLocation: c.location ?? null,
+    valuation: c.valuation ?? null,
+  }
+}
+
+function toRequest(a, regionIds, typeIds) {
+  const c = catalogue[a.inventoryNumber] ?? {}
+  const acquisition = a.acquisition
+    ? { ...a.acquisition, ...(c.price ? { price: c.price } : {}), lot: c.lot ?? null, note: c.note ?? null }
+    : null
+  return {
+    ...catalogueFields(a, regionIds, typeIds),
     inventoryNumber: a.inventoryNumber,
     title: a.title,
     maker: a.maker,
@@ -65,7 +104,7 @@ function toRequest(a, regionIds) {
     medium: a.medium,
     dimensions: a.dimensions,
     description: a.description,
-    acquisition: a.acquisition,
+    acquisition,
     provenance: a.provenance.map((p) => {
       const regionId = regionIds.get(p.region)
       if (!regionId) throw new Error(`${a.inventoryNumber}: unknown region "${p.region}" in provenance.`)
@@ -109,6 +148,7 @@ async function main() {
   console.log(`Seeding ${API}`)
   const started = Date.now()
   const regionIds = await seedRegions()
+  const typeIds = await seedObjectTypes()
 
   const totals = { created: 0, skipped: 0, failed: 0, images: 0 }
   for (const a of artefacts) {
@@ -119,7 +159,7 @@ async function main() {
         console.log(`  skip    ${label} (already present)`)
         continue
       }
-      const { body: created } = await call('POST', '/api/artefacts', { json: toRequest(a, regionIds) })
+      const { body: created } = await call('POST', '/api/artefacts', { json: toRequest(a, regionIds, typeIds) })
       const images = await uploadImages(a, created.id)
       totals.created++
       totals.images += images
@@ -131,7 +171,9 @@ async function main() {
   }
 
   const seconds = ((Date.now() - started) / 1000).toFixed(1)
-  console.log(`Artefacts: ${totals.created} created (${totals.images} images), ${totals.skipped} skipped, ${totals.failed} failed, in ${seconds}s.`)
+  console.log(
+    `Artefacts: ${totals.created} created (${totals.images} images), ${totals.skipped} skipped, ${totals.failed} failed, in ${seconds}s.`,
+  )
   if (totals.failed > 0) process.exit(1)
 }
 

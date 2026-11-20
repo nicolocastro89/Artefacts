@@ -24,7 +24,14 @@ public sealed record PagedResult<T>(IReadOnlyList<T> Items, int Total, int Page,
 
 // ---------- Artefacts ----------
 
-public sealed record AcquisitionDto(AcquisitionMethod Method, DateOnly? Date, string? Source, MoneyDto? Price);
+public sealed record AcquisitionDto(
+    AcquisitionMethod Method, DateOnly? Date, string? Source, MoneyDto? Price, string? Lot = null, string? Note = null);
+
+/// <summary>A reference to another aggregate together with its current display name.</summary>
+public sealed record NamedRefDto(Guid Id, string Name);
+
+/// <summary>Where an artefact was made: the text as written and the linked region, if any.</summary>
+public sealed record PlaceOfProductionDto(string? Text, NamedRefDto? Region);
 
 public sealed record ProvenanceEntryDto(Guid RegionId, string RegionName, HistoricalDateDto Period, string? Note);
 
@@ -50,7 +57,16 @@ public sealed record ArtefactDetail(
     AcquisitionDto? Acquisition,
     IReadOnlyList<ProvenanceEntryDto> Provenance,
     ArtefactImageDto? PrimaryImage,
-    IReadOnlyList<ArtefactImageDto> Images);
+    IReadOnlyList<ArtefactImageDto> Images,
+    NamedRefDto? ObjectType,
+    string? CollectionGroup,
+    PlaceOfProductionDto? PlaceOfProduction,
+    string? Dynasty,
+    IReadOnlyList<string> Exhibitions,
+    string? CatalogueEntryEn,
+    string? Holder,
+    string? StorageLocation,
+    MoneyDto? Valuation);
 
 public sealed record ArtefactListItem(
     Guid Id,
@@ -60,7 +76,34 @@ public sealed record ArtefactListItem(
     HistoricalDateDto? CreationDate,
     string? Medium,
     ImageUrls? PrimaryImage,
-    int ImageCount);
+    int ImageCount,
+    string? ObjectType,
+    string? CollectionGroup,
+    string? PlaceOfProduction,
+    string? Dynasty,
+    string? GroupKey,
+    string? GroupLabel);
+
+/// <summary>Grouping of the artefact list. <see cref="None"/> keeps the plain sorted list.</summary>
+public enum ArtefactGrouping
+{
+    None = 0,
+    ObjectType = 1,
+    CollectionGroup = 2,
+    Origin = 3,
+    Century = 4,
+    Dynasty = 5,
+}
+
+/// <summary>
+/// One group of the current search: <see cref="Key"/> and <see cref="Label"/> are null for the final group of
+/// artefacts without a value for the grouping field.
+/// </summary>
+public sealed record ArtefactGroupDto(string? Key, string? Label, int Count);
+
+/// <summary>A page of the artefact list, with every group of the whole search when the list is grouped.</summary>
+public sealed record ArtefactListPage(
+    IReadOnlyList<ArtefactListItem> Items, int Total, int Page, int PageSize, IReadOnlyList<ArtefactGroupDto> Groups);
 
 public enum ArtefactSort
 {
@@ -80,9 +123,13 @@ public sealed record ArtefactListRequest(
     ArtefactSort Sort = ArtefactSort.InventoryNumber,
     SortDirection Direction = SortDirection.Asc,
     int Page = 1,
-    int PageSize = 25);
+    int PageSize = 25,
+    ArtefactGrouping Group = ArtefactGrouping.None);
 
-public sealed record AcquisitionInput(AcquisitionMethod Method, DateOnly? Date, string? Source, MoneyDto? Price);
+public sealed record AcquisitionInput(
+    AcquisitionMethod Method, DateOnly? Date, string? Source, MoneyDto? Price, string? Lot = null, string? Note = null);
+
+public sealed record PlaceOfProductionInput(string? Text, Guid? RegionId = null);
 
 public sealed record ProvenanceEntryInput(Guid RegionId, HistoricalDateInput? Period, string? Note);
 
@@ -95,9 +142,29 @@ public sealed record ArtefactWriteRequest(
     string? Dimensions = null,
     string? Description = null,
     AcquisitionInput? Acquisition = null,
-    IReadOnlyList<ProvenanceEntryInput>? Provenance = null);
+    IReadOnlyList<ProvenanceEntryInput>? Provenance = null,
+    Guid? ObjectTypeId = null,
+    string? CollectionGroup = null,
+    PlaceOfProductionInput? PlaceOfProduction = null,
+    string? Dynasty = null,
+    IReadOnlyList<string>? Exhibitions = null,
+    string? CatalogueEntryEn = null,
+    string? Holder = null,
+    string? StorageLocation = null,
+    MoneyDto? Valuation = null);
 
 public sealed record SetCaptionRequest(string? Caption);
+
+// ---------- Object types ----------
+
+public sealed record ObjectTypeDto(Guid Id, string Name, int ArtefactCount);
+
+public sealed record AddObjectTypeRequest(string? Name);
+
+public sealed record RenameObjectTypeRequest(string? Name);
+
+/// <summary>Outcome of adding an object type: <see cref="Created"/> is false when an existing one was returned.</summary>
+public sealed record AddObjectTypeResult(ObjectTypeDto ObjectType, bool Created);
 
 // ---------- Regions ----------
 

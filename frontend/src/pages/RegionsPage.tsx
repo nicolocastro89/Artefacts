@@ -3,6 +3,7 @@ import { Check, Pencil, Plus, Search, Trash2, X } from 'lucide-react'
 import { useEffect, useId, useMemo, useState, type FormEvent } from 'react'
 import { api, type Region } from '../api/client'
 import { ApiError, unwrap } from '../api/problem'
+import { ReferenceTabs } from './ReferenceTabs'
 import './RegionsPage.css'
 
 function message(e: unknown): string {
@@ -33,10 +34,11 @@ export function RegionsPage() {
 
   return (
     <div className="regions">
+      <ReferenceTabs />
       <div className="page-head">
         <div className="page-head__titles">
           <h1>Regions</h1>
-          <p className="page-head__sub">The places provenance refers to. Renaming a region updates every artefact that uses it.</p>
+          <p className="page-head__sub">The places provenance and places of production refer to. Renaming a region updates every artefact that uses it.</p>
         </div>
       </div>
 

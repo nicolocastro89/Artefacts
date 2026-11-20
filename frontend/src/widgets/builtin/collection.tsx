@@ -1,5 +1,5 @@
 import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, ChevronsUpDown, LayoutGrid, Plus, Rows3, Search, X } from 'lucide-react'
-import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react'
+import { Fragment, useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import type { ImageUrls } from '../../api/client'
 import { resolvePath } from '../core/paths'
@@ -9,7 +9,7 @@ import { fillTemplate, ImagePlate } from './display'
 import './collection.css'
 
 /*
- * Collection widgets share list state through the URL (search, sort, direction, page, view, selected),
+ * Collection widgets share list state through the URL (search, sort, direction, group, page, view, selected),
  * so a list view can be bookmarked and shared. They never fetch: the container feeds them its rows.
  */
 
@@ -37,8 +37,51 @@ function useListParams() {
     direction: params.get('direction') === 'desc' ? 'desc' : 'asc',
     selected: params.get('selected'),
     search: params.get('search') ?? '',
+    group: params.get('group') ?? '',
     update,
   }
+}
+
+/** A way the list can be grouped: the API value, the control label, and the heading for records without a value. */
+export interface GroupOption {
+  value: string
+  label: string
+  emptyLabel: string
+}
+
+interface GroupInfo {
+  key: string | null
+  label: string | null
+  count: number
+}
+
+/**
+ * Group headings for a page of rows: returns, for each row index that starts a group (or the page),
+ * the heading text and the group's total count across all pages.
+ */
+function useGroupHeadings(rows: unknown[], groupsValue: unknown, options: GroupOption[]) {
+  const { group } = useListParams()
+  const option = options.find((o) => o.value === group)
+  if (!option) return () => null
+  const groups = (Array.isArray(groupsValue) ? groupsValue : []) as GroupInfo[]
+  const keyOf = (row: unknown) => (resolvePath(row, 'groupKey') as string | null | undefined) ?? null
+  return (index: number): { label: string; count: number | null } | null => {
+    const key = keyOf(rows[index])
+    if (index > 0 && keyOf(rows[index - 1]) === key) return null
+    const info = groups.find((g) => (g.key ?? null) === key)
+    const label = (resolvePath(rows[index], 'groupLabel') as string | null | undefined) ?? info?.label ?? null
+    return { label: key === null ? option.emptyLabel : (label ?? key), count: info?.count ?? null }
+  }
+}
+
+/** Heading content: the group's label and, when known, its total count. A plain render helper, not a component. */
+function groupHeading({ label, count }: { label: string; count: number | null }): ReactNode {
+  return (
+    <>
+      <span className="group-heading__label">{label}</span>
+      {count !== null && <span className="group-heading__count">{count.toLocaleString()}</span>}
+    </>
+  )
 }
 
 function rowId(row: unknown, idPath: string): string {
@@ -50,10 +93,18 @@ defineWidget({
   id: 'list-toolbar',
   label: 'List toolbar',
   slots: { total: { type: 'number' } },
-  config: { title: 'Artefacts', noun: 'record', searchLabel: 'Search', searchPlaceholder: 'Search', newHref: '', newLabel: 'New' },
+  config: {
+    title: 'Artefacts',
+    noun: 'record',
+    searchLabel: 'Search',
+    searchPlaceholder: 'Search',
+    newHref: '',
+    newLabel: 'New',
+    groupOptions: [] as GroupOption[],
+  },
   print: { hideInPrint: true },
   component: function ListToolbar({ values, config }) {
-    const { view, search, update } = useListParams()
+    const { view, search, group, update } = useListParams()
     const [text, setText] = useState(search)
     const total = typeof values.total?.value === 'number' ? values.total.value : null
 
@@ -107,6 +158,23 @@ defineWidget({
               <LayoutGrid aria-hidden="true" /> Grid
             </button>
           </div>
+          {config.groupOptions.length > 0 && (
+            <label className="toolbar__group">
+              <span className="label">Group by</span>
+              <select
+                className="select"
+                value={config.groupOptions.some((o) => o.value === group) ? group : ''}
+                onChange={(e) => update({ group: e.target.value || null, selected: null }, { resetPage: true })}
+              >
+                <option value="">No grouping</option>
+                {config.groupOptions.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
         </div>
       </div>
     )
@@ -173,8 +241,8 @@ function useSelectionKeys(ids: string[], selected: string | null, select: (id: s
 defineWidget({
   id: 'record-table',
   label: 'Record table',
-  slots: { rows: { type: 'list', required: true } },
-  config: { columns: [] as RecordColumn[], idPath: 'id', rowHref: '', emptyText: 'Nothing found.', caption: 'Records' },
+  slots: { rows: { type: 'list', required: true }, groups: { type: 'list' } },
+  config: { columns: [] as RecordColumn[], idPath: 'id', rowHref: '', emptyText: 'Nothing found.', caption: 'Records', groupOptions: [] as GroupOption[] },
   print: {},
   component: function RecordTable({ values, config }) {
     const { view, sort, direction, selected, update } = useListParams()
@@ -185,6 +253,7 @@ defineWidget({
     const select = (id: string | null) => update({ selected: id })
     const open = (id: string) => config.rowHref && navigate(fillTemplate(config.rowHref, rows[ids.indexOf(id)]))
     const onKeyDown = useSelectionKeys(ids, selected, select, open)
+    const headingAt = useGroupHeadings(rows, values.groups?.value, config.groupOptions)
 
     if (view !== 'table') return null
     if (rows.length === 0) return <EmptyResult text={config.emptyText} />
@@ -216,9 +285,19 @@ defineWidget({
             {rows.map((row, i) => {
               const id = ids[i]!
               const isSelected = id === selected
+              const heading = headingAt(i)
               return (
+                <Fragment key={id}>
+                {heading && (
+                  <tr className="group-row">
+                    <th scope="colgroup" colSpan={config.columns.length}>
+                      <div className="group-heading">
+                        {groupHeading(heading)}
+                      </div>
+                    </th>
+                  </tr>
+                )}
                 <tr
-                  key={id}
                   ref={ref(id)}
                   data-row-id={id}
                   tabIndex={isSelected || (!selected && i === 0) ? 0 : -1}
@@ -232,6 +311,7 @@ defineWidget({
                     </td>
                   ))}
                 </tr>
+                </Fragment>
               )
             })}
           </tbody>
@@ -289,8 +369,17 @@ function EmptyResult({ text }: { text: string }) {
 defineWidget({
   id: 'record-grid',
   label: 'Record grid',
-  slots: { rows: { type: 'list', required: true } },
-  config: { idPath: 'id', imagePath: 'primaryImage', tagPath: 'inventoryNumber', titlePath: 'title', metaPaths: [] as string[], rowHref: '', emptyText: 'Nothing found.' },
+  slots: { rows: { type: 'list', required: true }, groups: { type: 'list' } },
+  config: {
+    idPath: 'id',
+    imagePath: 'primaryImage',
+    tagPath: 'inventoryNumber',
+    titlePath: 'title',
+    metaPaths: [] as string[],
+    rowHref: '',
+    emptyText: 'Nothing found.',
+    groupOptions: [] as GroupOption[],
+  },
   print: {},
   component: function RecordGrid({ values, config }) {
     const { view, selected, update } = useListParams()
@@ -300,6 +389,7 @@ defineWidget({
     const select = (id: string | null) => update({ selected: id })
     const open = (id: string) => config.rowHref && navigate(fillTemplate(config.rowHref, rows[ids.indexOf(id)]))
     const onKeyDown = useSelectionKeys(ids, selected, select, open)
+    const headingAt = useGroupHeadings(rows, values.groups?.value, config.groupOptions)
 
     if (view !== 'grid') return null
     if (rows.length === 0) return <EmptyResult text={config.emptyText} />
@@ -310,8 +400,15 @@ defineWidget({
           const id = ids[i]!
           const isSelected = id === selected
           const meta = config.metaPaths.map((p) => formatValue(resolvePath(row, p))).filter(Boolean)
+          const heading = headingAt(i)
           return (
-            <li key={id}>
+            <Fragment key={id}>
+            {heading && (
+              <li className="record-grid__group group-heading" role="presentation">
+                {groupHeading(heading)}
+              </li>
+            )}
+            <li>
               <button
                 type="button"
                 className="record-card"
@@ -327,6 +424,7 @@ defineWidget({
                 {meta.length > 0 && <span className="record-card__meta">{meta.join(' · ')}</span>}
               </button>
             </li>
+            </Fragment>
           )
         })}
       </ul>

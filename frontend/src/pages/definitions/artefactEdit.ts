@@ -13,7 +13,21 @@ const formBindings: WidgetNode['bindings'] = {
   acquisitionDate: 'acquisition.date',
   acquisitionSource: 'acquisition.source',
   acquisitionPrice: 'acquisition.price',
+  acquisitionLot: 'acquisition.lot',
+  acquisitionNote: 'acquisition.note',
   provenance: 'provenance[]',
+  objectTypeId: 'objectType.id',
+  objectTypeName: 'objectType.name',
+  collectionGroup: 'collectionGroup',
+  placeText: 'placeOfProduction.text',
+  placeRegionId: 'placeOfProduction.region.id',
+  placeRegionName: 'placeOfProduction.region.name',
+  dynasty: 'dynasty',
+  exhibitions: 'exhibitions[]',
+  catalogueEntryEn: 'catalogueEntryEn',
+  holder: 'holder',
+  storageLocation: 'storageLocation',
+  valuation: 'valuation',
 }
 
 /** Editing an existing artefact: images first (they are what staff check), then the catalogue form. */

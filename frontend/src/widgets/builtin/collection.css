@@ -45,6 +45,52 @@
   text-decoration: underline;
 }
 
+/* ---------- Group headings (table row and grid cell) ---------- */
+.group-heading {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s2);
+  font-stretch: var(--stretch-condensed);
+  font-size: var(--text-xs);
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.group-heading__count {
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-muted);
+}
+
+.table--records .group-row th {
+  /* Not sticky like the column headers: each heading scrolls away with its group. */
+  position: static;
+  padding-top: var(--s3);
+  padding-bottom: var(--s2);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--plate-sunk);
+  text-align: left;
+}
+
+.table--records tbody .group-row:first-child th {
+  border-top: 0;
+}
+
+.record-grid__group {
+  grid-column: 1 / -1;
+  padding: var(--s2) var(--s1) 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.toolbar__group {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  white-space: nowrap;
+}
+
 /* ---------- Record grid: whole cells only ---------- */
 .record-grid {
   display: grid;
@@ -273,6 +319,16 @@
 
   .table--records tbody tr:last-child {
     border-bottom: 0;
+  }
+
+  .table--records tbody tr.group-row {
+    display: block;
+    padding: 0;
+  }
+
+  .table--records tbody .group-row th {
+    display: block;
+    padding: var(--s2) var(--s3);
   }
 
   .table--records tbody td {

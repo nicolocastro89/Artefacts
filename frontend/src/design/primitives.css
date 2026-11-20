@@ -193,11 +193,16 @@
   cursor: pointer;
 }
 
+a.seg__btn {
+  text-decoration: none;
+}
+
 .seg__btn + .seg__btn {
   border-left: 1px solid var(--line);
 }
 
-.seg__btn[aria-pressed='true'] {
+.seg__btn[aria-pressed='true'],
+.seg__btn[aria-current='page'] {
   background: var(--ink);
   color: var(--plate);
 }
@@ -471,6 +476,11 @@
   display: grid;
   gap: var(--s3);
   align-content: start;
+}
+
+/* A section whose widgets all rendered nothing (every field empty) is omitted, heading included. */
+.layout--section:not(:has(> :not(.layout__title, .widget:empty))) {
+  display: none;
 }
 
 .layout__title {

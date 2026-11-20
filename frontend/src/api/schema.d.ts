@@ -164,6 +164,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/object-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listObjectTypes"];
+        put?: never;
+        post: operations["addObjectType"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/object-types/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getObjectType"];
+        put: operations["renameObjectType"];
+        post?: never;
+        delete: operations["deleteObjectType"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -174,6 +206,8 @@ export interface components {
             date: null | string;
             source: null | string;
             price: null | components["schemas"]["MoneyDto"];
+            lot?: null | string;
+            note?: null | string;
         };
         AcquisitionInput: {
             method: components["schemas"]["AcquisitionMethod"];
@@ -181,9 +215,14 @@ export interface components {
             date: null | string;
             source: null | string;
             price: null | components["schemas"]["MoneyDto"];
+            lot?: null | string;
+            note?: null | string;
         };
         /** @enum {unknown} */
         AcquisitionMethod: "purchase" | "gift" | "bequest" | "transfer" | "other";
+        AddObjectTypeRequest: {
+            name: null | string;
+        };
         AddRegionRequest: {
             name: null | string;
             /** Format: uuid */
@@ -203,7 +242,24 @@ export interface components {
             provenance: components["schemas"]["ProvenanceEntryDto"][];
             primaryImage: null | components["schemas"]["ArtefactImageDto"];
             images: components["schemas"]["ArtefactImageDto"][];
+            objectType: null | components["schemas"]["NamedRefDto"];
+            collectionGroup: null | string;
+            placeOfProduction: null | components["schemas"]["PlaceOfProductionDto"];
+            dynasty: null | string;
+            exhibitions: string[];
+            catalogueEntryEn: null | string;
+            holder: null | string;
+            storageLocation: null | string;
+            valuation: null | components["schemas"]["MoneyDto"];
         };
+        ArtefactGroupDto: {
+            key: null | string;
+            label: null | string;
+            /** Format: int32 */
+            count: number;
+        };
+        /** @enum {unknown} */
+        ArtefactGrouping: "none" | "objectType" | "collectionGroup" | "origin" | "century" | "dynasty";
         ArtefactImageDto: {
             /** Format: uuid */
             mediaAssetId: string;
@@ -228,6 +284,22 @@ export interface components {
             primaryImage: null | components["schemas"]["ImageUrls"];
             /** Format: int32 */
             imageCount: number;
+            objectType: null | string;
+            collectionGroup: null | string;
+            placeOfProduction: null | string;
+            dynasty: null | string;
+            groupKey: null | string;
+            groupLabel: null | string;
+        };
+        ArtefactListPage: {
+            items: components["schemas"]["ArtefactListItem"][];
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+            groups: components["schemas"]["ArtefactGroupDto"][];
         };
         /** @enum {unknown} */
         ArtefactSort: "inventoryNumber" | "title" | "creationDate";
@@ -241,6 +313,16 @@ export interface components {
             description?: null | string;
             acquisition?: null | components["schemas"]["AcquisitionInput"];
             provenance?: null | components["schemas"]["ProvenanceEntryInput"][];
+            /** Format: uuid */
+            objectTypeId?: null | string;
+            collectionGroup?: null | string;
+            placeOfProduction?: null | components["schemas"]["PlaceOfProductionInput"];
+            dynasty?: null | string;
+            exhibitions?: null | string[];
+            catalogueEntryEn?: null | string;
+            holder?: null | string;
+            storageLocation?: null | string;
+            valuation?: null | components["schemas"]["MoneyDto"];
         };
         EntityDto: {
             id: string;
@@ -305,14 +387,26 @@ export interface components {
             amount: number;
             currency: string;
         };
-        PagedResultOfArtefactListItem: {
-            items: components["schemas"]["ArtefactListItem"][];
+        NamedRefDto: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+        };
+        ObjectTypeDto: {
+            /** Format: uuid */
+            id: string;
+            name: string;
             /** Format: int32 */
-            total: number;
-            /** Format: int32 */
-            page: number;
-            /** Format: int32 */
-            pageSize: number;
+            artefactCount: number;
+        };
+        PlaceOfProductionDto: {
+            text: null | string;
+            region: null | components["schemas"]["NamedRefDto"];
+        };
+        PlaceOfProductionInput: {
+            text: null | string;
+            /** Format: uuid */
+            regionId?: null | string;
         };
         ProblemDetails: {
             type?: null | string;
@@ -342,6 +436,9 @@ export interface components {
             /** Format: uuid */
             parentId: null | string;
             parentName: null | string;
+        };
+        RenameObjectTypeRequest: {
+            name: null | string;
         };
         RenameRegionRequest: {
             name: null | string;
@@ -425,6 +522,7 @@ export interface operations {
                 direction?: components["schemas"]["SortDirection"];
                 page?: number;
                 pageSize?: number;
+                group?: components["schemas"]["ArtefactGrouping"];
             };
             header?: never;
             path?: never;
@@ -438,7 +536,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PagedResultOfArtefactListItem"];
+                    "application/json": components["schemas"]["ArtefactListPage"];
                 };
             };
             /** @description Bad Request */
@@ -927,6 +1025,183 @@ export interface operations {
             };
             /** @description Not Found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    listObjectTypes: {
+        parameters: {
+            query?: {
+                search?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ObjectTypeDto"][];
+                };
+            };
+        };
+    };
+    addObjectType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddObjectTypeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ObjectTypeDto"];
+                };
+            };
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ObjectTypeDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+        };
+    };
+    getObjectType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ObjectTypeDto"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    renameObjectType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RenameObjectTypeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ObjectTypeDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    deleteObjectType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

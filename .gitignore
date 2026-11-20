@@ -30,6 +30,8 @@ appsettings.*.local.json
 
 # Local data
 .data/
+# Real collection spreadsheets used to design and test the import: private, never committed.
+data/
 media-local/
 
 # Claude Code local settings

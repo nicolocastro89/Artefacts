@@ -48,6 +48,7 @@ if (app.Environment.IsDevelopment())
 
 app.MapArtefactEndpoints();
 app.MapRegionEndpoints();
+app.MapObjectTypeEndpoints();
 app.MapSupportEndpoints();
 
 if (app.Configuration.GetValue("Database:MigrateOnStartup", false))

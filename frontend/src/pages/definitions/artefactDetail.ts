@@ -1,4 +1,5 @@
 import type { PageDefinition, PageNode } from '../../widgets/core/page'
+import { acquisitionFields, acquisitionNote, catalogueEntrySection, classificationSection, exhibitionsSection, holdingSection } from './recordSections'
 
 /** The record body: shared by the detail page and its print preview. */
 export const artefactRecordBody: PageNode[] = [
@@ -46,24 +47,16 @@ export const artefactRecordBody: PageNode[] = [
               { type: 'widget', id: 'description', widgetId: 'text-block', bindings: { text: 'description' } },
             ],
           },
+          classificationSection,
+          holdingSection,
           {
             type: 'layout',
             id: 'acquisition',
             layout: 'section',
             title: 'Acquisition',
             children: [
-              {
-                type: 'widget',
-                id: 'acquisition-fields',
-                widgetId: 'field-list',
-                bindings: {
-                  method: 'acquisition.method',
-                  date: 'acquisition.date',
-                  source: 'acquisition.source',
-                  price: 'acquisition.price',
-                },
-                config: { labels: { method: 'Method', date: 'Date', source: 'Source', price: 'Price' } },
-              },
+              acquisitionFields,
+              acquisitionNote,
             ],
           },
           {
@@ -84,6 +77,8 @@ export const artefactRecordBody: PageNode[] = [
               },
             ],
           },
+          exhibitionsSection,
+          catalogueEntrySection,
         ],
       },
     ],
