@@ -87,6 +87,7 @@ openspec/                       Specifications and change proposals.
 - **`dotnet test` fails in the integration tests with container errors.** Docker is not running; start Docker Desktop and rerun.
 - **`dotnet test` reports "Zero tests ran" and fails.** Every test project must contain at least one test, because an empty test module fails the whole run under Microsoft.Testing.Platform.
 - **`dotnet ef` complains that more than one DbContext was found.** Pass `--context CollectionDbContext` (the read context maps views and has no migrations).
+- **`npm install` exits with code 1 without an error, or the first `dotnet build` fails inside MSBuild (Windows).** The checkout is too deep for the 260-character path limit. Clone to a shorter path (for example `C:\srcrtefacts`), or enable long paths (`git config --system core.longpaths true` and the `LongPathsEnabled` Windows setting).
 - **Port already in use.** Change `POSTGRES_PORT`, `S3_PORT` or `IMGPROXY_PORT` in `docker/.env`, and the matching URLs in `appsettings.Development.json`.
 
 ## Work tracking

@@ -15,7 +15,7 @@
 >
 >   The print image height is also capped from the page box, so the heading and primary image share page 1 in landscape. Because of that cap, no seeded image triggers the "scale a unit taller than a page" path, which remains untested.
 > - **Seed (14.1):** `node scripts/seed/seed.mjs` (dependency-free; uses the public API) creates 31 regions and 30 artefacts with 32 PNG/TIFF images, and a rerun creates nothing. The edge cases are listed at the top of `scripts/seed/data.mjs`. The user confirmed the list and detail pages; print was verified by the checks above.
-> - **README (1.4):** every command and URL in it was run as written against the working tree, not a fresh clone, because nothing is committed yet. Repeat the quick start from a clone after the first commit (14.3).
+> - **README (1.4):** every command and URL in it was run as written against the working tree, not a fresh clone, because nothing is committed yet. After the first commit (7c3c5ad) the quick start was repeated from a fresh clone: backend build, `npm install`, production build, 32 frontend tests, API health, Scalar, OpenAPI, Vite and a no-op seed all passed. A clone under a very deep Windows path fails `npm install` and MSBuild (260-character path limit); the README troubleshooting notes this.
 > - **Design (impeccable):** Storage Rack direction chosen; contract in `.impeccable/surfaces/`. 10.3 is done: the finish review (headless captures at 1440 and 390, light and dark, every list/detail/form/regions/print state) returned *fix* with seven material fixes (yellow reserved for selection, two-line cells while the rack is open, stacked phone rows, no eyebrow, grid alignment, form polish, quiet row deletes), all scored resolved, verdict *ship*. The documenter then wrote `DESIGN.md` and `.impeccable/design.json` from the shipped CSS. Open design notes are beads under art-hfw.
 > - **Deviations recorded:** SeaweedFS replaced the AWS Emulator (see design D12). TypeScript is pinned to 5.9, because openapi-typescript needs the TypeScript 5 compiler API. The OpenAPI document is generated at build time into `backend/openapi/`.
 > - **Nothing committed** beyond the automatic `bd init` commit.
@@ -118,4 +118,4 @@
 
 - [x] 14.1 Add a seed script with roughly 30 artefacts, regions, provenance and sample images (including a TIFF); verify the list, detail and print preview all work against the seeded data
 - [x] 14.2 Run `dotnet test`, `npm test` and `openspec validate foundation --strict`; verify all pass
-- [ ] 14.3 Commit the foundation and record any discovered follow-up work as beads issues; verify `git log` shows the commit and `bd list` contains the follow-ups
+- [x] 14.3 Commit the foundation and record any discovered follow-up work as beads issues; verify `git log` shows the commit and `bd list` contains the follow-ups
