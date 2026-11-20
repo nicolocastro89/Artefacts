@@ -1,0 +1,132 @@
+/* Screen chrome around the paginated preview. Paged.js renders .pagedjs_page elements into .print-pages. */
+.print-screen {
+  min-height: 100dvh;
+  background: var(--rail);
+}
+
+.print-bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2) var(--s4);
+  padding: var(--s3) var(--s5);
+  background: var(--plate);
+  border-bottom: 1px solid var(--line);
+}
+
+.print-bar__title {
+  display: grid;
+  margin-right: auto;
+  line-height: 1.25;
+}
+
+.print-bar__title .muted {
+  font-size: var(--text-sm);
+  max-width: 32ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.print-bar__field {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.print-bar__field .select {
+  width: auto;
+}
+
+.print-bar__count {
+  min-width: 8rem;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.print-error {
+  margin: var(--s4) var(--s5);
+}
+
+/* The source is laid out (so it can be measured) but never visible. */
+.print-source {
+  position: absolute;
+  left: -100000px;
+  top: 0;
+  visibility: hidden;
+}
+
+.print-pages {
+  display: grid;
+  justify-items: center;
+  gap: var(--s5);
+  padding: var(--s6) var(--s4) var(--s10);
+  overflow-x: auto;
+}
+
+.print-pages .pagedjs_page {
+  background: #fff;
+  box-shadow: 0 12px 32px -12px rgb(0 0 0 / 0.55);
+}
+
+/* Paper is always light: the printed record uses the light palette whatever the screen theme. */
+.print-doc,
+.print-pages .pagedjs_page {
+  color-scheme: light;
+  --plate: #ffffff;
+  --plate-sunk: #f4f6f6;
+  --line: #cfd5d6;
+  --line-soft: #e3e7e8;
+  --ink: #1d2427;
+  --ink-muted: #545f65;
+  --ink-faint: #6d787d;
+  color: var(--ink);
+  font-size: 10pt;
+}
+
+.print-doc .w-heading--1 h1,
+.print-pages .w-heading--1 h1 {
+  font-size: 20pt;
+}
+
+.print-doc .table-wrap,
+.print-pages .table-wrap {
+  overflow: visible;
+  box-shadow: none;
+}
+
+/* --print-image-max is set per paper and orientation by PrintPreview (see imageMaxHeight). */
+.print-doc .w-image img,
+.print-pages .w-image img {
+  max-height: var(--print-image-max, 150mm);
+  width: auto;
+  margin: 0 auto;
+}
+
+.print-doc .thumb,
+.print-pages .thumb {
+  background: #fff;
+}
+
+@media print {
+  .print-bar,
+  .print-error {
+    display: none !important;
+  }
+
+  .print-screen {
+    background: none;
+  }
+
+  .print-pages {
+    display: block;
+    padding: 0;
+  }
+
+  .print-pages .pagedjs_page {
+    box-shadow: none;
+  }
+}

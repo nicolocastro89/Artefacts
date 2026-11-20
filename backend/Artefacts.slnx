@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Artefacts.Api/Artefacts.Api.csproj" />
+    <Project Path="src/Artefacts.Application/Artefacts.Application.csproj" />
+    <Project Path="src/Artefacts.Domain/Artefacts.Domain.csproj" />
+    <Project Path="src/Artefacts.Infrastructure/Artefacts.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Artefacts.Api.IntegrationTests/Artefacts.Api.IntegrationTests.csproj" />
+    <Project Path="tests/Artefacts.Application.Tests/Artefacts.Application.Tests.csproj" />
+    <Project Path="tests/Artefacts.Domain.Tests/Artefacts.Domain.Tests.csproj" />
+  </Folder>
+</Solution>

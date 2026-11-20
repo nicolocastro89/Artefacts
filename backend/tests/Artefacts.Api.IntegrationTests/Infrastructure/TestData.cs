@@ -1,0 +1,54 @@
+using System.Net;
+using System.Net.Http.Json;
+using Artefacts.Application.Contracts;
+
+namespace Artefacts.Api.IntegrationTests.Infrastructure;
+
+internal static class TestData
+{
+    public static async Task<ArtefactDetail> CreateArtefactAsync(this HttpClient client, ArtefactWriteRequest request)
+    {
+        var response = await client.PostJsonAsync("/api/artefacts", request);
+        if (response.StatusCode != HttpStatusCode.Created)
+            throw new InvalidOperationException($"Create failed: {response.StatusCode} {await response.Content.ReadAsStringAsync()}");
+        return await response.ReadAsync<ArtefactDetail>();
+    }
+
+    public static Task<ArtefactDetail> CreateArtefactAsync(this HttpClient client, string? title = null) =>
+        client.CreateArtefactAsync(new ArtefactWriteRequest(HttpExtensions.Unique("INV"), title ?? "Untitled"));
+
+    public static async Task<RegionDto> AddRegionAsync(this HttpClient client, string name, Guid? parentId = null)
+    {
+        var response = await client.PostJsonAsync("/api/regions", new AddRegionRequest(name, parentId));
+        response.EnsureSuccessStatusCode();
+        return await response.ReadAsync<RegionDto>();
+    }
+
+    public static async Task<ArtefactDetail> UploadAsync(this HttpClient client, Guid artefactId, params (string Name, byte[] Bytes)[] files)
+    {
+        var response = await client.PostAsync($"/api/artefacts/{artefactId}/images", Multipart(files));
+        if (!response.IsSuccessStatusCode)
+            throw new InvalidOperationException($"Upload failed: {response.StatusCode} {await response.Content.ReadAsStringAsync()}");
+        return await response.ReadAsync<ArtefactDetail>();
+    }
+
+    public static MultipartFormDataContent Multipart(params (string Name, byte[] Bytes)[] files)
+    {
+        var content = new MultipartFormDataContent();
+        foreach (var (name, bytes) in files)
+            content.Add(new ByteArrayContent(bytes), "files", name);
+        return content;
+    }
+
+    public static byte[] Jpeg(int size = 2048) => WithHeader([0xFF, 0xD8, 0xFF, 0xE0], size);
+    public static byte[] Tiff(int size = 4096) => WithHeader([0x49, 0x49, 0x2A, 0x00], size);
+    public static byte[] Pdf(int size = 2048) => WithHeader("%PDF-1.7\n"u8.ToArray(), size);
+
+    private static byte[] WithHeader(byte[] header, int size)
+    {
+        var bytes = new byte[Math.Max(size, header.Length)];
+        Random.Shared.NextBytes(bytes);
+        header.CopyTo(bytes, 0);
+        return bytes;
+    }
+}

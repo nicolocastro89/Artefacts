@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "overused-font",
+        "value": "inter",
+        "files": [
+          ".impeccable/mocks/decision/canon.html"
+        ],
+        "createdAt": "2026-11-19T21:47:53.343Z",
+        "reason": "Intentional: the 'category standard' decision card deliberately depicts the generic admin default (Inter); it is a throwaway decision sketch, not shipped UI"
+      }
+    ]
+  }
+}

@@ -1,0 +1,151 @@
+/*
+ * Storage Rack design tokens.
+ * Steel rail + galvanised ground; records on white plates. Blue = something you can press.
+ * Rack-label yellow = "selected", never decoration. Archivo; condensed width for tags and labels.
+ */
+:root {
+  color-scheme: light;
+
+  /* Shell (powder-coated steel) */
+  --rail: #2e3a41;
+  --rail-raised: #3a4850;
+  --rail-ink: #eef2f3;
+  --rail-ink-muted: #c3ccd0;
+  --rail-focus: #9cc8ec;
+
+  /* Ground and plates */
+  --ground: #e9ecec;
+  --plate: #ffffff;
+  --plate-sunk: #f4f6f6;
+  --line: #cfd5d6;
+  --line-soft: #e3e7e8;
+
+  /* Ink */
+  --ink: #1d2427;
+  --ink-muted: #545f65;
+  --ink-faint: #6d787d;
+
+  /* Action: enamel blue, only on pressable things */
+  --action: #2a5d86;
+  --action-hover: #214d70;
+  --action-ink: #ffffff;
+  --action-soft: #e3edf5;
+
+  /* Selection: rack-label yellow, only for "selected" */
+  --tag: #f2c23a;
+  --tag-ink: #2b2205;
+  --tag-soft: #fcf3d6;
+
+  /* States (only where they carry meaning) */
+  --danger: #b3261e;
+  --danger-soft: #fbe9e7;
+  --warning: #8a5d00;
+  --warning-soft: #fdf1d8;
+  --success: #2f6b3a;
+
+  --focus: #2a5d86;
+
+  /* Type */
+  --font: 'Archivo Variable', 'Archivo', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --stretch-condensed: 75%;
+  --stretch-normal: 100%;
+  --text-xs: 0.75rem;   /* 12 — condensed labels */
+  --text-sm: 0.8125rem; /* 13 */
+  --text-md: 0.875rem;  /* 14 — body */
+  --text-lg: 1rem;      /* 16 */
+  --text-xl: 1.1875rem; /* 19 */
+  --text-2xl: 1.375rem; /* 22 — page titles */
+  --text-3xl: 1.75rem;  /* 28 */
+  --leading: 1.45;
+  --tracking-label: 0.06em;
+
+  /* Space (4px base) */
+  --s1: 0.25rem;
+  --s2: 0.5rem;
+  --s3: 0.75rem;
+  --s4: 1rem;
+  --s5: 1.25rem;
+  --s6: 1.5rem;
+  --s8: 2rem;
+  --s10: 2.5rem;
+
+  --radius-sm: 3px;
+  --radius: 6px;
+
+  --shadow-plate: 0 1px 2px rgb(20 30 35 / 0.06);
+  --shadow-rack: -18px 0 32px -24px rgb(20 30 35 / 0.55);
+  --shadow-pop: 0 8px 24px -8px rgb(20 30 35 / 0.3);
+
+  --rail-width: 13.5rem;
+  --rack-width: 27.5rem;
+  --thumb-row: 2.75rem;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur: 220ms;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --rail: #121a1e;
+    --rail-raised: #22303a;
+    --rail-ink: #e6ecee;
+    --rail-ink-muted: #a9b5bb;
+    --rail-focus: #8fc0ea;
+    --ground: #1a2226;
+    --plate: #222c31;
+    --plate-sunk: #1d262a;
+    --line: #3a464d;
+    --line-soft: #2e393f;
+    --ink: #e4e9eb;
+    --ink-muted: #aab5ba;
+    --ink-faint: #8e9aa0;
+    --action: #7ab0dc;
+    --action-hover: #93c1e6;
+    --action-ink: #0d1a24;
+    --action-soft: #22374a;
+    --tag: #f2c23a;
+    --tag-ink: #2b2205;
+    --tag-soft: #3a3418;
+    --danger: #f1a19a;
+    --danger-soft: #3d2423;
+    --warning: #e9bf63;
+    --warning-soft: #3a3019;
+    --success: #8fcf98;
+    --focus: #8fc0ea;
+    --shadow-plate: 0 1px 2px rgb(0 0 0 / 0.3);
+    --shadow-rack: -18px 0 32px -22px rgb(0 0 0 / 0.8);
+    --shadow-pop: 0 8px 24px -8px rgb(0 0 0 / 0.6);
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --rail: #121a1e;
+  --rail-raised: #22303a;
+  --rail-ink: #e6ecee;
+  --rail-ink-muted: #a9b5bb;
+  --rail-focus: #8fc0ea;
+  --ground: #1a2226;
+  --plate: #222c31;
+  --plate-sunk: #1d262a;
+  --line: #3a464d;
+  --line-soft: #2e393f;
+  --ink: #e4e9eb;
+  --ink-muted: #aab5ba;
+  --ink-faint: #8e9aa0;
+  --action: #7ab0dc;
+  --action-hover: #93c1e6;
+  --action-ink: #0d1a24;
+  --action-soft: #22374a;
+  --tag-soft: #3a3418;
+  --danger: #f1a19a;
+  --danger-soft: #3d2423;
+  --warning: #e9bf63;
+  --warning-soft: #3a3019;
+  --success: #8fcf98;
+  --focus: #8fc0ea;
+  --shadow-plate: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-rack: -18px 0 32px -22px rgb(0 0 0 / 0.8);
+  --shadow-pop: 0 8px 24px -8px rgb(0 0 0 / 0.6);
+}

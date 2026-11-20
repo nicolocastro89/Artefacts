@@ -1,0 +1,211 @@
+.shell {
+  display: grid;
+  grid-template-columns: var(--rail-width) minmax(0, 1fr);
+  min-height: 100dvh;
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--s2);
+  top: -3rem;
+  z-index: 10;
+  padding: var(--s2) var(--s3);
+  border-radius: var(--radius-sm);
+  background: var(--plate);
+  color: var(--ink);
+}
+
+.skip-link:focus {
+  top: var(--s2);
+}
+
+/* ---------- Steel rail ---------- */
+.rail {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  height: 100dvh;
+  padding: var(--s5) var(--s3);
+  background: var(--rail);
+  color: var(--rail-ink);
+}
+
+.rail :focus-visible {
+  outline-color: var(--rail-focus);
+}
+
+.rail__brand {
+  padding: var(--s1) var(--s3) var(--s6);
+  font-stretch: var(--stretch-condensed);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.rail__nav {
+  display: grid;
+  gap: 2px;
+}
+
+.rail__link {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s2) var(--s3);
+  border-radius: var(--radius-sm);
+  color: var(--rail-ink-muted);
+  font-weight: 550;
+  text-decoration: none;
+}
+
+.rail__link svg {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+}
+
+.rail__link:hover {
+  background: var(--rail-raised);
+  color: var(--rail-ink);
+}
+
+/* Active page: the rack-label yellow marker (selection), not a stripe. */
+.rail__link.active {
+  background: var(--rail-raised);
+  color: var(--rail-ink);
+}
+
+.rail__link.active svg {
+  color: var(--tag);
+}
+
+.rail__count {
+  margin-left: auto;
+  font-stretch: var(--stretch-condensed);
+  font-size: var(--text-sm);
+  color: var(--rail-ink-muted);
+}
+
+.rail__theme {
+  display: flex;
+  gap: 2px;
+  margin: auto 0 0;
+  padding: 2px;
+  border: 1px solid var(--rail-raised);
+  border-radius: var(--radius-sm);
+  align-self: flex-start;
+}
+
+.rail__theme-btn {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 1.75rem;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--rail-ink-muted);
+  cursor: pointer;
+}
+
+.rail__theme-btn svg {
+  width: 0.9375rem;
+  height: 0.9375rem;
+}
+
+.rail__theme-btn:hover {
+  color: var(--rail-ink);
+}
+
+.rail__theme-btn[aria-pressed='true'] {
+  background: var(--rail-raised);
+  color: var(--rail-ink);
+}
+
+/* ---------- Work area ---------- */
+.work {
+  min-width: 0;
+  padding: var(--s6);
+  outline: none;
+}
+
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--s3) var(--s4);
+  margin-bottom: var(--s4);
+}
+
+.page-head__titles {
+  display: grid;
+  gap: 2px;
+  margin-right: auto;
+}
+
+.page-head h1 {
+  font-size: var(--text-2xl);
+}
+
+.page-head__sub {
+  color: var(--ink-muted);
+  font-size: var(--text-sm);
+}
+
+.page-head__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+}
+
+/* ---------- Phone: the rail becomes a top bar ---------- */
+@media (max-width: 48rem) {
+  .shell {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+  }
+
+  .rail {
+    position: sticky;
+    z-index: 5;
+    flex-direction: row;
+    align-items: center;
+    height: auto;
+    padding: var(--s2) var(--s3);
+    gap: var(--s2);
+  }
+
+  .rail__brand {
+    padding: 0 var(--s2) 0 var(--s1);
+    font-size: var(--text-md);
+  }
+
+  .rail__nav {
+    display: flex;
+    gap: 2px;
+  }
+
+  .rail__count {
+    display: none;
+  }
+
+  .rail__theme {
+    margin: 0 0 0 auto;
+    align-self: center;
+  }
+
+  .work {
+    padding: var(--s4);
+  }
+}
+
+/* Narrow phones: brand, both sections and the theme control do not fit one bar. The active section already
+   names where you are, so the wordmark gives way rather than pushing the bar past the screen edge. */
+@media (max-width: 30rem) {
+  .rail__brand {
+    display: none;
+  }
+}

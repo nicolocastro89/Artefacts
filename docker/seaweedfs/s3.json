@@ -1,0 +1,14 @@
+{
+  "identities": [
+    {
+      "name": "artefacts-dev",
+      "credentials": [
+        {
+          "accessKey": "artefacts-dev",
+          "secretKey": "artefacts-dev-secret"
+        }
+      ],
+      "actions": ["Admin", "Read", "Write", "List", "Tagging"]
+    }
+  ]
+}

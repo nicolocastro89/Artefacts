@@ -1,0 +1,187 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-20T00:00:00Z",
+  "title": "Design System: Artefacts",
+  "extensions": {
+    "colorMeta": {
+      "rail": { "role": "neutral", "displayName": "Powder-Coat Steel", "dark": "#121a1e", "tonalRamp": ["#121a1e", "#1f292f", "#2e3a41", "#3a4850", "#56656d", "#7a888f", "#a9b5bb", "#e6ecee"] },
+      "rail-raised": { "role": "neutral", "displayName": "Raised Steel", "dark": "#22303a" },
+      "rail-ink": { "role": "neutral", "displayName": "Rail Ink", "dark": "#e6ecee" },
+      "rail-ink-muted": { "role": "neutral", "displayName": "Rail Ink Muted", "dark": "#a9b5bb" },
+      "rail-focus": { "role": "neutral", "displayName": "Rail Focus Blue", "dark": "#8fc0ea" },
+      "ground": { "role": "neutral", "displayName": "Galvanised Ground", "dark": "#1a2226", "tonalRamp": ["#1a2226", "#2e393f", "#545f65", "#8e9aa0", "#cfd5d6", "#e3e7e8", "#e9ecec", "#f4f6f6"] },
+      "plate": { "role": "neutral", "displayName": "White Plate", "dark": "#222c31" },
+      "plate-sunk": { "role": "neutral", "displayName": "Sunk Plate", "dark": "#1d262a" },
+      "line": { "role": "neutral", "displayName": "Line", "dark": "#3a464d" },
+      "line-soft": { "role": "neutral", "displayName": "Soft Line", "dark": "#2e393f" },
+      "ink": { "role": "neutral", "displayName": "Ink", "dark": "#e4e9eb" },
+      "ink-muted": { "role": "neutral", "displayName": "Muted Ink", "dark": "#aab5ba" },
+      "ink-faint": { "role": "neutral", "displayName": "Faint Ink", "dark": "#8e9aa0" },
+      "action": { "role": "primary", "displayName": "Enamel Blue", "dark": "#7ab0dc", "tonalRamp": ["#13293b", "#214d70", "#2a5d86", "#3f76a3", "#7ab0dc", "#93c1e6", "#c3dbef", "#e3edf5"] },
+      "action-hover": { "role": "primary", "displayName": "Enamel Blue Deep", "dark": "#93c1e6" },
+      "action-ink": { "role": "primary", "displayName": "Action Ink", "dark": "#0d1a24" },
+      "action-soft": { "role": "primary", "displayName": "Enamel Wash", "dark": "#22374a" },
+      "tag": { "role": "secondary", "displayName": "Rack-Label Yellow", "dark": "#f2c23a", "tonalRamp": ["#2b2205", "#5c4810", "#8f6f16", "#c99a22", "#f2c23a", "#f6d26e", "#f9e3a3", "#fcf3d6"] },
+      "tag-ink": { "role": "secondary", "displayName": "Label Ink", "dark": "#2b2205" },
+      "tag-soft": { "role": "secondary", "displayName": "Label Wash", "dark": "#3a3418" },
+      "danger": { "role": "state", "displayName": "Danger", "dark": "#f1a19a" },
+      "danger-soft": { "role": "state", "displayName": "Danger Wash", "dark": "#3d2423" },
+      "warning": { "role": "state", "displayName": "Warning", "dark": "#e9bf63" },
+      "warning-soft": { "role": "state", "displayName": "Warning Wash", "dark": "#3a3019" },
+      "success": { "role": "state", "displayName": "Success", "dark": "#8fcf98" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Record heading on detail and print pages (20pt in print)." },
+      "headline": { "displayName": "Headline", "purpose": "Work-area page titles beside the record count." },
+      "title": { "displayName": "Title", "purpose": "Rack title and second-level headings." },
+      "body": { "displayName": "Body", "purpose": "All reading text; tabular numerals app-wide." },
+      "body-sm": { "displayName": "Body small", "purpose": "Hints, sub-heads, captions, pager, field labels (550)." },
+      "label": { "displayName": "Label", "purpose": "Condensed uppercase column heads, legends and meta labels." },
+      "inventory": { "displayName": "Inventory", "purpose": "Tie-on tags and inventory numbers; condensed, tabular." }
+    },
+    "shadows": [
+      { "name": "plate", "value": "0 1px 2px rgb(20 30 35 / 0.06)", "dark": "0 1px 2px rgb(0 0 0 / 0.3)", "purpose": "Every plate at rest: tables, cards, form sections." },
+      { "name": "rack", "value": "-18px 0 32px -24px rgb(20 30 35 / 0.55)", "dark": "-18px 0 32px -22px rgb(0 0 0 / 0.8)", "purpose": "The pulled-out rack only, cast leftward over the list." },
+      { "name": "pop", "value": "0 8px 24px -8px rgb(20 30 35 / 0.3)", "dark": "0 8px 24px -8px rgb(0 0 0 / 0.6)", "purpose": "Elements over content: rack tag on its image, picker lists." },
+      { "name": "sheet", "value": "0 -12px 40px -16px rgb(0 0 0 / 0.45)", "purpose": "The rack as a bottom sheet under 72rem." }
+    ],
+    "motion": [
+      { "name": "ease-out", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "All transitions and the rack and row motion." },
+      { "name": "dur", "value": "220ms", "purpose": "Control state transitions (background, border)." },
+      { "name": "rack-pull", "value": "260ms; translateX(2.5rem) + clip-path inset(0 0 0 2.5rem) to rest", "purpose": "Rack slides out from the right." },
+      { "name": "rack-sheet", "value": "260ms; translateY(2.5rem), opacity 0.6 to rest", "purpose": "Rack rises as a sheet under 72rem." },
+      { "name": "row-travel", "value": "320ms FLIP translateY", "purpose": "Rows travel to their new place on re-sort; off under reduced motion." }
+    ],
+    "breakpoints": [
+      { "name": "rack-sheet", "value": "72rem" },
+      { "name": "split-stack", "value": "52rem" },
+      { "name": "rail-topbar", "value": "48rem" },
+      { "name": "table-stack", "value": "40rem" },
+      { "name": "narrow-phone", "value": "30rem" }
+    ],
+    "layout": {
+      "railWidth": "13.5rem",
+      "rackWidth": "27.5rem",
+      "thumbRow": "2.75rem",
+      "formMaxWidth": "64rem",
+      "gridCellMin": "11rem",
+      "printMarginsMm": [18, 16, 20, 16],
+      "printImageMax": "min(150mm, content height - 45mm)"
+    }
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Enamel-blue action; one per page head.",
+      "html": "<button class=\"ds-btn ds-btn--primary\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><path d=\"M12 5v14M5 12h14\"/></svg>New artefact</button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; gap: var(--s2, 0.5rem); min-height: 2.25rem; padding: 0 var(--s3, 0.75rem); border: 1px solid var(--line, #cfd5d6); border-radius: var(--radius-sm, 3px); background: var(--plate, #fff); color: var(--ink, #1d2427); font-family: var(--font, 'Archivo Variable', Archivo, sans-serif); font-size: 0.875rem; font-weight: 550; line-height: 1; cursor: pointer; transition: background-color 220ms cubic-bezier(0.16,1,0.3,1), border-color 220ms cubic-bezier(0.16,1,0.3,1); } .ds-btn svg { width: 1rem; height: 1rem; } .ds-btn--primary { background: var(--action, #2a5d86); border-color: var(--action, #2a5d86); color: var(--action-ink, #fff); } .ds-btn--primary:hover { background: var(--action-hover, #214d70); border-color: var(--action-hover, #214d70); } .ds-btn:focus-visible { outline: 2px solid var(--focus, #2a5d86); outline-offset: 2px; }"
+    },
+    {
+      "name": "Default Button",
+      "kind": "button",
+      "refersTo": "button-default",
+      "description": "Plate button for ordinary commands.",
+      "html": "<button class=\"ds-btn-default\">Print</button>",
+      "css": ".ds-btn-default { display: inline-flex; align-items: center; min-height: 2.25rem; padding: 0 0.75rem; border: 1px solid var(--line, #cfd5d6); border-radius: var(--radius-sm, 3px); background: var(--plate, #fff); color: var(--ink, #1d2427); font-family: var(--font, 'Archivo Variable', Archivo, sans-serif); font-size: 0.875rem; font-weight: 550; line-height: 1; cursor: pointer; transition: background-color 220ms cubic-bezier(0.16,1,0.3,1), border-color 220ms cubic-bezier(0.16,1,0.3,1); } .ds-btn-default:hover { background: var(--plate-sunk, #f4f6f6); border-color: var(--ink-faint, #6d787d); } .ds-btn-default:focus-visible { outline: 2px solid var(--focus, #2a5d86); outline-offset: 2px; }"
+    },
+    {
+      "name": "Quiet Button",
+      "kind": "button",
+      "refersTo": "button-quiet",
+      "description": "Borderless blue text action; secondary actions and the rack close.",
+      "html": "<button class=\"ds-btn-quiet\">Edit</button>",
+      "css": ".ds-btn-quiet { display: inline-flex; align-items: center; min-height: 2.25rem; padding: 0 0.75rem; border: 1px solid transparent; border-radius: var(--radius-sm, 3px); background: transparent; color: var(--action, #2a5d86); font-family: var(--font, 'Archivo Variable', Archivo, sans-serif); font-size: 0.875rem; font-weight: 550; line-height: 1; cursor: pointer; transition: background-color 220ms cubic-bezier(0.16,1,0.3,1); } .ds-btn-quiet:hover { background: var(--action-soft, #e3edf5); color: var(--action-hover, #214d70); } .ds-btn-quiet:focus-visible { outline: 2px solid var(--focus, #2a5d86); outline-offset: 2px; }"
+    },
+    {
+      "name": "Search Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Plate field with inset search icon; focus is a blue outline.",
+      "html": "<label class=\"ds-search\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><circle cx=\"11\" cy=\"11\" r=\"7\"/><path d=\"m20 20-3.5-3.5\"/></svg><input class=\"ds-input\" type=\"search\" placeholder=\"Search artefacts\"></label>",
+      "css": ".ds-search { position: relative; display: block; max-width: 28rem; } .ds-search svg { position: absolute; left: 0.75rem; top: 50%; width: 1rem; height: 1rem; transform: translateY(-50%); color: var(--ink-muted, #545f65); pointer-events: none; } .ds-input { width: 100%; min-height: 2.25rem; padding: 0.5rem 0.75rem 0.5rem 2.25rem; border: 1px solid var(--line, #cfd5d6); border-radius: var(--radius-sm, 3px); background: var(--plate, #fff); color: var(--ink, #1d2427); font-family: var(--font, 'Archivo Variable', Archivo, sans-serif); font-size: 0.875rem; transition: border-color 220ms cubic-bezier(0.16,1,0.3,1); } .ds-input::placeholder { color: var(--ink-faint, #6d787d); } .ds-input:hover { border-color: var(--ink-faint, #6d787d); } .ds-input:focus-visible { outline: 2px solid var(--focus, #2a5d86); outline-offset: -1px; border-color: var(--focus, #2a5d86); }"
+    },
+    {
+      "name": "Inventory Tag",
+      "kind": "chip",
+      "refersTo": "inventory-tag",
+      "description": "Tie-on tag with punched hole; yellow only when its record is selected.",
+      "html": "<span class=\"ds-tag\">INV-0142</span> <span class=\"ds-tag ds-tag--selected\">INV-0143</span>",
+      "css": ".ds-tag { position: relative; display: inline-flex; align-items: center; padding: 0.125rem 0.5rem 0.125rem 1.125rem; border: 1px solid var(--line, #cfd5d6); border-radius: var(--radius-sm, 3px); background: var(--plate, #fff); color: var(--ink, #1d2427); font-family: var(--font, 'Archivo Variable', Archivo, sans-serif); font-size: 0.875rem; font-stretch: 75%; font-weight: 650; letter-spacing: 0.03em; font-variant-numeric: tabular-nums; white-space: nowrap; } .ds-tag::before { content: ''; position: absolute; left: 0.4375rem; top: 50%; width: 0.3125rem; height: 0.3125rem; margin-top: -0.15625rem; border-radius: 50%; background: var(--ground, #e9ecec); box-shadow: inset 0 0 0 1px var(--line, #cfd5d6); } .ds-tag--selected { border-color: var(--tag, #f2c23a); background: var(--tag, #f2c23a); color: var(--tag-ink, #2b2205); } .ds-tag--selected::before { background: var(--plate, #fff); box-shadow: none; }"
+    },
+    {
+      "name": "Segmented View Switch",
+      "kind": "custom",
+      "refersTo": "segmented-pressed",
+      "description": "Table/Grid mode switch; pressed segment inverts to ink.",
+      "html": "<div class=\"ds-seg\"><button class=\"ds-seg__btn\" aria-pressed=\"true\">Table</button><button class=\"ds-seg__btn\" aria-pressed=\"false\">Grid</button></div>",
+      "css": ".ds-seg { display: inline-flex; border: 1px solid var(--line, #cfd5d6); border-radius: var(--radius-sm, 3px); background: var(--plate, #fff); overflow: hidden; } .ds-seg__btn { min-height: 2.125rem; padding: 0 0.75rem; border: 0; background: transparent; color: var(--ink-muted, #545f65); font-family: var(--font, 'Archivo Variable', Archivo, sans-serif); font-size: 0.875rem; font-weight: 550; cursor: pointer; } .ds-seg__btn + .ds-seg__btn { border-left: 1px solid var(--line, #cfd5d6); } .ds-seg__btn[aria-pressed='true'] { background: var(--ink, #1d2427); color: var(--plate, #fff); } .ds-seg__btn:focus-visible { outline: 2px solid var(--focus, #2a5d86); outline-offset: -2px; }"
+    },
+    {
+      "name": "Steel Rail",
+      "kind": "nav",
+      "refersTo": "rail",
+      "description": "Navigation rail; active section icon in rack-label yellow, counts condensed.",
+      "html": "<nav class=\"ds-rail\"><div class=\"ds-rail__brand\">Artefacts</div><a class=\"ds-rail__link is-active\" href=\"#\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"1\"/><path d=\"M3 10h18M3 15h18\"/></svg>Artefacts<span class=\"ds-rail__count\">1,204</span></a><a class=\"ds-rail__link\" href=\"#\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18\"/></svg>Regions<span class=\"ds-rail__count\">48</span></a></nav>",
+      "css": ".ds-rail { display: flex; flex-direction: column; gap: 2px; width: 13.5rem; padding: 1.25rem 0.75rem; background: var(--rail, #2e3a41); color: var(--rail-ink, #eef2f3); font-family: var(--font, 'Archivo Variable', Archivo, sans-serif); font-size: 0.875rem; } .ds-rail__brand { padding: 0.25rem 0.75rem 1.5rem; font-stretch: 75%; font-size: 1rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; } .ds-rail__link { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.75rem; border-radius: var(--radius-sm, 3px); color: var(--rail-ink-muted, #c3ccd0); font-weight: 550; text-decoration: none; } .ds-rail__link svg { width: 1rem; height: 1rem; flex: none; } .ds-rail__link:hover, .ds-rail__link.is-active { background: var(--rail-raised, #3a4850); color: var(--rail-ink, #eef2f3); } .ds-rail__link.is-active svg { color: var(--tag, #f2c23a); } .ds-rail__link:focus-visible { outline: 2px solid var(--rail-focus, #9cc8ec); outline-offset: 2px; } .ds-rail__count { margin-left: auto; font-stretch: 75%; font-size: 0.8125rem; color: var(--rail-ink-muted, #c3ccd0); font-variant-numeric: tabular-nums; }"
+    },
+    {
+      "name": "Record Table",
+      "kind": "card",
+      "refersTo": "table-row-selected",
+      "description": "Plate table with condensed header band, fixed-scale thumbs; selected row on label wash.",
+      "html": "<div class=\"ds-table-wrap\"><table class=\"ds-table\"><thead><tr><th></th><th>Inventory</th><th>Title</th><th>Date</th></tr></thead><tbody><tr><td><div class=\"ds-thumb\"></div></td><td><span class=\"ds-inv\">INV-0142</span></td><td class=\"ds-cell-title\">Bronze ewer</td><td>c. 1650</td></tr><tr aria-selected=\"true\"><td><div class=\"ds-thumb\"></div></td><td><span class=\"ds-inv\">INV-0143</span></td><td class=\"ds-cell-title\">Lacquer box</td><td>late 17th century</td></tr></tbody></table></div>",
+      "css": ".ds-table-wrap { overflow-x: auto; background: var(--plate, #fff); border: 1px solid var(--line, #cfd5d6); border-radius: var(--radius, 6px); box-shadow: 0 1px 2px rgb(20 30 35 / 0.06); font-family: var(--font, 'Archivo Variable', Archivo, sans-serif); font-size: 0.875rem; color: var(--ink, #1d2427); font-variant-numeric: tabular-nums; } .ds-table { width: 100%; border-collapse: collapse; } .ds-table th { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--line, #cfd5d6); background: var(--plate-sunk, #f4f6f6); text-align: left; font-stretch: 75%; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-muted, #545f65); } .ds-table td { padding: 0.375rem 0.75rem; border-bottom: 1px solid var(--line-soft, #e3e7e8); vertical-align: middle; } .ds-table tbody tr { cursor: pointer; } .ds-table tbody tr:hover td { background: var(--plate-sunk, #f4f6f6); } .ds-table tbody tr[aria-selected='true'] td { background: var(--tag-soft, #fcf3d6); } .ds-thumb { width: 3rem; aspect-ratio: 4 / 3; background: var(--plate-sunk, #f4f6f6); border: 1px solid var(--line-soft, #e3e7e8); border-radius: var(--radius-sm, 3px); } .ds-inv { font-stretch: 75%; font-weight: 600; letter-spacing: 0.02em; } .ds-cell-title { font-weight: 550; }"
+    },
+    {
+      "name": "Pull-out Rack",
+      "kind": "custom",
+      "refersTo": "rack",
+      "description": "Signature panel: slides from the right with the image under its yellow tag, facts and Open/Edit.",
+      "html": "<aside class=\"ds-rack\"><div class=\"ds-rack__head\"><button class=\"ds-rack__close\" aria-label=\"Close\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><path d=\"M6 6l12 12M18 6 6 18\"/></svg></button></div><div class=\"ds-rack__mesh\"><div class=\"ds-rack__plate\"></div><span class=\"ds-rack__tag\">INV-0143</span></div><h2 class=\"ds-rack__title\">Lacquer box</h2><dl class=\"ds-rack__facts\"><div><dt>Date</dt><dd>late 17th century</dd></div><div><dt>Region</dt><dd>Kyoto</dd></div></dl><div class=\"ds-rack__actions\"><button class=\"ds-rack__open\">Open</button><button class=\"ds-rack__edit\">Edit</button></div></aside>",
+      "css": ".ds-rack { display: grid; gap: 0.75rem; width: 27.5rem; max-width: 100%; padding: 1rem 1.25rem 1.25rem; border: 1px solid var(--line, #cfd5d6); border-radius: var(--radius, 6px); background: var(--plate, #fff); box-shadow: -18px 0 32px -24px rgb(20 30 35 / 0.55); font-family: var(--font, 'Archivo Variable', Archivo, sans-serif); font-size: 0.875rem; color: var(--ink, #1d2427); animation: ds-rack-pull 260ms cubic-bezier(0.16,1,0.3,1); } @keyframes ds-rack-pull { from { transform: translateX(2.5rem); clip-path: inset(0 0 0 2.5rem); } to { transform: none; clip-path: inset(0); } } .ds-rack__head { display: flex; justify-content: flex-end; } .ds-rack__close { display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border: 0; border-radius: 3px; background: transparent; color: var(--action, #2a5d86); cursor: pointer; } .ds-rack__close:hover { background: var(--action-soft, #e3edf5); } .ds-rack__close svg { width: 1rem; height: 1rem; } .ds-rack__mesh { position: relative; } .ds-rack__plate { aspect-ratio: 4 / 3; background: var(--plate-sunk, #f4f6f6); border: 1px solid var(--line-soft, #e3e7e8); border-radius: 3px; } .ds-rack__tag { position: absolute; top: 0.75rem; right: 0.75rem; padding: 0.125rem 0.5rem; border-radius: 3px; background: var(--tag, #f2c23a); color: var(--tag-ink, #2b2205); font-stretch: 75%; font-weight: 650; letter-spacing: 0.03em; font-variant-numeric: tabular-nums; box-shadow: 0 8px 24px -8px rgb(20 30 35 / 0.3); } .ds-rack__title { margin: 0; font-size: 1.1875rem; font-weight: 650; line-height: 1.2; letter-spacing: -0.01em; } .ds-rack__facts { display: grid; gap: 0.5rem; margin: 0; } .ds-rack__facts div { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); gap: 0.75rem; } .ds-rack__facts dt { color: var(--ink-muted, #545f65); } .ds-rack__facts dd { margin: 0; } .ds-rack__actions { display: flex; gap: 0.5rem; padding-top: 0.25rem; } .ds-rack__open, .ds-rack__edit { min-height: 2.25rem; padding: 0 0.75rem; border: 1px solid var(--line, #cfd5d6); border-radius: 3px; background: var(--plate, #fff); color: var(--ink, #1d2427); font: inherit; font-weight: 550; cursor: pointer; } .ds-rack__open { background: var(--action, #2a5d86); border-color: var(--action, #2a5d86); color: var(--action-ink, #fff); } .ds-rack__open:hover { background: var(--action-hover, #214d70); } .ds-rack__edit:hover { background: var(--plate-sunk, #f4f6f6); border-color: var(--ink-faint, #6d787d); } .ds-rack button:focus-visible { outline: 2px solid var(--focus, #2a5d86); outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Storage Rack",
+    "overview": "The collection as it is really kept: racked, tagged, and pulled out when you need to look. A powder-coated steel rail holds the navigation; the work area is a galvanised cool-grey ground on which every record, table and form sits on a white plate. Images sit on identical neutral plates at a fixed scale so staff recognise artefacts by eye, and each record carries a tie-on inventory tag set in Archivo's condensed width. The interface recedes; the artefact and its record lead.\n\nDensity is calm and high: a 14px body, 4px spacing base, tight table rows with fixed-scale thumbnails, condensed uppercase column labels. Colour is rationed by meaning. One enamel blue marks only things you can press. Rack-label yellow means \"selected\" and nothing else. Everything else is steel, ground, plate and ink.\n\nThe world rejects both the white-sidebar, blue-button admin template and the precious white-wall gallery. Its signature is the pull-out rack: selecting a record slides a panel out from the right with the image large under its yellow tag, the key facts, and Open/Edit.",
+    "keyCharacteristics": [
+      "Steel rail, galvanised ground, white plates; flat with a whisper of plate shadow.",
+      "One action colour, only on pressables; one selection colour, only on selection.",
+      "Archivo throughout; condensed width (75%) for tags, column labels, counts; tabular numerals everywhere.",
+      "Fixed-scale thumbnails on a neutral plate (4:3, object-fit contain).",
+      "Motion is physical and short: the rack slides out, rows travel to their new place on re-sort.",
+      "Print is a first-class surface with its own running header and page logic."
+    ],
+    "rules": [
+      { "name": "The Pressable Blue Rule", "body": "Enamel blue appears only on something you can press or type into (buttons, links, focus, caret, upload). Never on headings, icons-as-decoration, borders of static plates, or status.", "section": "colors" },
+      { "name": "The Yellow Means Selected Rule", "body": "Rack-label yellow marks the current selection (selected row, card, tag, gallery pick, active rail section) and nothing else. A property is not a selection: the primary image is marked in ink, and title tags on detail and edit pages are plain.", "section": "colors" },
+      { "name": "The Two Widths Rule", "body": "Normal width reads; condensed width labels and counts. Do not set reading text condensed, and do not set inventory numbers, counts or column heads at normal width.", "section": "typography" },
+      { "name": "The Tabular Rule", "body": "All numerals are tabular (`font-variant-numeric: tabular-nums` on body). Columns of numbers and dates must align.", "section": "typography" },
+      { "name": "The Columns Never Move Rule", "body": "Column order is fixed. Narrow screens hide optional columns or restack a row; they never reorder.", "section": "layout" },
+      { "name": "The Contained Overflow Rule", "body": "Stacks use a `minmax(0, 1fr)` column so wide content (tables) scrolls inside its plate rather than widening the page.", "section": "layout" },
+      { "name": "The Clamp While Racked Rule", "body": "While the rack is open, record-table cells clamp to two lines; the full text stays in the cell title.", "section": "layout" },
+      { "name": "The Plate Rule", "body": "Surfaces are white plates on the galvanised ground with a 1px line and the plate shadow. Nothing floats unless it is literally pulled out or dropped over content.", "section": "elevation" }
+    ],
+    "dos": [
+      "**Do** keep enamel blue (action) on pressables only, and use one primary button per head.",
+      "**Do** use rack-label yellow (tag, tag-soft) only to show the current selection.",
+      "**Do** mark properties (primary image, a record's own tag on its detail page) in ink, not yellow.",
+      "**Do** set inventory numbers, counts and column labels in Archivo condensed (75%) with tabular numerals.",
+      "**Do** put every image on the same neutral sunk plate at a fixed aspect, contained, never cropped.",
+      "**Do** place every record surface on a white plate with a 1px line and the plate shadow, on the galvanised ground.",
+      "**Do** let the grid reflow by whole cells and keep table column order fixed at every width.",
+      "**Do** keep destructive row actions in muted ink at rest, danger colour on hover and focus.",
+      "**Do** design every record view to print: no unit split across a page, running inventory header, page N of M."
+    ],
+    "donts": [
+      "**Don't** use blue for decoration, status or headings, or yellow for highlights, badges, warnings or emphasis.",
+      "**Don't** put eyebrow labels or kickers above headings; the rack carries only its close button above its title.",
+      "**Don't** reorder or move columns on narrow screens; hide optional columns or restack the row.",
+      "**Don't** add shadows beyond the four roles (plate, rack, pop, sheet) or lift plates on hover.",
+      "**Don't** use corners larger than 6px or pill shapes on controls.",
+      "**Don't** fall back to the white-sidebar blue-button admin template or a white-wall gallery look."
+    ]
+  }
+}

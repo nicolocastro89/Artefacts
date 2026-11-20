@@ -1,0 +1,302 @@
+.toolbar {
+  display: grid;
+  gap: var(--s3);
+}
+
+.toolbar .page-head {
+  margin-bottom: 0;
+}
+
+.toolbar__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2) var(--s3);
+}
+
+/* ---------- Record table ---------- */
+.table--records td {
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+}
+
+.table--records tbody tr:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+/* While a rack is pulled out the table loses width; cells hold at two lines so rows stay scannable.
+   The full text stays in each cell's title. */
+.layout--rack:has(.rack) .table--records .cell-clamp {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.cell-link {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.cell-link:hover {
+  color: var(--action);
+  text-decoration: underline;
+}
+
+/* ---------- Record grid: whole cells only ---------- */
+.record-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: var(--s3);
+}
+
+.record-card {
+  display: grid;
+  /* Cards stretch to the row's height; the spare height goes below the content, so tags and titles line up. */
+  align-content: start;
+  gap: var(--s2);
+  justify-items: start;
+  width: 100%;
+  height: 100%;
+  padding: var(--s2) var(--s2) var(--s3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--plate);
+  box-shadow: var(--shadow-plate);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease-out);
+}
+
+.record-card .thumb {
+  width: 100%;
+}
+
+.record-card:hover {
+  border-color: var(--ink-faint);
+}
+
+.record-card[aria-pressed='true'] {
+  border-color: var(--tag);
+  background: var(--tag-soft);
+}
+
+.record-card__title {
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.record-card__meta {
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+}
+
+/* ---------- Pull-out rack (signature) ---------- */
+.layout--rack {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--s4);
+  align-items: start;
+}
+
+.rack {
+  position: sticky;
+  top: var(--s4);
+  display: grid;
+  gap: var(--s3);
+  width: var(--rack-width);
+  max-height: calc(100dvh - 2 * var(--s4));
+  overflow: auto;
+  padding: var(--s4) var(--s5) var(--s5);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--plate);
+  box-shadow: var(--shadow-rack);
+  animation: rack-pull 260ms var(--ease-out);
+}
+
+@keyframes rack-pull {
+  from {
+    transform: translateX(2.5rem);
+    clip-path: inset(0 0 0 2.5rem);
+  }
+  to {
+    transform: translateX(0);
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+.rack__head {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin: calc(-1 * var(--s1)) calc(-1 * var(--s2)) 0 0;
+}
+
+.rack__mesh {
+  position: relative;
+}
+
+.rack__mesh .thumb {
+  width: 100%;
+}
+
+.rack__tag {
+  position: absolute;
+  top: var(--s3);
+  right: var(--s3);
+  box-shadow: var(--shadow-pop);
+}
+
+.rack__title {
+  font-size: var(--text-xl);
+}
+
+.rack__facts {
+  display: grid;
+  gap: var(--s2);
+}
+
+.rack__facts div {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr);
+  gap: var(--s3);
+}
+
+.rack__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  padding-top: var(--s1);
+}
+
+/* ---------- Pager ---------- */
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2) var(--s4);
+  color: var(--ink-muted);
+  font-size: var(--text-sm);
+}
+
+.pager__controls {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.pager__page {
+  min-width: 7.5rem;
+  text-align: center;
+}
+
+/* ---------- Narrow screens: the rack becomes a sheet over the list ---------- */
+@media (max-width: 72rem) {
+  .layout--rack {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rack {
+    position: fixed;
+    z-index: 20;
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: auto;
+    max-height: 85dvh;
+    border-radius: var(--radius) var(--radius) 0 0;
+    box-shadow: 0 -12px 40px -16px rgb(0 0 0 / 0.45);
+    animation-name: rack-sheet;
+  }
+
+  .rack__mesh .thumb {
+    --thumb-aspect: 16 / 10 !important;
+  }
+
+  @keyframes rack-sheet {
+    from {
+      transform: translateY(2.5rem);
+      opacity: 0.6;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+}
+
+@media (max-width: 40rem) {
+  .table--records .col-optional {
+    display: none;
+  }
+
+  /* Phones: each record becomes a stacked row (thumbnail, then tag over title over date) so nothing is
+     clipped at the screen edge. The header stays as a row of sort controls; columns keep their order. */
+  .table--records,
+  .table--records tbody,
+  .table--records thead {
+    display: block;
+  }
+
+  .table--records thead tr {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--s1);
+    background: var(--plate-sunk);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .table--records thead th {
+    position: static;
+    border-bottom: 0;
+    padding: var(--s2);
+  }
+
+  .table--records thead th:not(:has(.table__sort)) {
+    display: none;
+  }
+
+  .table--records tbody tr {
+    display: grid;
+    grid-template-columns: 4.5rem minmax(0, 1fr);
+    column-gap: var(--s3);
+    row-gap: 0.25rem;
+    align-items: start;
+    padding: var(--s3);
+    border-bottom: 1px solid var(--line-soft);
+  }
+
+  .table--records tbody tr:last-child {
+    border-bottom: 0;
+  }
+
+  .table--records tbody td {
+    grid-column: 2;
+    padding: 0;
+    border: 0;
+  }
+
+  .table--records tbody td.table__thumb {
+    grid-column: 1;
+    grid-row: 1 / span 3;
+    width: auto;
+  }
+
+  .table--records tbody td.table__thumb .thumb {
+    width: 4.5rem;
+  }
+
+  .table--records tbody td.col-optional {
+    display: none;
+  }
+
+  .table--records tbody td:not(.table__thumb):not(:has(.tag, .cell-title)) {
+    color: var(--ink-muted);
+    font-size: var(--text-sm);
+  }
+}

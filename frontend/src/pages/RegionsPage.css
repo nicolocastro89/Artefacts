@@ -1,0 +1,84 @@
+.regions {
+  display: grid;
+  gap: var(--s4);
+  max-width: 60rem;
+}
+
+.regions .page-head {
+  margin-bottom: 0;
+}
+
+.regions__add {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1fr) minmax(10rem, 16rem) auto;
+  gap: var(--s3);
+  align-items: end;
+  padding: var(--s4);
+}
+
+.regions__add-feedback {
+  grid-column: 1 / -1;
+  min-height: 1.25rem;
+  font-size: var(--text-sm);
+}
+
+.regions__add-feedback:empty {
+  display: none;
+}
+
+.regions__table td {
+  vertical-align: top;
+}
+
+.regions__parent {
+  width: 16rem;
+}
+
+.regions__actions {
+  width: 1%;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.regions__actions .btn + .btn {
+  margin-left: var(--s2);
+}
+
+/* One delete per row: kept in muted ink at rest so the column does not out-shout the names;
+   the danger colour arrives on hover and focus, and the confirm dialog guards the act. */
+.regions__actions .btn--danger:not(:hover, :focus-visible) {
+  color: var(--ink-muted);
+}
+
+.regions__rename {
+  display: flex;
+  gap: var(--s1);
+  align-items: center;
+}
+
+@media (max-width: 40rem) {
+  .regions__add {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .regions__table thead {
+    display: none;
+  }
+
+  .regions__table tr {
+    display: grid;
+    gap: var(--s2);
+    padding: var(--s2) 0;
+    border-bottom: 1px solid var(--line-soft);
+  }
+
+  .regions__table td {
+    border: 0;
+  }
+
+  .regions__parent,
+  .regions__actions {
+    width: auto;
+    text-align: left;
+  }
+}
