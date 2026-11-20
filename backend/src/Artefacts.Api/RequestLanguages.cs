@@ -5,14 +5,15 @@ namespace Artefacts.Api;
 
 /// <summary>
 /// The preferred content languages of the current HTTP request (the <c>lang</c> parameter, else Accept-Language,
-/// then the fallback order). Set once per request by <see cref="RequestLanguagesMiddleware"/>.
+/// then the fallback order). Set once per request by <see cref="RequestLanguagesMiddleware"/>; work outside a request
+/// (the import worker) reads in the fallback order.
 /// </summary>
-internal sealed class RequestLanguages : ILanguagePreferences
+internal sealed class RequestLanguages(IContentLanguages contentLanguages) : ILanguagePreferences
 {
     private IReadOnlyList<string>? _current;
 
     public IReadOnlyList<string> Current =>
-        _current ?? throw new InvalidOperationException("Request languages are resolved by RequestLanguagesMiddleware.");
+        _current ??= contentLanguages.ListAsync(CancellationToken.None).GetAwaiter().GetResult().Select(l => l.Code).ToList();
 
     public void Set(IReadOnlyList<string> languages) => _current = languages;
 }

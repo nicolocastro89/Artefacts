@@ -1,4 +1,5 @@
 using Artefacts.Application.Artefacts;
+using Artefacts.Application.Imports;
 using Artefacts.Application.Media;
 using Artefacts.Application.Languages;
 using Artefacts.Application.ObjectTypes;
@@ -19,6 +20,9 @@ public static class DependencyInjection
         services.AddScoped<ObjectTypeHandler>();
         services.AddScoped<LanguageHandler>();
         services.AddScoped<ImageHandler>();
+        services.AddScoped<ImportHandler>();
+        services.AddScoped<ImportTemplateHandler>();
+        services.AddSingleton<ImportProcessor>();
         return services;
     }
 }

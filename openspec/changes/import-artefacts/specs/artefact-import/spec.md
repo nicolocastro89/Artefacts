@@ -48,7 +48,7 @@ The system SHALL let a user map each column to a catalogue field or ignore it. F
 - **THEN** the new import starts with the saved mapping, line rules, inventory number pattern and place decisions
 
 ### Requirement: Inventory numbers from a pattern
-The system SHALL assign each imported record an inventory number built from a user-defined pattern. The pattern can combine fixed text with the group number, the item number, the sheet row number, and the value of a mapped field (such as a detected catalogue number), with optional zero padding, and can name a mapped field to use instead when it has a value. The system MUST report, as a problem for the later row, any two rows that produce the same inventory number, and any row whose pattern produces no value.
+The system SHALL assign each imported record an inventory number built from a user-defined pattern. The pattern can combine fixed text with the group number, the item number, the sheet row number, a three-letter prefix taken from the sheet name (so one template serves several workbooks), and the value of a mapped field (such as a detected catalogue number), with optional zero padding, and can name a mapped field to use instead when it has a value. The system MUST report, as a problem for the later row, any two rows that produce the same inventory number, and any row whose pattern produces no value.
 
 #### Scenario: Pattern from group and item
 - **WHEN** the pattern is "CER-{group:2}-{item:2}" and a row has group "1" and item "2"

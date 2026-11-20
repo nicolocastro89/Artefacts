@@ -16,6 +16,23 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "import_templates",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    normalized_name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    mapping = table.Column<string>(type: "jsonb", nullable: false),
+                    decisions = table.Column<string>(type: "jsonb", nullable: false),
+                    created_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    updated_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_import_templates", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "languages",
                 columns: table => new
                 {
@@ -69,6 +86,52 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                         name: "fk_regions_regions_parent_id",
                         column: x => x.parent_id,
                         principalTable: "regions",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "import_jobs",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    file_name = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    file_size = table.Column<long>(type: "bigint", nullable: false),
+                    state = table.Column<string>(type: "character varying(24)", maxLength: 24, nullable: false),
+                    object_type_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    template_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    sheet_name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    sheet_names = table.Column<string>(type: "jsonb", nullable: false),
+                    headings = table.Column<string>(type: "jsonb", nullable: false),
+                    mapping = table.Column<string>(type: "jsonb", nullable: true),
+                    decisions = table.Column<string>(type: "jsonb", nullable: false),
+                    warnings = table.Column<string>(type: "jsonb", nullable: false),
+                    group_headings = table.Column<int>(type: "integer", nullable: false),
+                    total_rows = table.Column<int>(type: "integer", nullable: false),
+                    processed_rows = table.Column<int>(type: "integer", nullable: false),
+                    imported_rows = table.Column<int>(type: "integer", nullable: false),
+                    skipped_rows = table.Column<int>(type: "integer", nullable: false),
+                    problem_rows = table.Column<int>(type: "integer", nullable: false),
+                    error = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
+                    created_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    updated_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    committed_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    finished_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    lease_until = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_import_jobs", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_import_jobs_import_templates_template_id",
+                        column: x => x.template_id,
+                        principalTable: "import_templates",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "fk_import_jobs_object_types_object_type_id",
+                        column: x => x.object_type_id,
+                        principalTable: "object_types",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -170,6 +233,35 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                         name: "fk_region_names_regions_region_id",
                         column: x => x.region_id,
                         principalTable: "regions",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "import_rows",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    job_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    sheet_row = table.Column<int>(type: "integer", nullable: false),
+                    group_number = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
+                    group_label = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    cells = table.Column<string>(type: "jsonb", nullable: false),
+                    pictures = table.Column<string>(type: "jsonb", nullable: false),
+                    warnings = table.Column<string>(type: "jsonb", nullable: false),
+                    status = table.Column<string>(type: "character varying(16)", maxLength: 16, nullable: false),
+                    problems = table.Column<string>(type: "jsonb", nullable: false),
+                    inventory_number = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    artefact_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    processed_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_import_rows", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_import_rows_import_jobs_job_id",
+                        column: x => x.job_id,
+                        principalTable: "import_jobs",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -338,6 +430,38 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "ix_import_jobs_object_type_id",
+                table: "import_jobs",
+                column: "object_type_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_import_jobs_state_created_at",
+                table: "import_jobs",
+                columns: new[] { "state", "created_at" });
+
+            migrationBuilder.CreateIndex(
+                name: "ix_import_jobs_template_id",
+                table: "import_jobs",
+                column: "template_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_import_rows_job_id_sheet_row",
+                table: "import_rows",
+                columns: new[] { "job_id", "sheet_row" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "ix_import_rows_job_id_status",
+                table: "import_rows",
+                columns: new[] { "job_id", "status" });
+
+            migrationBuilder.CreateIndex(
+                name: "ux_import_templates_normalized_name",
+                table: "import_templates",
+                column: "normalized_name",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "ix_media_assets_storage_key",
                 table: "media_assets",
                 column: "storage_key",
@@ -384,7 +508,6 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
         {
             migrationBuilder.Sql("DROP VIEW IF EXISTS v_artefact;");
             migrationBuilder.Sql("DROP FUNCTION IF EXISTS region_name(uuid, text[]); DROP FUNCTION IF EXISTS object_type_name(uuid, text[]);");
-
             migrationBuilder.DropTable(
                 name: "artefact_exhibitions");
 
@@ -396,6 +519,9 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "artefact_translations");
+
+            migrationBuilder.DropTable(
+                name: "import_rows");
 
             migrationBuilder.DropTable(
                 name: "object_type_names");
@@ -410,13 +536,19 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                 name: "artefacts");
 
             migrationBuilder.DropTable(
+                name: "import_jobs");
+
+            migrationBuilder.DropTable(
                 name: "languages");
 
             migrationBuilder.DropTable(
-                name: "object_types");
+                name: "regions");
 
             migrationBuilder.DropTable(
-                name: "regions");
+                name: "import_templates");
+
+            migrationBuilder.DropTable(
+                name: "object_types");
         }
     }
 }

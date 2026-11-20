@@ -208,4 +208,20 @@
   .rail__brand {
     display: none;
   }
+
+  /* Three sections and the theme control: sections other than the current one show their icon alone,
+     keeping their names for assistive technology. */
+  .rail__link {
+    gap: var(--s2);
+    padding: var(--s2);
+  }
+
+  .rail__link:not(.active) > span:not(.rail__count) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
 }

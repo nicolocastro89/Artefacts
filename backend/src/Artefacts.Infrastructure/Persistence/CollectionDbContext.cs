@@ -1,6 +1,7 @@
 using Artefacts.Domain.Catalogue;
 using Artefacts.Domain.Classification;
 using Artefacts.Domain.Common;
+using Artefacts.Domain.Imports;
 using Artefacts.Domain.Languages;
 using Artefacts.Domain.Media;
 using Artefacts.Domain.Regions;
@@ -16,12 +17,16 @@ public sealed class CollectionDbContext(DbContextOptions<CollectionDbContext> op
     public const string RegionNameIndex = "ux_region_names_language_normalized_name";
     public const string ObjectTypeNameIndex = "ux_object_type_names_language_normalized_name";
     public const string LanguageForeignKeyPrefix = "fk_language_";
+    public const string ImportTemplateNameIndex = "ux_import_templates_normalized_name";
 
     public DbSet<Artefact> Artefacts => Set<Artefact>();
     public DbSet<Region> Regions => Set<Region>();
     public DbSet<MediaAsset> MediaAssets => Set<MediaAsset>();
     public DbSet<ObjectType> ObjectTypes => Set<ObjectType>();
     public DbSet<Language> Languages => Set<Language>();
+    public DbSet<ImportJob> ImportJobs => Set<ImportJob>();
+    public DbSet<ImportRow> ImportRows => Set<ImportRow>();
+    public DbSet<ImportTemplate> ImportTemplates => Set<ImportTemplate>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder builder)
     {
@@ -189,6 +194,53 @@ public sealed class CollectionDbContext(DbContextOptions<CollectionDbContext> op
                 i.HasOne<MediaAsset>().WithMany().HasForeignKey(x => x.MediaAssetId).OnDelete(DeleteBehavior.Restrict);
             });
             b.Navigation(a => a.Images).HasField("_images").UsePropertyAccessMode(PropertyAccessMode.Field);
+        });
+
+        MapImports(model);
+    }
+
+    /// <summary>Import jobs, their staged rows and saved templates. Mappings and staged values are JSON documents.</summary>
+    private static void MapImports(ModelBuilder model)
+    {
+        model.Entity<ImportJob>(b =>
+        {
+            b.ToTable("import_jobs");
+            b.HasKey(j => j.Id);
+            b.Property(j => j.FileName).HasMaxLength(ImportJob.MaxFileNameLength).IsRequired();
+            b.Property(j => j.State).HasConversion<string>().HasMaxLength(24);
+            b.Property(j => j.SheetName).HasMaxLength(200);
+            foreach (var json in new[] { nameof(ImportJob.SheetNames), nameof(ImportJob.Headings), nameof(ImportJob.Mapping), nameof(ImportJob.Decisions), nameof(ImportJob.Warnings) })
+                b.Property(json).HasColumnType("jsonb");
+            b.Property(j => j.Error).HasMaxLength(2000);
+            b.HasIndex(j => new { j.State, j.CreatedAt });
+            b.HasOne<ObjectType>().WithMany().HasForeignKey(j => j.ObjectTypeId).OnDelete(DeleteBehavior.Restrict);
+            b.HasOne<ImportTemplate>().WithMany().HasForeignKey(j => j.TemplateId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        model.Entity<ImportRow>(b =>
+        {
+            b.ToTable("import_rows");
+            b.HasKey(r => r.Id);
+            b.Property(r => r.GroupNumber).HasMaxLength(20);
+            b.Property(r => r.GroupLabel).HasMaxLength(500);
+            b.Property(r => r.Status).HasConversion<string>().HasMaxLength(16);
+            b.Property(r => r.InventoryNumber).HasMaxLength(500);
+            foreach (var json in new[] { nameof(ImportRow.Cells), nameof(ImportRow.Pictures), nameof(ImportRow.Warnings), nameof(ImportRow.Problems) })
+                b.Property(json).HasColumnType("jsonb");
+            b.HasIndex(r => new { r.JobId, r.Status });
+            b.HasIndex(r => new { r.JobId, r.SheetRow }).IsUnique();
+            b.HasOne<ImportJob>().WithMany().HasForeignKey(r => r.JobId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        model.Entity<ImportTemplate>(b =>
+        {
+            b.ToTable("import_templates");
+            b.HasKey(t => t.Id);
+            b.Property(t => t.Name).HasMaxLength(ImportTemplate.MaxNameLength).IsRequired();
+            b.Property(t => t.NormalizedName).HasMaxLength(ImportTemplate.MaxNameLength).IsRequired();
+            b.HasIndex(t => t.NormalizedName).IsUnique().HasDatabaseName(ImportTemplateNameIndex);
+            b.Property(t => t.Mapping).HasColumnType("jsonb");
+            b.Property(t => t.Decisions).HasColumnType("jsonb");
         });
     }
 

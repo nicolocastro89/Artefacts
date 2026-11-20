@@ -21,18 +21,50 @@ public sealed class ArtefactCommandHandler(
 {
     public async Task<ArtefactDetail> CreateAsync(ArtefactWriteRequest request, CancellationToken ct)
     {
+        var artefact = await BuildNewAsync(request, ct);
+        await unitOfWork.SaveChangesAsync(ct);
+        return await detail.GetAsync(artefact.Id.Value, ct);
+    }
+
+    /// <summary>
+    /// Validates a new artefact and adds it to the repository without saving, so a caller can save it together with
+    /// other changes (the import saves the artefact, its media and the row status in one transaction).
+    /// </summary>
+    /// <exception cref="DomainValidationException"/>
+    public async Task<Artefact> BuildNewAsync(ArtefactWriteRequest request, CancellationToken ct)
+    {
+        var (artefact, v) = await BuildAsync(request, checkInventoryNumber: true, ct);
+        v.ThrowIfAny();
+        artefacts.Add(artefact!);
+        return artefact!;
+    }
+
+    /// <summary>The validation errors of a would-be new artefact, without adding it (inventory numbers are not checked).</summary>
+    public async Task<IReadOnlyDictionary<string, string[]>> ValidateNewAsync(ArtefactWriteRequest request, CancellationToken ct)
+    {
+        var (_, v) = await BuildAsync(request, checkInventoryNumber: false, ct);
+        try
+        {
+            v.ThrowIfAny();
+            return new Dictionary<string, string[]>();
+        }
+        catch (DomainValidationException e)
+        {
+            return e.Errors;
+        }
+    }
+
+    private async Task<(Artefact? Artefact, ValidationCollector Validation)> BuildAsync(
+        ArtefactWriteRequest request, bool checkInventoryNumber, CancellationToken ct)
+    {
         var v = new ValidationCollector();
         var artefact = v.Try("", () => Artefact.Create(request.InventoryNumber, request.Title));
         // Keep validating the rest of the request even if identity failed, using a throwaway aggregate.
         var target = artefact ?? Artefact.Create("_", "_");
         await ApplyAsync(target, request, v, ct);
-        if (artefact is not null)
+        if (artefact is not null && checkInventoryNumber)
             await EnsureUniqueInventoryNumberAsync(artefact.InventoryNumber, null, v, ct);
-        v.ThrowIfAny();
-
-        artefacts.Add(artefact!);
-        await unitOfWork.SaveChangesAsync(ct);
-        return await detail.GetAsync(artefact!.Id.Value, ct);
+        return (artefact, v);
     }
 
     public async Task<ArtefactDetail> UpdateAsync(Guid id, ArtefactWriteRequest request, CancellationToken ct)

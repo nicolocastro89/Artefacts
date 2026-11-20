@@ -48,7 +48,7 @@ Mapping, patterns, places and dates are then pure functions applied to staged ro
 - **Pictures:** a picture belongs to the record row of its `from` anchor. Otherwise it goes to the nearest record row above, with a warning. Order follows the anchor row, then the anchor column, then the offset.
 
 ### Mapping model: column rules with content-recognised lines
-A mapping (stored as JSON in the job and in templates) is a list of column rules. Each rule names a source column, by heading text with its index as a fallback, and either:
+A mapping (stored as JSON in the job and in templates) is a list of column rules. Each rule names a source column, by heading text with its index as a fallback (used only when no other rule claims that column by heading), and either:
 - a single target field; or
 - **line rules**: an ordered list of `{ detector | position } → target` entries, plus `rest → target`.
 
@@ -74,11 +74,11 @@ A line matches the first rule that accepts it. Consecutive unmatched lines that 
 - The parsed amount is shown next to the original text in the review, and the original line is also kept in the acquisition note when the parse needed a guess, for example a single separator followed by exactly three digits.
 
 ### Inventory number pattern
-- **Syntax:** `{group:2}` (zero-padded), `{item:2}`, `{row}`, `{field:catalogueNumber}`, and literal text, plus an optional `prefer` field used when the row has a value for it. For example, `prefer catalogueNumber, else CER-{group:2}-{item:2}`.
+- **Syntax:** `{group:2}` (zero-padded), `{item:2}`, `{row}`, `{sheet}` (three letters of the sheet name, so a template serves every workbook), `{field:catalogueNumber}`, and literal text, plus an optional `prefer` field used when the row has a value for it. For example, `prefer catalogueNumber, else CER-{group:2}-{item:2}`.
 - **Repeats:** detected in the review, in sheet order; the first row wins. Rows whose number already exists in the catalogue are "already present" (skipped), which is what makes re-import incremental.
 
 ### Places: similarity plus remembered aliases
-Place texts are normalised (NFKD with accents stripped, lower case, punctuation and "?" removed, whitespace collapsed). Candidates are every region's names in all content languages (the `translations` change), plus every alias recorded in any template's place decisions (alias → region). An exact match on a normalised name in any language ranks first: the Italian workbooks mostly hit Italian region names exactly ("Cina", "Turchia"), so similarity scoring is only the fallback. Each candidate is scored with the maximum of the trigram Jaccard and the Jaro-Winkler similarity, and the top three at ≥ 0.6 are shown. For "Cina" vs "China", Jaro-Winkler is about 0.9. Exact alias hits rank first. This runs in memory, which is enough for hundreds of regions. Decisions are stored per normalised text: `link(regionId)`, `create(names, parentId)` (names per language, the workbook's text pre-filled under Italian) (executed when the import is committed, before rows, so every row links the same new region), or `keep`.
+Place texts are normalised (NFKD with accents stripped, lower case, punctuation and "?" removed, whitespace collapsed). Candidates are every region's names in all content languages (the `translations` change), plus every alias recorded in any template's place decisions (alias → region). An exact match on a normalised name in any language ranks first: the Italian workbooks mostly hit Italian region names exactly ("Cina", "Turchia"), so similarity scoring is only the fallback. Each candidate is scored with the maximum of the trigram Jaccard and the Jaro-Winkler similarity (Jaro-Winkler counting only at 0.8 or above, since it rates short unrelated names around 0.7), and the top three at ≥ 0.6 are shown. A text such as "Cairo, Egitto" is also compared part by part. For "Cina" vs "China", Jaro-Winkler is about 0.9. Exact alias hits rank first. This runs in memory, which is enough for hundreds of regions. Decisions are stored per normalised text: `link(regionId)`, `create(names, parentId)` (names per language, the workbook's text pre-filled under Italian) (executed when the import is committed, before rows, so every row links the same new region), or `keep`.
 *Alternative:* PostgreSQL `pg_trgm`. Unnecessary at this scale, and it would add an extension to the database setup.
 
 ### Dates
@@ -131,7 +131,7 @@ The Import section (rail item) lists jobs. The wizard route `/imports/:id` deriv
 
 ## Migration Plan
 
-1. Migration `Imports`: the three tables, plus an index on `(job_id, status)`.
+1. The three tables, plus an index on `(job_id, status)`, in the single regenerated `Initial` migration (nothing is live yet, so the development data is reset rather than migrated).
 2. Deploy normally; the worker starts with the API. No existing data changes.
 3. Rollback: drop the tables. Artefacts already imported remain as ordinary records.
 

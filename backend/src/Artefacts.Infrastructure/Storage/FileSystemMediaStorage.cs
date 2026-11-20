@@ -29,6 +29,34 @@ public sealed class FileSystemMediaStorage(IOptions<StorageOptions> options) : I
         return Task.CompletedTask;
     }
 
+    public Task CopyAsync(string sourceKey, string destinationKey, CancellationToken ct)
+    {
+        var destination = PathFor(destinationKey);
+        Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
+        File.Copy(PathFor(sourceKey), destination, overwrite: true);
+        return Task.CompletedTask;
+    }
+
+    public Task DeletePrefixAsync(string prefix, CancellationToken ct)
+    {
+        // Keys use "/" as a folder separator, so a prefix ending in "/" is a directory.
+        var trimmed = prefix.TrimEnd('/');
+        if (trimmed.Length == 0) throw new ArgumentException("Refusing to delete every stored object.", nameof(prefix));
+        var path = PathFor(trimmed);
+        if (prefix.EndsWith('/'))
+        {
+            if (Directory.Exists(path)) Directory.Delete(path, recursive: true);
+        }
+        else
+        {
+            var directory = Path.GetDirectoryName(path)!;
+            if (Directory.Exists(directory))
+                foreach (var file in Directory.GetFiles(directory, Path.GetFileName(path) + "*")) File.Delete(file);
+        }
+
+        return Task.CompletedTask;
+    }
+
     private string PathFor(string key)
     {
         var full = Path.GetFullPath(Path.Combine(_root, key.Replace('/', Path.DirectorySeparatorChar)));

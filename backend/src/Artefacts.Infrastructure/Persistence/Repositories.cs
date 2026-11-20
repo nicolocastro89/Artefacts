@@ -23,6 +23,13 @@ internal sealed class ArtefactRepository(CollectionDbContext db) : IArtefactRepo
             ? db.Artefacts.AnyAsync(a => a.InventoryNumber == inventoryNumber && a.Id != ex, ct)
             : db.Artefacts.AnyAsync(a => a.InventoryNumber == inventoryNumber, ct);
 
+    public async Task<IReadOnlySet<string>> ExistingInventoryNumbersAsync(IReadOnlyCollection<string> inventoryNumbers, CancellationToken ct)
+    {
+        if (inventoryNumbers.Count == 0) return new HashSet<string>();
+        var list = inventoryNumbers.Distinct().ToList();
+        return (await db.Artefacts.Where(a => list.Contains(a.InventoryNumber)).Select(a => a.InventoryNumber).ToListAsync(ct)).ToHashSet();
+    }
+
     public Task<bool> AnyReferencesAsync(RegionId regionId, CancellationToken ct) =>
         db.Artefacts.AnyAsync(a =>
             a.Provenance.Any(p => p.RegionId == regionId) ||
@@ -168,6 +175,8 @@ internal sealed class UnitOfWork(CollectionDbContext db) : IUnitOfWork
                     new DomainValidationException("inventoryNumber", "This inventory number is already used by another artefact."),
                 { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: CollectionDbContext.RegionNameIndex } =>
                     new DomainValidationException("names", "Another region already has this name in the same language."),
+                { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: CollectionDbContext.ImportTemplateNameIndex } =>
+                    new DomainValidationException("name", "Another import template already has this name."),
                 { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: CollectionDbContext.ObjectTypeNameIndex } =>
                     new DomainValidationException("names", "Another object type already has this name in the same language."),
                 { SqlState: PostgresErrorCodes.ForeignKeyViolation } when pg.ConstraintName?.StartsWith(CollectionDbContext.LanguageForeignKeyPrefix) == true =>

@@ -2,6 +2,7 @@ using Artefacts.Application.Contracts;
 using Artefacts.Domain.Catalogue;
 using Artefacts.Domain.Classification;
 using Artefacts.Domain.Common;
+using Artefacts.Domain.Imports;
 using Artefacts.Domain.Languages;
 using Artefacts.Domain.Media;
 using Artefacts.Domain.Regions;
@@ -13,6 +14,9 @@ public interface IArtefactRepository
     Task<Artefact?> GetAsync(ArtefactId id, CancellationToken ct);
     void Add(Artefact artefact);
     Task<bool> InventoryNumberExistsAsync(string inventoryNumber, ArtefactId? excluding, CancellationToken ct);
+
+    /// <summary>Which of <paramref name="inventoryNumbers"/> are already used by an artefact.</summary>
+    Task<IReadOnlySet<string>> ExistingInventoryNumbersAsync(IReadOnlyCollection<string> inventoryNumbers, CancellationToken ct);
 
     /// <summary>True when a provenance entry or a place of production references the region.</summary>
     Task<bool> AnyReferencesAsync(RegionId regionId, CancellationToken ct);
@@ -99,6 +103,12 @@ public interface IMediaStorage
     Task PutAsync(string key, Stream content, long length, string contentType, CancellationToken ct);
     Task<Stream?> OpenReadAsync(string key, CancellationToken ct);
     Task DeleteAsync(string key, CancellationToken ct);
+
+    /// <summary>Copies an object within the store (server-side where the store supports it).</summary>
+    Task CopyAsync(string sourceKey, string destinationKey, CancellationToken ct);
+
+    /// <summary>Deletes every object whose key starts with <paramref name="prefix"/>.</summary>
+    Task DeletePrefixAsync(string prefix, CancellationToken ct);
 }
 
 /// <summary>Produces signed URLs for the sized renditions of a stored image.</summary>
@@ -117,4 +127,49 @@ public interface IArtefactListQuery
 public interface IFieldCatalog
 {
     FieldCatalogDto Get();
+}
+
+public interface IImportRepository
+{
+    Task<ImportJob?> GetJobAsync(Guid id, CancellationToken ct);
+    Task<IReadOnlyList<ImportJob>> ListJobsAsync(CancellationToken ct);
+    void AddJob(ImportJob job);
+
+    /// <summary>The job's staged rows in sheet order (tracked).</summary>
+    Task<IReadOnlyList<ImportRow>> GetRowsAsync(Guid jobId, CancellationToken ct);
+    Task<ImportRow?> GetRowAsync(Guid rowId, CancellationToken ct);
+    void AddRows(IEnumerable<ImportRow> rows);
+    Task DeleteRowsAsync(Guid jobId, CancellationToken ct);
+
+    /// <summary>
+    /// Claims the oldest job that is waiting to be read or imported and not held by another worker
+    /// (<c>FOR UPDATE SKIP LOCKED</c>), holding it until <paramref name="leaseUntil"/>.
+    /// </summary>
+    Task<Guid?> ClaimAsync(DateTimeOffset now, DateTimeOffset leaseUntil, CancellationToken ct);
+
+    Task RenewLeaseAsync(Guid jobId, DateTimeOffset leaseUntil, CancellationToken ct);
+
+    /// <summary>Jobs never committed and untouched since <paramref name="before"/>.</summary>
+    Task<IReadOnlyList<ImportJob>> AbandonedAsync(DateTimeOffset before, CancellationToken ct);
+}
+
+public interface IImportTemplateRepository
+{
+    Task<ImportTemplate?> GetAsync(Guid id, CancellationToken ct);
+    Task<IReadOnlyList<ImportTemplate>> ListAsync(CancellationToken ct);
+    void Add(ImportTemplate template);
+    void Remove(ImportTemplate template);
+}
+
+/// <summary>Wakes the import worker when there is new work, instead of waiting for its next poll.</summary>
+public interface IImportSignal
+{
+    void Notify();
+    Task WaitAsync(TimeSpan timeout, CancellationToken ct);
+}
+
+/// <summary>Writes the import report as a spreadsheet.</summary>
+public interface IImportReportWriter
+{
+    void Write(ImportReportDto report, Stream output);
 }

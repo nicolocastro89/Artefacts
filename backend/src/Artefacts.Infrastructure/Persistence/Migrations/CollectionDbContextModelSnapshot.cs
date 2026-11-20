@@ -109,6 +109,254 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                     b.ToTable("object_types", (string)null);
                 });
 
+            modelBuilder.Entity("Artefacts.Domain.Imports.ImportJob", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("CommittedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("committed_at");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Decisions")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("decisions");
+
+                    b.Property<string>("Error")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("error");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("file_name");
+
+                    b.Property<long>("FileSize")
+                        .HasColumnType("bigint")
+                        .HasColumnName("file_size");
+
+                    b.Property<DateTimeOffset?>("FinishedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("finished_at");
+
+                    b.Property<int>("GroupHeadings")
+                        .HasColumnType("integer")
+                        .HasColumnName("group_headings");
+
+                    b.Property<string>("Headings")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("headings");
+
+                    b.Property<int>("ImportedRows")
+                        .HasColumnType("integer")
+                        .HasColumnName("imported_rows");
+
+                    b.Property<DateTimeOffset?>("LeaseUntil")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("lease_until");
+
+                    b.Property<string>("Mapping")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("mapping");
+
+                    b.Property<Guid>("ObjectTypeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("object_type_id");
+
+                    b.Property<int>("ProblemRows")
+                        .HasColumnType("integer")
+                        .HasColumnName("problem_rows");
+
+                    b.Property<int>("ProcessedRows")
+                        .HasColumnType("integer")
+                        .HasColumnName("processed_rows");
+
+                    b.Property<string>("SheetName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("sheet_name");
+
+                    b.Property<string>("SheetNames")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("sheet_names");
+
+                    b.Property<int>("SkippedRows")
+                        .HasColumnType("integer")
+                        .HasColumnName("skipped_rows");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(24)
+                        .HasColumnType("character varying(24)")
+                        .HasColumnName("state");
+
+                    b.Property<Guid?>("TemplateId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("template_id");
+
+                    b.Property<int>("TotalRows")
+                        .HasColumnType("integer")
+                        .HasColumnName("total_rows");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("Warnings")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("warnings");
+
+                    b.HasKey("Id")
+                        .HasName("pk_import_jobs");
+
+                    b.HasIndex("ObjectTypeId")
+                        .HasDatabaseName("ix_import_jobs_object_type_id");
+
+                    b.HasIndex("TemplateId")
+                        .HasDatabaseName("ix_import_jobs_template_id");
+
+                    b.HasIndex("State", "CreatedAt")
+                        .HasDatabaseName("ix_import_jobs_state_created_at");
+
+                    b.ToTable("import_jobs", (string)null);
+                });
+
+            modelBuilder.Entity("Artefacts.Domain.Imports.ImportRow", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("ArtefactId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("artefact_id");
+
+                    b.Property<string>("Cells")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("cells");
+
+                    b.Property<string>("GroupLabel")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("group_label");
+
+                    b.Property<string>("GroupNumber")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("group_number");
+
+                    b.Property<string>("InventoryNumber")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("inventory_number");
+
+                    b.Property<Guid>("JobId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("job_id");
+
+                    b.Property<string>("Pictures")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("pictures");
+
+                    b.Property<string>("Problems")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("problems");
+
+                    b.Property<DateTimeOffset?>("ProcessedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("processed_at");
+
+                    b.Property<int>("SheetRow")
+                        .HasColumnType("integer")
+                        .HasColumnName("sheet_row");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Warnings")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("warnings");
+
+                    b.HasKey("Id")
+                        .HasName("pk_import_rows");
+
+                    b.HasIndex("JobId", "SheetRow")
+                        .IsUnique()
+                        .HasDatabaseName("ix_import_rows_job_id_sheet_row");
+
+                    b.HasIndex("JobId", "Status")
+                        .HasDatabaseName("ix_import_rows_job_id_status");
+
+                    b.ToTable("import_rows", (string)null);
+                });
+
+            modelBuilder.Entity("Artefacts.Domain.Imports.ImportTemplate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Decisions")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("decisions");
+
+                    b.Property<string>("Mapping")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("mapping");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("NormalizedName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("normalized_name");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_import_templates");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasDatabaseName("ux_import_templates_normalized_name");
+
+                    b.ToTable("import_templates", (string)null);
+                });
+
             modelBuilder.Entity("Artefacts.Domain.Languages.Language", b =>
                 {
                     b.Property<string>("Code")
@@ -659,6 +907,32 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                         });
 
                     b.Navigation("Names");
+                });
+
+            modelBuilder.Entity("Artefacts.Domain.Imports.ImportJob", b =>
+                {
+                    b.HasOne("Artefacts.Domain.Classification.ObjectType", null)
+                        .WithMany()
+                        .HasForeignKey("ObjectTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_import_jobs_object_types_object_type_id");
+
+                    b.HasOne("Artefacts.Domain.Imports.ImportTemplate", null)
+                        .WithMany()
+                        .HasForeignKey("TemplateId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_import_jobs_import_templates_template_id");
+                });
+
+            modelBuilder.Entity("Artefacts.Domain.Imports.ImportRow", b =>
+                {
+                    b.HasOne("Artefacts.Domain.Imports.ImportJob", null)
+                        .WithMany()
+                        .HasForeignKey("JobId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_import_rows_import_jobs_job_id");
                 });
 
             modelBuilder.Entity("Artefacts.Domain.Regions.Region", b =>

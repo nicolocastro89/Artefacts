@@ -244,6 +244,232 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listImports"];
+        put?: never;
+        /** Uploads an .xlsx workbook and starts reading it in the background. */
+        post: operations["createImport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/imports/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getImport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/imports/{id}/columns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getImportColumns"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/imports/{id}/mapping": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["setImportMapping"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/imports/{id}/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Evaluates the first rows with an unsaved mapping. */
+        post: operations["previewImportMapping"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/imports/{id}/places": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getImportPlaces"];
+        put: operations["setImportPlaces"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/imports/{id}/dates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getImportDates"];
+        put: operations["setImportDates"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/imports/{id}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getImportReview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/imports/{id}/commit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["commitImport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/imports/{id}/discard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["discardImport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/imports/{id}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getImportReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/imports/{id}/report.xlsx": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["downloadImportReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/import-templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listImportTemplates"];
+        put?: never;
+        post: operations["createImportTemplate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/import-templates/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getImportTemplate"];
+        put: operations["updateImportTemplate"];
+        post?: never;
+        delete: operations["deleteImportTemplate"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -387,6 +613,32 @@ export interface components {
             storageLocation?: null | string;
             valuation?: null | components["schemas"]["MoneyDto"];
         };
+        ColumnRule: {
+            /** Format: int32 */
+            column: number;
+            heading: null | string;
+            target?: null | components["schemas"]["ImportField"];
+            lines?: null | components["schemas"]["LineRule"][];
+            rest?: null | components["schemas"]["ImportField"];
+        };
+        ColumnSummary: {
+            /** Format: int32 */
+            column: number;
+            heading: string;
+            samples: string[];
+            /** Format: int32 */
+            filledRows: number;
+            hitRates: {
+                [key: string]: number;
+            };
+        };
+        DateResolution: {
+            text: string;
+            /** Format: int32 */
+            earliestYear: number;
+            /** Format: int32 */
+            latestYear: number;
+        };
         EntityDto: {
             id: string;
             label: string;
@@ -445,11 +697,146 @@ export interface components {
             web: string;
             print: string;
         };
+        ImportColumnsDto: {
+            columns: components["schemas"]["ColumnSummary"][];
+            fields: string[];
+            detectors: string[];
+        };
+        ImportCountsDto: {
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            ready: number;
+            /** Format: int32 */
+            skipped: number;
+            /** Format: int32 */
+            problems: number;
+            /** Format: int32 */
+            imported: number;
+        };
+        ImportDateDto: {
+            text: string;
+            sheetRows: number[];
+            resolution: null | components["schemas"]["DateResolution"];
+        };
+        ImportDecisions: {
+            places: components["schemas"]["PlaceDecision"][];
+            dates: components["schemas"]["DateResolution"][];
+        };
+        /** @enum {unknown} */
+        ImportField: "title" | "itemNumber" | "groupNumber" | "catalogueNumber" | "inventoryNumber" | "dimensions" | "medium" | "maker" | "description" | "placeOfProduction" | "creationDate" | "dynasty" | "acquisitionSource" | "acquisitionDate" | "acquisitionLot" | "acquisitionPrice" | "acquisitionNote" | "exhibitions" | "catalogueEntryEn" | "holder" | "storageLocation" | "valuation" | null;
+        ImportJobDto: {
+            /** Format: uuid */
+            id: string;
+            fileName: string;
+            /** Format: int64 */
+            fileSize: number;
+            state: components["schemas"]["ImportJobState"];
+            objectType: components["schemas"]["NamedRefDto"];
+            template: null | components["schemas"]["NamedRefDto"];
+            sheetName: null | string;
+            sheetNames: string[];
+            /** Format: int32 */
+            groupHeadings: number;
+            /** Format: int32 */
+            totalRows: number;
+            /** Format: int32 */
+            processedRows: number;
+            /** Format: int32 */
+            importedRows: number;
+            /** Format: int32 */
+            skippedRows: number;
+            /** Format: int32 */
+            problemRows: number;
+            error: null | string;
+            warnings: string[];
+            mapping: null | components["schemas"]["ImportMapping"];
+            decisions: components["schemas"]["ImportDecisions"];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            /** Format: date-time */
+            committedAt: null | string;
+            /** Format: date-time */
+            finishedAt: null | string;
+        };
+        /** @enum {unknown} */
+        ImportJobState: "reading" | "awaitingMapping" | "readyForReview" | "importing" | "finished" | "failed" | "discarded";
+        ImportMapping: {
+            columns: components["schemas"]["ColumnRule"][];
+            inventoryNumber: components["schemas"]["InventoryNumberPattern"];
+            /** @default it */
+            language: string;
+            acquisitionMethod?: components["schemas"]["AcquisitionMethod"];
+            locationPatterns?: null | string[];
+        };
+        ImportMappingResult: {
+            job: components["schemas"]["ImportJobDto"];
+            warnings: string[];
+        };
+        ImportPlaceDto: {
+            text: string;
+            /** Format: int32 */
+            rows: number;
+            decision: null | components["schemas"]["PlaceDecision"];
+            decided: boolean;
+            suggestions: components["schemas"]["PlaceSuggestionDto"][];
+        };
+        ImportReportDto: {
+            job: components["schemas"]["ImportJobDto"];
+            rows: components["schemas"]["ImportReportRowDto"][];
+        };
+        ImportReportRowDto: {
+            /** Format: int32 */
+            sheetRow: number;
+            status: components["schemas"]["ImportRowStatus"];
+            inventoryNumber: null | string;
+            /** Format: uuid */
+            artefactId: null | string;
+            problems: components["schemas"]["RowProblem"][];
+            warnings: string[];
+        };
+        ImportReviewDto: {
+            counts: components["schemas"]["ImportCountsDto"];
+            rows: components["schemas"]["ReviewRowDto"][];
+            /** Format: int32 */
+            total: number;
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            pageSize: number;
+        };
+        /** @enum {unknown} */
+        ImportRowStatus: "pending" | "ready" | "problem" | "imported" | "skipped";
+        ImportTemplateDto: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            mapping: components["schemas"]["ImportMapping"];
+            decisions: components["schemas"]["ImportDecisions"];
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        InventoryNumberPattern: {
+            pattern: string;
+            prefer?: null | components["schemas"]["ImportField"];
+        };
         LanguageDto: {
             code: string;
             name: string;
             /** Format: int32 */
             position: number;
+        };
+        /** @enum {unknown} */
+        LineDetector: "itemTitle" | "groupNumber" | "dimensions" | "historicalDate" | "calendarDate" | "lot" | "money" | "catalogueNumber" | "locationCode" | null;
+        LineRule: {
+            target: components["schemas"]["ImportField"];
+            detector?: null | components["schemas"]["LineDetector"];
+            /** Format: int32 */
+            position?: null | number;
+            /** @default false */
+            continues: boolean;
         };
         MoneyDto: {
             /** Format: double */
@@ -472,6 +859,19 @@ export interface components {
             /** Format: int32 */
             artefactCount: number;
         };
+        /** @enum {unknown} */
+        PlaceAction: "link" | "create" | "keep";
+        PlaceDecision: {
+            text: string;
+            action: components["schemas"]["PlaceAction"];
+            /** Format: uuid */
+            regionId?: null | string;
+            names?: null | {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            parentId?: null | string;
+        };
         PlaceOfProductionDto: {
             text: null | string;
             region: null | components["schemas"]["NamedRefDto"];
@@ -480,6 +880,21 @@ export interface components {
             text: null | string;
             /** Format: uuid */
             regionId?: null | string;
+        };
+        PlaceSuggestionDto: {
+            /** Format: uuid */
+            regionId: string;
+            regionName: string;
+            matchedName: string;
+            /** Format: double */
+            score: number;
+            exact: boolean;
+            alias: boolean;
+        };
+        PreviewMappingRequest: {
+            mapping: null | components["schemas"]["ImportMapping"];
+            /** Format: int32 */
+            rows?: null | number;
         };
         ProblemDetails: {
             type?: null | string;
@@ -514,8 +929,48 @@ export interface components {
             parentId: null | string;
             parentName: null | string;
         };
+        ReviewFieldDto: {
+            field: components["schemas"]["ImportField"];
+            value: string;
+        };
+        ReviewPictureDto: {
+            /** Format: int32 */
+            index: number;
+            name: string;
+            supported: boolean;
+            thumbUrl: null | string;
+        };
+        ReviewRowDto: {
+            /** Format: int32 */
+            sheetRow: number;
+            status: components["schemas"]["ImportRowStatus"];
+            inventoryNumber: null | string;
+            title: null | string;
+            groupLabel: null | string;
+            fields: components["schemas"]["ReviewFieldDto"][];
+            pictures: components["schemas"]["ReviewPictureDto"][];
+            problems: components["schemas"]["RowProblem"][];
+            warnings: string[];
+            /** Format: uuid */
+            artefactId: null | string;
+        };
+        RowProblem: {
+            field: string;
+            text: null | string;
+            reason: string;
+        };
+        SaveImportTemplateRequest: {
+            name: null | string;
+            /** Format: uuid */
+            fromJobId?: null | string;
+            mapping?: null | components["schemas"]["ImportMapping"];
+            decisions?: null | components["schemas"]["ImportDecisions"];
+        };
         SetCaptionRequest: {
             caption: null | string;
+        };
+        SetDateResolutionsRequest: {
+            dates: null | components["schemas"]["DateResolution"][];
         };
         SetLanguageOrderRequest: {
             codes: null | string[];
@@ -524,6 +979,9 @@ export interface components {
             names: null | {
                 [key: string]: string;
             };
+        };
+        SetPlaceDecisionsRequest: {
+            places: null | components["schemas"]["PlaceDecision"][];
         };
         SetRegionParentRequest: {
             /** Format: uuid */
@@ -1405,6 +1863,746 @@ export interface operations {
             };
             /** @description Conflict */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    listImports: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportJobDto"][];
+                };
+            };
+        };
+    };
+    createImport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    file?: components["schemas"]["IFormFile"];
+                } & {
+                    /** Format: uuid */
+                    objectTypeId?: string;
+                } & {
+                    /** Format: uuid */
+                    templateId?: string;
+                } & {
+                    sheet?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportJobDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+        };
+    };
+    getImport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportJobDto"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    getImportColumns: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportColumnsDto"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    setImportMapping: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportMapping"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportMappingResult"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    previewImportMapping: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PreviewMappingRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportReviewDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    getImportPlaces: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportPlaceDto"][];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    setImportPlaces: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetPlaceDecisionsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportPlaceDto"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    getImportDates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportDateDto"][];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    setImportDates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetDateResolutionsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportDateDto"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    getImportReview: {
+        parameters: {
+            query?: {
+                status?: string;
+                page?: number;
+                pageSize?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportReviewDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    commitImport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportJobDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    discardImport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportJobDto"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    getImportReport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportReportDto"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    downloadImportReport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    listImportTemplates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportTemplateDto"][];
+                };
+            };
+        };
+    };
+    createImportTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveImportTemplateRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportTemplateDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+        };
+    };
+    getImportTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportTemplateDto"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    updateImportTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveImportTemplateRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportTemplateDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    deleteImportTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

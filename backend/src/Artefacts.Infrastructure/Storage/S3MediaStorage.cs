@@ -60,6 +60,23 @@ public sealed class S3MediaStorage : IMediaStorage, IDisposable
     public Task DeleteAsync(string key, CancellationToken ct) =>
         _client.DeleteObjectAsync(_bucket, key, ct);
 
+    public Task CopyAsync(string sourceKey, string destinationKey, CancellationToken ct) =>
+        _client.CopyObjectAsync(_bucket, sourceKey, _bucket, destinationKey, ct);
+
+    public async Task DeletePrefixAsync(string prefix, CancellationToken ct)
+    {
+        var request = new ListObjectsV2Request { BucketName = _bucket, Prefix = prefix };
+        ListObjectsV2Response response;
+        do
+        {
+            response = await _client.ListObjectsV2Async(request, ct);
+            var keys = (response.S3Objects ?? []).Select(o => new KeyVersion { Key = o.Key }).ToList();
+            if (keys.Count > 0)
+                await _client.DeleteObjectsAsync(new DeleteObjectsRequest { BucketName = _bucket, Objects = keys }, ct);
+            request.ContinuationToken = response.NextContinuationToken;
+        } while (response.IsTruncated == true);
+    }
+
     /// <summary>Creates the bucket if it does not exist (used by tests and first-run setup).</summary>
     public async Task EnsureBucketAsync(CancellationToken ct)
     {

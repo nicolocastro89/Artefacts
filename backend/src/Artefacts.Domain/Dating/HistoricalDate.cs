@@ -69,7 +69,8 @@ public sealed class HistoricalDate : IEquatable<HistoricalDate>
         if (parsed is null)
             throw new DomainValidationException("",
                 $"\"{display}\" could not be interpreted. Use forms like 1654, c. 1650, 1680s, " +
-                "17th century, late 17th century, 1650-1660, before 1720, or enter an explicit range.");
+                "17th century, late 17th century, XV secolo, seconda metà XV, 1650-1660, before 1720, " +
+                "or enter an explicit range.");
 
         return new HistoricalDate(display, parsed.Earliest, parsed.Latest, parsed.Precision);
     }

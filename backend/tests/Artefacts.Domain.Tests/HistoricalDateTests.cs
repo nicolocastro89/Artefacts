@@ -33,6 +33,77 @@ public class HistoricalDateTests
         Assert.Equal(precision, date.Precision);
     }
 
+    [Theory]
+    // Circa after the year
+    [InlineData("1470 circa", 1460, 1480, HistoricalDatePrecision.Approximate)]
+    // Roman-numeral centuries, with or without "secolo"/"sec."
+    [InlineData("XV", 1401, 1500, HistoricalDatePrecision.Century)]
+    [InlineData("XV secolo", 1401, 1500, HistoricalDatePrecision.Century)]
+    [InlineData("IX sec.", 801, 900, HistoricalDatePrecision.Century)]
+    [InlineData("XIII sec", 1201, 1300, HistoricalDatePrecision.Century)]
+    [InlineData("XIX", 1801, 1900, HistoricalDatePrecision.Century)]
+    // Italian parts of a century
+    [InlineData("inizio XVII", 1601, 1633, HistoricalDatePrecision.Century)]
+    [InlineData("metà XVI", 1534, 1566, HistoricalDatePrecision.Century)]
+    [InlineData("fine XVI", 1567, 1600, HistoricalDatePrecision.Century)]
+    [InlineData("Fine XIII", 1267, 1300, HistoricalDatePrecision.Century)]
+    [InlineData("prima metà XVI", 1501, 1550, HistoricalDatePrecision.Century)]
+    [InlineData("seconda metà XV", 1451, 1500, HistoricalDatePrecision.Century)]
+    [InlineData("seconda metà XV sec", 1451, 1500, HistoricalDatePrecision.Century)]
+    [InlineData("inizio XIV sec.", 1301, 1333, HistoricalDatePrecision.Century)]
+    // Spans of centuries and century parts
+    [InlineData("XI-XII", 1001, 1200, HistoricalDatePrecision.Century)]
+    [InlineData("XI - XII", 1001, 1200, HistoricalDatePrecision.Century)]
+    [InlineData("IX/X", 801, 1000, HistoricalDatePrecision.Century)]
+    [InlineData("X/XI secolo", 901, 1100, HistoricalDatePrecision.Century)]
+    [InlineData("XV XVI", 1401, 1600, HistoricalDatePrecision.Century)]
+    [InlineData("XVI - XVII secolo", 1501, 1700, HistoricalDatePrecision.Century)]
+    [InlineData("fine XII inizio XIII", 1167, 1233, HistoricalDatePrecision.Century)]
+    [InlineData("fine X-inizio XI", 967, 1033, HistoricalDatePrecision.Century)]
+    [InlineData("seconda metà VII - VIII", 651, 800, HistoricalDatePrecision.Century)]
+    // Shortened year ranges
+    [InlineData("1450 - 75", 1450, 1475, HistoricalDatePrecision.Year)]
+    [InlineData("1463-4", 1463, 1464, HistoricalDatePrecision.Year)]
+    [InlineData("1480-81", 1480, 1481, HistoricalDatePrecision.Year)]
+    [InlineData("1530- 35", 1530, 1535, HistoricalDatePrecision.Year)]
+    [InlineData("1330 -1340", 1330, 1340, HistoricalDatePrecision.Year)]
+    // A century refined by a year expression
+    [InlineData("XV (1440-1446)", 1440, 1446, HistoricalDatePrecision.Year)]
+    [InlineData("XIII (1260/70)", 1260, 1270, HistoricalDatePrecision.Year)]
+    [InlineData("inizio XIV (1330)", 1330, 1330, HistoricalDatePrecision.Year)]
+    [InlineData("Fine XVI (1580 circa)", 1570, 1590, HistoricalDatePrecision.Approximate)]
+    [InlineData("XV 1450", 1450, 1450, HistoricalDatePrecision.Year)]
+    [InlineData("seconda metà XIV 1386", 1386, 1386, HistoricalDatePrecision.Year)]
+    public void Interprets_italian_and_roman_forms(string text, int? earliest, int? latest, HistoricalDatePrecision precision)
+    {
+        var date = HistoricalDate.Create(text);
+
+        Assert.Equal(text, date.Display);
+        Assert.Equal(earliest, date.EarliestYear);
+        Assert.Equal(latest, date.LatestYear);
+        Assert.Equal(precision, date.Precision);
+    }
+
+    [Fact]
+    public void Circa_after_the_year_matches_circa_before()
+    {
+        var after = HistoricalDate.Create("1470 circa");
+        var before = HistoricalDate.Create("c. 1470");
+        Assert.Equal((before.EarliestYear, before.LatestYear, before.Precision), (after.EarliestYear, after.LatestYear, after.Precision));
+    }
+
+    [Theory]
+    [InlineData("XIIII")] // not a canonical numeral
+    [InlineData("XII - X")] // span runs backwards
+    [InlineData("II secolo a.C.")] // years before 1 are not supported
+    [InlineData("X Fatimide")]
+    [InlineData("1475 - 50")] // shortened end before the start
+    [InlineData("Qinghai Dulan VIII")]
+    public void Rejects_unsupported_italian_forms(string text)
+    {
+        Assert.Throws<DomainValidationException>(() => HistoricalDate.Create(text));
+    }
+
     [Fact]
     public void Keeps_display_text_as_entered_with_whitespace_collapsed()
     {

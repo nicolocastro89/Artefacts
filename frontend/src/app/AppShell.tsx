@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { Archive, Map as MapIcon, Monitor, Moon, Sun } from 'lucide-react'
+import { Archive, FileUp, Map as MapIcon, Monitor, Moon, Sun } from 'lucide-react'
 import { NavLink, Outlet, useLocation } from 'react-router'
 import { api } from '../api/client'
 import { useTheme, type ThemeChoice } from './theme'
@@ -56,6 +56,12 @@ export function AppShell() {
               <MapIcon aria-hidden="true" />
               <span>Reference lists</span>
               {counts.reference != null && <span className="rail__count">{counts.reference.toLocaleString()}</span>}
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/imports" className="rail__link">
+              <FileUp aria-hidden="true" />
+              <span>Import</span>
             </NavLink>
           </li>
         </ul>

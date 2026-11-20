@@ -1,5 +1,7 @@
 using Artefacts.Application.Abstractions;
+using Artefacts.Application.Imports;
 using Artefacts.Application.Media;
+using Artefacts.Infrastructure.Imports;
 using Artefacts.Infrastructure.Imaging;
 using Artefacts.Infrastructure.Persistence;
 using Artefacts.Infrastructure.Read;
@@ -48,6 +50,14 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IArtefactListQuery, ArtefactListQuery>();
         services.AddSingleton<IFieldCatalog, FieldCatalog>();
+        services.AddScoped<IImportRepository, ImportRepository>();
+        services.AddScoped<IImportTemplateRepository, ImportTemplateRepository>();
+        services.AddSingleton<IImportSignal, ImportSignal>();
+        services.AddSingleton<IWorkbookReader, OpenXmlWorkbookReader>();
+        services.AddSingleton<IImportReportWriter, XlsxImportReportWriter>();
+        services.AddOptions<ImportOptions>().Bind(configuration.GetSection(ImportOptions.Section));
+        services.AddOptions<ImportWorkerOptions>().Bind(configuration.GetSection("Imports:Worker"));
+        services.AddHostedService<ImportWorker>();
 
         services.AddOptions<MediaOptions>().Bind(configuration.GetSection(MediaOptions.Section)).ValidateOnStart();
         services.AddOptions<StorageOptions>().Bind(configuration.GetSection(StorageOptions.Section))

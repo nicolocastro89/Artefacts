@@ -53,6 +53,7 @@ app.MapArtefactEndpoints();
 app.MapRegionEndpoints();
 app.MapObjectTypeEndpoints();
 app.MapLanguageEndpoints();
+app.MapImportEndpoints();
 app.MapSupportEndpoints();
 
 if (app.Configuration.GetValue("Database:MigrateOnStartup", false))

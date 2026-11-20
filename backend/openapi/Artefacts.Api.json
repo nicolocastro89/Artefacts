@@ -1167,6 +1167,1005 @@
           }
         }
       }
+    },
+    "/api/imports": {
+      "post": {
+        "tags": [
+          "Imports"
+        ],
+        "summary": "Uploads an .xlsx workbook and starts reading it in the background.",
+        "operationId": "createImport",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "allOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "file": {
+                        "$ref": "#/components/schemas/IFormFile"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "objectTypeId": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "templateId": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "sheet": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportJobDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Imports"
+        ],
+        "operationId": "listImports",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ImportJobDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/imports/{id}": {
+      "get": {
+        "tags": [
+          "Imports"
+        ],
+        "operationId": "getImport",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportJobDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/imports/{id}/columns": {
+      "get": {
+        "tags": [
+          "Imports"
+        ],
+        "operationId": "getImportColumns",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportColumnsDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/imports/{id}/mapping": {
+      "put": {
+        "tags": [
+          "Imports"
+        ],
+        "operationId": "setImportMapping",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportMapping"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportMappingResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/imports/{id}/preview": {
+      "post": {
+        "tags": [
+          "Imports"
+        ],
+        "summary": "Evaluates the first rows with an unsaved mapping.",
+        "operationId": "previewImportMapping",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreviewMappingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportReviewDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/imports/{id}/places": {
+      "get": {
+        "tags": [
+          "Imports"
+        ],
+        "operationId": "getImportPlaces",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ImportPlaceDto"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Imports"
+        ],
+        "operationId": "setImportPlaces",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetPlaceDecisionsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ImportPlaceDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/imports/{id}/dates": {
+      "get": {
+        "tags": [
+          "Imports"
+        ],
+        "operationId": "getImportDates",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ImportDateDto"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Imports"
+        ],
+        "operationId": "setImportDates",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetDateResolutionsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ImportDateDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/imports/{id}/review": {
+      "get": {
+        "tags": [
+          "Imports"
+        ],
+        "operationId": "getImportReview",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportReviewDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/imports/{id}/commit": {
+      "post": {
+        "tags": [
+          "Imports"
+        ],
+        "operationId": "commitImport",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportJobDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/imports/{id}/discard": {
+      "post": {
+        "tags": [
+          "Imports"
+        ],
+        "operationId": "discardImport",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportJobDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/imports/{id}/report": {
+      "get": {
+        "tags": [
+          "Imports"
+        ],
+        "operationId": "getImportReport",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportReportDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/imports/{id}/report.xlsx": {
+      "get": {
+        "tags": [
+          "Imports"
+        ],
+        "operationId": "downloadImportReport",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/import-templates": {
+      "get": {
+        "tags": [
+          "Imports"
+        ],
+        "operationId": "listImportTemplates",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ImportTemplateDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Imports"
+        ],
+        "operationId": "createImportTemplate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveImportTemplateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportTemplateDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/import-templates/{id}": {
+      "get": {
+        "tags": [
+          "Imports"
+        ],
+        "operationId": "getImportTemplate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportTemplateDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Imports"
+        ],
+        "operationId": "updateImportTemplate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveImportTemplateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportTemplateDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Imports"
+        ],
+        "operationId": "deleteImportTemplate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1898,6 +2897,111 @@
           }
         }
       },
+      "ColumnRule": {
+        "required": [
+          "column",
+          "heading"
+        ],
+        "type": "object",
+        "properties": {
+          "column": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "heading": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "target": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ImportField"
+              }
+            ]
+          },
+          "lines": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/LineRule"
+            }
+          },
+          "rest": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ImportField"
+              }
+            ]
+          }
+        }
+      },
+      "ColumnSummary": {
+        "required": [
+          "column",
+          "heading",
+          "samples",
+          "filledRows",
+          "hitRates"
+        ],
+        "type": "object",
+        "properties": {
+          "column": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "heading": {
+            "type": "string"
+          },
+          "samples": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "filledRows": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hitRates": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number",
+              "format": "double"
+            }
+          }
+        }
+      },
+      "DateResolution": {
+        "required": [
+          "text",
+          "earliestYear",
+          "latestYear"
+        ],
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "earliestYear": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "latestYear": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "EntityDto": {
         "required": [
           "id",
@@ -2140,6 +3244,539 @@
           }
         }
       },
+      "ImportColumnsDto": {
+        "required": [
+          "columns",
+          "fields",
+          "detectors"
+        ],
+        "type": "object",
+        "properties": {
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ColumnSummary"
+            }
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "detectors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ImportCountsDto": {
+        "required": [
+          "total",
+          "ready",
+          "skipped",
+          "problems",
+          "imported"
+        ],
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "ready": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "skipped": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "problems": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "imported": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ImportDateDto": {
+        "required": [
+          "text",
+          "sheetRows",
+          "resolution"
+        ],
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "sheetRows": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "resolution": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/DateResolution"
+              }
+            ]
+          }
+        }
+      },
+      "ImportDecisions": {
+        "required": [
+          "places",
+          "dates"
+        ],
+        "type": "object",
+        "properties": {
+          "places": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlaceDecision"
+            }
+          },
+          "dates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DateResolution"
+            }
+          }
+        }
+      },
+      "ImportField": {
+        "enum": [
+          "title",
+          "itemNumber",
+          "groupNumber",
+          "catalogueNumber",
+          "inventoryNumber",
+          "dimensions",
+          "medium",
+          "maker",
+          "description",
+          "placeOfProduction",
+          "creationDate",
+          "dynasty",
+          "acquisitionSource",
+          "acquisitionDate",
+          "acquisitionLot",
+          "acquisitionPrice",
+          "acquisitionNote",
+          "exhibitions",
+          "catalogueEntryEn",
+          "holder",
+          "storageLocation",
+          "valuation",
+          null
+        ]
+      },
+      "ImportJobDto": {
+        "required": [
+          "id",
+          "fileName",
+          "fileSize",
+          "state",
+          "objectType",
+          "template",
+          "sheetName",
+          "sheetNames",
+          "groupHeadings",
+          "totalRows",
+          "processedRows",
+          "importedRows",
+          "skippedRows",
+          "problemRows",
+          "error",
+          "warnings",
+          "mapping",
+          "decisions",
+          "createdAt",
+          "updatedAt",
+          "committedAt",
+          "finishedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "fileSize": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "state": {
+            "$ref": "#/components/schemas/ImportJobState"
+          },
+          "objectType": {
+            "$ref": "#/components/schemas/NamedRefDto"
+          },
+          "template": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/NamedRefDto"
+              }
+            ]
+          },
+          "sheetName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sheetNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "groupHeadings": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalRows": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "processedRows": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "importedRows": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "skippedRows": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "problemRows": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "error": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "mapping": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ImportMapping"
+              }
+            ]
+          },
+          "decisions": {
+            "$ref": "#/components/schemas/ImportDecisions"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "committedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "finishedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "ImportJobState": {
+        "enum": [
+          "reading",
+          "awaitingMapping",
+          "readyForReview",
+          "importing",
+          "finished",
+          "failed",
+          "discarded"
+        ]
+      },
+      "ImportMapping": {
+        "required": [
+          "columns",
+          "inventoryNumber"
+        ],
+        "type": "object",
+        "properties": {
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ColumnRule"
+            }
+          },
+          "inventoryNumber": {
+            "$ref": "#/components/schemas/InventoryNumberPattern"
+          },
+          "language": {
+            "type": "string",
+            "default": "it"
+          },
+          "acquisitionMethod": {
+            "$ref": "#/components/schemas/AcquisitionMethod"
+          },
+          "locationPatterns": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ImportMappingResult": {
+        "required": [
+          "job",
+          "warnings"
+        ],
+        "type": "object",
+        "properties": {
+          "job": {
+            "$ref": "#/components/schemas/ImportJobDto"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ImportPlaceDto": {
+        "required": [
+          "text",
+          "rows",
+          "decision",
+          "decided",
+          "suggestions"
+        ],
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "rows": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "decision": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PlaceDecision"
+              }
+            ]
+          },
+          "decided": {
+            "type": "boolean"
+          },
+          "suggestions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlaceSuggestionDto"
+            }
+          }
+        }
+      },
+      "ImportReportDto": {
+        "required": [
+          "job",
+          "rows"
+        ],
+        "type": "object",
+        "properties": {
+          "job": {
+            "$ref": "#/components/schemas/ImportJobDto"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportReportRowDto"
+            }
+          }
+        }
+      },
+      "ImportReportRowDto": {
+        "required": [
+          "sheetRow",
+          "status",
+          "inventoryNumber",
+          "artefactId",
+          "problems",
+          "warnings"
+        ],
+        "type": "object",
+        "properties": {
+          "sheetRow": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ImportRowStatus"
+          },
+          "inventoryNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "artefactId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "problems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RowProblem"
+            }
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ImportReviewDto": {
+        "required": [
+          "counts",
+          "rows",
+          "total",
+          "page",
+          "pageSize"
+        ],
+        "type": "object",
+        "properties": {
+          "counts": {
+            "$ref": "#/components/schemas/ImportCountsDto"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReviewRowDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ImportRowStatus": {
+        "enum": [
+          "pending",
+          "ready",
+          "problem",
+          "imported",
+          "skipped"
+        ]
+      },
+      "ImportTemplateDto": {
+        "required": [
+          "id",
+          "name",
+          "mapping",
+          "decisions",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "mapping": {
+            "$ref": "#/components/schemas/ImportMapping"
+          },
+          "decisions": {
+            "$ref": "#/components/schemas/ImportDecisions"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "InventoryNumberPattern": {
+        "required": [
+          "pattern"
+        ],
+        "type": "object",
+        "properties": {
+          "pattern": {
+            "type": "string"
+          },
+          "prefer": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ImportField"
+              }
+            ]
+          }
+        }
+      },
       "LanguageDto": {
         "required": [
           "code",
@@ -2157,6 +3794,52 @@
           "position": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "LineDetector": {
+        "enum": [
+          "itemTitle",
+          "groupNumber",
+          "dimensions",
+          "historicalDate",
+          "calendarDate",
+          "lot",
+          "money",
+          "catalogueNumber",
+          "locationCode",
+          null
+        ]
+      },
+      "LineRule": {
+        "required": [
+          "target"
+        ],
+        "type": "object",
+        "properties": {
+          "target": {
+            "$ref": "#/components/schemas/ImportField"
+          },
+          "detector": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/LineDetector"
+              }
+            ]
+          },
+          "position": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "continues": {
+            "type": "boolean",
+            "default": false
           }
         }
       },
@@ -2224,6 +3907,51 @@
           }
         }
       },
+      "PlaceAction": {
+        "enum": [
+          "link",
+          "create",
+          "keep"
+        ]
+      },
+      "PlaceDecision": {
+        "required": [
+          "text",
+          "action"
+        ],
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "action": {
+            "$ref": "#/components/schemas/PlaceAction"
+          },
+          "regionId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "names": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "parentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
       "PlaceOfProductionDto": {
         "required": [
           "text",
@@ -2267,6 +3995,64 @@
               "string"
             ],
             "format": "uuid"
+          }
+        }
+      },
+      "PlaceSuggestionDto": {
+        "required": [
+          "regionId",
+          "regionName",
+          "matchedName",
+          "score",
+          "exact",
+          "alias"
+        ],
+        "type": "object",
+        "properties": {
+          "regionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "regionName": {
+            "type": "string"
+          },
+          "matchedName": {
+            "type": "string"
+          },
+          "score": {
+            "type": "number",
+            "format": "double"
+          },
+          "exact": {
+            "type": "boolean"
+          },
+          "alias": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PreviewMappingRequest": {
+        "required": [
+          "mapping"
+        ],
+        "type": "object",
+        "properties": {
+          "mapping": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ImportMapping"
+              }
+            ]
+          },
+          "rows": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
           }
         }
       },
@@ -2405,6 +4191,184 @@
           }
         }
       },
+      "ReviewFieldDto": {
+        "required": [
+          "field",
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "field": {
+            "$ref": "#/components/schemas/ImportField"
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      },
+      "ReviewPictureDto": {
+        "required": [
+          "index",
+          "name",
+          "supported",
+          "thumbUrl"
+        ],
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "supported": {
+            "type": "boolean"
+          },
+          "thumbUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "ReviewRowDto": {
+        "required": [
+          "sheetRow",
+          "status",
+          "inventoryNumber",
+          "title",
+          "groupLabel",
+          "fields",
+          "pictures",
+          "problems",
+          "warnings",
+          "artefactId"
+        ],
+        "type": "object",
+        "properties": {
+          "sheetRow": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ImportRowStatus"
+          },
+          "inventoryNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "groupLabel": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReviewFieldDto"
+            }
+          },
+          "pictures": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReviewPictureDto"
+            }
+          },
+          "problems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RowProblem"
+            }
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "artefactId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "RowProblem": {
+        "required": [
+          "field",
+          "text",
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "text": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "SaveImportTemplateRequest": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "fromJobId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "mapping": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ImportMapping"
+              }
+            ]
+          },
+          "decisions": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ImportDecisions"
+              }
+            ]
+          }
+        }
+      },
       "SetCaptionRequest": {
         "required": [
           "caption"
@@ -2416,6 +4380,23 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "SetDateResolutionsRequest": {
+        "required": [
+          "dates"
+        ],
+        "type": "object",
+        "properties": {
+          "dates": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/DateResolution"
+            }
           }
         }
       },
@@ -2449,6 +4430,23 @@
             ],
             "additionalProperties": {
               "type": "string"
+            }
+          }
+        }
+      },
+      "SetPlaceDecisionsRequest": {
+        "required": [
+          "places"
+        ],
+        "type": "object",
+        "properties": {
+          "places": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/PlaceDecision"
             }
           }
         }
@@ -2497,6 +4495,9 @@
     },
     {
       "name": "Languages"
+    },
+    {
+      "name": "Imports"
     }
   ]
 }

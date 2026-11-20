@@ -40,6 +40,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
             ["Imgproxy:Key"] = "736563726574",
             ["Imgproxy:Salt"] = "68656C6C6F",
             ["Media:MaxUploadBytes"] = MaxUploadBytes.ToString(),
+            ["Imports:PollSeconds"] = "1",
         }));
     }
 
