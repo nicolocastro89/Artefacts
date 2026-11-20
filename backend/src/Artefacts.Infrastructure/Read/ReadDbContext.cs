@@ -13,6 +13,9 @@ public sealed class ReadDbContext(DbContextOptions<ReadDbContext> options) : DbC
 
     protected override void OnModelCreating(ModelBuilder model)
     {
+        model.HasDbFunction(typeof(LocalizedSql).GetMethod(nameof(LocalizedSql.RegionName))!).HasName("region_name");
+        model.HasDbFunction(typeof(LocalizedSql).GetMethod(nameof(LocalizedSql.ObjectTypeName))!).HasName("object_type_name");
+
         model.Entity<ArtefactRow>(b =>
         {
             b.HasNoKey();

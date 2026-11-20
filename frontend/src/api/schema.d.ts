@@ -140,7 +140,7 @@ export interface paths {
             cookie?: never;
         };
         get: operations["getRegion"];
-        put: operations["renameRegion"];
+        put: operations["setRegionNames"];
         post?: never;
         delete: operations["deleteRegion"];
         options?: never;
@@ -188,9 +188,57 @@ export interface paths {
             cookie?: never;
         };
         get: operations["getObjectType"];
-        put: operations["renameObjectType"];
+        put: operations["setObjectTypeNames"];
         post?: never;
         delete: operations["deleteObjectType"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/languages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listLanguages"];
+        put?: never;
+        post: operations["addLanguage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/languages/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["setLanguageOrder"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/languages/{code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["deleteLanguage"];
         options?: never;
         head?: never;
         patch?: never;
@@ -220,11 +268,19 @@ export interface components {
         };
         /** @enum {unknown} */
         AcquisitionMethod: "purchase" | "gift" | "bequest" | "transfer" | "other";
-        AddObjectTypeRequest: {
+        AddLanguageRequest: {
+            code: null | string;
             name: null | string;
         };
+        AddObjectTypeRequest: {
+            names: null | {
+                [key: string]: string;
+            };
+        };
         AddRegionRequest: {
-            name: null | string;
+            names: null | {
+                [key: string]: string;
+            };
             /** Format: uuid */
             parentId?: null | string;
         };
@@ -238,6 +294,11 @@ export interface components {
             medium: null | string;
             dimensions: null | string;
             description: null | string;
+            descriptionLanguage: null | string;
+            descriptions: {
+                [key: string]: string;
+            };
+            language: string;
             acquisition: null | components["schemas"]["AcquisitionDto"];
             provenance: components["schemas"]["ProvenanceEntryDto"][];
             primaryImage: null | components["schemas"]["ArtefactImageDto"];
@@ -310,7 +371,9 @@ export interface components {
             creationDate?: null | components["schemas"]["HistoricalDateInput"];
             medium?: null | string;
             dimensions?: null | string;
-            description?: null | string;
+            descriptions?: null | {
+                [key: string]: string;
+            };
             acquisition?: null | components["schemas"]["AcquisitionInput"];
             provenance?: null | components["schemas"]["ProvenanceEntryInput"][];
             /** Format: uuid */
@@ -382,6 +445,12 @@ export interface components {
             web: string;
             print: string;
         };
+        LanguageDto: {
+            code: string;
+            name: string;
+            /** Format: int32 */
+            position: number;
+        };
         MoneyDto: {
             /** Format: double */
             amount: number;
@@ -396,6 +465,10 @@ export interface components {
             /** Format: uuid */
             id: string;
             name: string;
+            nameLanguage: string;
+            names: {
+                [key: string]: string;
+            };
             /** Format: int32 */
             artefactCount: number;
         };
@@ -433,18 +506,24 @@ export interface components {
             /** Format: uuid */
             id: string;
             name: string;
+            nameLanguage: string;
+            names: {
+                [key: string]: string;
+            };
             /** Format: uuid */
             parentId: null | string;
             parentName: null | string;
         };
-        RenameObjectTypeRequest: {
-            name: null | string;
-        };
-        RenameRegionRequest: {
-            name: null | string;
-        };
         SetCaptionRequest: {
             caption: null | string;
+        };
+        SetLanguageOrderRequest: {
+            codes: null | string[];
+        };
+        SetNamesRequest: {
+            names: null | {
+                [key: string]: string;
+            };
         };
         SetRegionParentRequest: {
             /** Format: uuid */
@@ -908,7 +987,7 @@ export interface operations {
             };
         };
     };
-    renameRegion: {
+    setRegionNames: {
         parameters: {
             query?: never;
             header?: never;
@@ -919,7 +998,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["RenameRegionRequest"];
+                "application/json": components["schemas"]["SetNamesRequest"];
             };
         };
         responses: {
@@ -1129,7 +1208,7 @@ export interface operations {
             };
         };
     };
-    renameObjectType: {
+    setObjectTypeNames: {
         parameters: {
             query?: never;
             header?: never;
@@ -1140,7 +1219,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["RenameObjectTypeRequest"];
+                "application/json": components["schemas"]["SetNamesRequest"];
             };
         };
         responses: {
@@ -1179,6 +1258,130 @@ export interface operations {
             header?: never;
             path: {
                 id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    listLanguages: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LanguageDto"][];
+                };
+            };
+        };
+    };
+    addLanguage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddLanguageRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LanguageDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+        };
+    };
+    setLanguageOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetLanguageOrderRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LanguageDto"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+        };
+    };
+    deleteLanguage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
             };
             cookie?: never;
         };

@@ -1,38 +1,48 @@
 using Artefacts.Domain.Common;
+using Artefacts.Domain.Languages;
 
 namespace Artefacts.Domain.Regions;
 
 /// <summary>
-/// A geographic region in the institution's reference list (e.g. "Flanders"), used by provenance.
-/// Names are unique ignoring case and surrounding/repeated whitespace.
+/// A geographic region in the institution's reference list (e.g. "Flanders"), used by provenance and places of
+/// production. A region has a name in one or more content languages ("Turchia"/"Turkey"); names are unique per
+/// language, ignoring case and surrounding/repeated whitespace.
 /// </summary>
 public sealed class Region
 {
     public const int MaxNameLength = 200;
 
+    private readonly List<LocalizedName> _names = [];
+
     public RegionId Id { get; private set; }
-    public string Name { get; private set; } = default!;
-    public string NormalizedName { get; private set; } = default!;
     public RegionId? ParentId { get; private set; }
+
+    /// <summary>The region's names, one per language.</summary>
+    public IReadOnlyList<LocalizedName> Names => _names.OrderBy(n => n.Language, StringComparer.Ordinal).ToList();
 
     // For EF Core.
     private Region()
     {
     }
 
-    public static Region Create(string? name)
+    public static Region Create(IReadOnlyDictionary<string, string?>? names)
     {
         var region = new Region { Id = RegionId.New() };
-        region.Rename(name);
+        region.SetNames(names);
         return region;
     }
 
-    public void Rename(string? name)
+    /// <summary>Replaces all names (blank ones dropped; at least one required).</summary>
+    public void SetNames(IReadOnlyDictionary<string, string?>? names)
     {
-        var clean = CleanName(name);
-        Name = clean;
-        NormalizedName = Normalize(clean);
+        var list = LocalizedName.FromMap(names, MaxNameLength);
+        _names.Clear();
+        _names.AddRange(list);
     }
+
+    /// <summary>The name in the first preferred language that has one.</summary>
+    public ResolvedText? NameIn(IReadOnlyList<string> preferences) =>
+        Localized.Resolve(_names.Select(n => (n.Language, n.Name)), preferences);
 
     /// <summary>Sets or clears the parent. <paramref name="parentOf"/> resolves the current parent of any region.</summary>
     public void SetParent(RegionId? parentId, Func<RegionId, RegionId?> parentOf)
@@ -40,17 +50,6 @@ public sealed class Region
         if (parentId is { } p)
             RegionHierarchy.EnsureNoCycle(Id, p, parentOf);
         ParentId = parentId;
-    }
-
-    public static string Normalize(string? name) => CleanName(name).ToLowerInvariant();
-
-    private static string CleanName(string? name)
-    {
-        var collapsed = string.Join(' ', (name ?? "").Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
-        if (collapsed.Length == 0) throw new DomainValidationException("name", "Is required.");
-        if (collapsed.Length > MaxNameLength)
-            throw new DomainValidationException("name", $"Must be at most {MaxNameLength} characters.");
-        return collapsed;
     }
 }
 

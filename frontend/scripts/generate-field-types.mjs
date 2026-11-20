@@ -52,6 +52,8 @@ function walk(schema, path, out, depth) {
       out[path + '[]'] = 'list'
       return walk(schema.items, path + '[]', out, depth + 1)
     case 'object':
+      // A map with no fixed properties (e.g. names or descriptions keyed by language).
+      if (!schema.properties && schema.additionalProperties) return void (out[path] = 'map')
       for (const [prop, propSchema] of Object.entries(schema.properties ?? {}))
         walk(propSchema, path ? `${path}.${prop}` : prop, out, depth + 1)
       return

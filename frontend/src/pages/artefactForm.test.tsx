@@ -1,7 +1,7 @@
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Route, Routes } from 'react-router'
-import { mockFetch, problem } from '../test/fetchMock'
+import { languagesRoute, mockFetch, problem } from '../test/fetchMock'
 import { renderWithProviders } from '../test/render'
 import { artefactNewPage } from './definitions/artefactEdit'
 import { PageRoute } from './PageRoute'
@@ -20,6 +20,7 @@ function parseDate(text: string) {
 
 function renderNew(routes: Parameters<typeof mockFetch>[0] = {}) {
   const mock = mockFetch({
+    ...languagesRoute,
     'POST /api/historical-dates/parse': (_url, init) => parseDate(JSON.parse(String(init?.body)).text),
     ...routes,
   })
@@ -60,7 +61,7 @@ describe('artefact form', () => {
     const user = userEvent.setup()
     const { calls } = renderNew({
       'GET /api/regions': () => [],
-      'POST /api/regions': () => new Response(JSON.stringify({ id: 'r9', name: 'Zeeland', parentId: null, parentName: null }), { status: 201, headers: { 'Content-Type': 'application/json' } }),
+      'POST /api/regions': () => new Response(JSON.stringify({ id: 'r9', name: 'Zeeland', nameLanguage: 'en', names: { en: 'Zeeland' }, parentId: null, parentName: null }), { status: 201, headers: { 'Content-Type': 'application/json' } }),
       'POST /api/artefacts': () => new Response(JSON.stringify({ id: 'new-1' }), { status: 201, headers: { 'Content-Type': 'application/json' } }),
     })
 
@@ -72,7 +73,7 @@ describe('artefact form', () => {
     await user.click(await screen.findByRole('option', { name: /Add “Zeeland”/ }))
 
     await waitFor(() => expect(picker).toHaveValue('Zeeland'))
-    expect(calls.find((c) => c.method === 'POST' && c.url.pathname === '/api/regions')?.body).toEqual({ name: 'Zeeland' })
+    expect(calls.find((c) => c.method === 'POST' && c.url.pathname === '/api/regions')?.body).toEqual({ names: { en: 'Zeeland' } })
 
     await user.type(screen.getByRole('textbox', { name: 'Period' }), '1780s')
     await user.click(screen.getByRole('button', { name: 'Create artefact' }))

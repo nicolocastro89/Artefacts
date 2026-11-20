@@ -7,7 +7,7 @@
 // The API URL can also come from ARTEFACTS_API_URL. Rerunning is safe: regions and object types are
 // matched by name, and artefacts whose inventory number already exists are skipped.
 // To start again from empty, reset the stack's volumes: docker compose -f docker/docker-compose.yml down -v
-import { catalogue, objectTypes } from './data-catalogue.mjs'
+import { catalogue, descriptionsIt, italianOnly, objectTypes, regionNamesIt } from './data-catalogue.mjs'
 import { artefacts, regions } from './data.mjs'
 import { encodePng, encodeTiff, renderImage } from './images.mjs'
 
@@ -43,7 +43,8 @@ async function seedRegions() {
   for (const r of regions) {
     const parentId = r.parent ? ids.get(r.parent) : null
     if (r.parent && !parentId) throw new Error(`Region "${r.name}" lists parent "${r.parent}", which is not defined before it.`)
-    const { status, body } = await call('POST', '/api/regions', { json: { name: r.name, parentId } })
+    const names = { en: r.name, ...(regionNamesIt[r.name] ? { it: regionNamesIt[r.name] } : {}) }
+    const { status, body } = await call('POST', '/api/regions', { json: { names, parentId } })
     if (status === 201) created++
     ids.set(r.name, body.id)
   }
@@ -54,10 +55,10 @@ async function seedRegions() {
 async function seedObjectTypes() {
   const ids = new Map()
   let created = 0
-  for (const name of objectTypes) {
-    const { status, body } = await call('POST', '/api/object-types', { json: { name } })
+  for (const names of objectTypes) {
+    const { status, body } = await call('POST', '/api/object-types', { json: { names } })
     if (status === 201) created++
-    ids.set(name, body.id)
+    ids.set(names.en, body.id)
   }
   console.log(`Object types: ${created} created, ${objectTypes.length - created} already present.`)
   return ids
@@ -103,7 +104,10 @@ function toRequest(a, regionIds, typeIds) {
     creationDate: dateInput(a.creationDate),
     medium: a.medium,
     dimensions: a.dimensions,
-    description: a.description,
+    descriptions: {
+      ...(a.description && !italianOnly.includes(a.inventoryNumber) ? { en: a.description } : {}),
+      ...(descriptionsIt[a.inventoryNumber] ? { it: descriptionsIt[a.inventoryNumber] } : {}),
+    },
     acquisition,
     provenance: a.provenance.map((p) => {
       const regionId = regionIds.get(p.region)

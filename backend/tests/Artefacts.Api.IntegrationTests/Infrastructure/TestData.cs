@@ -17,16 +17,33 @@ internal static class TestData
     public static Task<ArtefactDetail> CreateArtefactAsync(this HttpClient client, string? title = null) =>
         client.CreateArtefactAsync(new ArtefactWriteRequest(HttpExtensions.Unique("INV"), title ?? "Untitled"));
 
+    /// <summary>A names map with an English name only.</summary>
+    public static Dictionary<string, string?> En(string name) => new() { ["en"] = name };
+
+    public static async Task<RegionDto> AddRegionAsync(this HttpClient client, IReadOnlyDictionary<string, string?> names, Guid? parentId = null)
+    {
+        var response = await client.PostJsonAsync("/api/regions", new AddRegionRequest(names, parentId));
+        response.EnsureSuccessStatusCode();
+        return await response.ReadAsync<RegionDto>();
+    }
+
+    public static async Task<ObjectTypeDto> AddObjectTypeAsync(this HttpClient client, IReadOnlyDictionary<string, string?> names)
+    {
+        var response = await client.PostJsonAsync("/api/object-types", new AddObjectTypeRequest(names));
+        response.EnsureSuccessStatusCode();
+        return await response.ReadAsync<ObjectTypeDto>();
+    }
+
     public static async Task<RegionDto> AddRegionAsync(this HttpClient client, string name, Guid? parentId = null)
     {
-        var response = await client.PostJsonAsync("/api/regions", new AddRegionRequest(name, parentId));
+        var response = await client.PostJsonAsync("/api/regions", new AddRegionRequest(En(name), parentId));
         response.EnsureSuccessStatusCode();
         return await response.ReadAsync<RegionDto>();
     }
 
     public static async Task<ObjectTypeDto> AddObjectTypeAsync(this HttpClient client, string name)
     {
-        var response = await client.PostJsonAsync("/api/object-types", new AddObjectTypeRequest(name));
+        var response = await client.PostJsonAsync("/api/object-types", new AddObjectTypeRequest(En(name)));
         response.EnsureSuccessStatusCode();
         return await response.ReadAsync<ObjectTypeDto>();
     }

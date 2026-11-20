@@ -2,6 +2,7 @@ using Artefacts.Application.Contracts;
 using Artefacts.Domain.Catalogue;
 using Artefacts.Domain.Classification;
 using Artefacts.Domain.Common;
+using Artefacts.Domain.Languages;
 using Artefacts.Domain.Media;
 using Artefacts.Domain.Regions;
 
@@ -24,7 +25,11 @@ public interface IArtefactRepository
 public interface IObjectTypeRepository
 {
     Task<ObjectType?> GetAsync(ObjectTypeId id, CancellationToken ct);
-    Task<ObjectType?> FindByNormalizedNameAsync(string normalizedName, CancellationToken ct);
+
+    /// <summary>The object type whose name in <paramref name="language"/> normalises to <paramref name="normalizedName"/>.</summary>
+    Task<ObjectType?> FindByNameAsync(string language, string normalizedName, CancellationToken ct);
+
+    /// <summary>Object types with a name in any language containing <paramref name="text"/> (all when empty).</summary>
     Task<IReadOnlyList<ObjectType>> SearchAsync(string? text, CancellationToken ct);
     void Add(ObjectType objectType);
     void Remove(ObjectType objectType);
@@ -34,7 +39,11 @@ public interface IRegionRepository
 {
     Task<Region?> GetAsync(RegionId id, CancellationToken ct);
     Task<IReadOnlyDictionary<RegionId, Region>> GetManyAsync(IEnumerable<RegionId> ids, CancellationToken ct);
-    Task<Region?> FindByNormalizedNameAsync(string normalizedName, CancellationToken ct);
+
+    /// <summary>The region whose name in <paramref name="language"/> normalises to <paramref name="normalizedName"/>.</summary>
+    Task<Region?> FindByNameAsync(string language, string normalizedName, CancellationToken ct);
+
+    /// <summary>Regions with a name in any language containing <paramref name="text"/> (all when empty).</summary>
     Task<IReadOnlyList<Region>> SearchAsync(string? text, CancellationToken ct);
     Task<IReadOnlyDictionary<RegionId, RegionId?>> GetParentMapAsync(CancellationToken ct);
     Task<bool> HasChildrenAsync(RegionId id, CancellationToken ct);
@@ -48,6 +57,34 @@ public interface IMediaAssetRepository
     Task<IReadOnlyDictionary<MediaAssetId, MediaAsset>> GetManyAsync(IEnumerable<MediaAssetId> ids, CancellationToken ct);
     void Add(MediaAsset asset);
     void Remove(MediaAsset asset);
+}
+
+public interface ILanguageRepository
+{
+    Task<IReadOnlyList<Language>> ListAsync(CancellationToken ct);
+    Task<Language?> GetAsync(string code, CancellationToken ct);
+
+    /// <summary>True when any translated value (name or description) is recorded in the language.</summary>
+    Task<bool> InUseAsync(string code, CancellationToken ct);
+
+    void Add(Language language);
+    void Remove(Language language);
+}
+
+/// <summary>The content languages in fallback order, cached; invalidated whenever the list changes.</summary>
+public interface IContentLanguages
+{
+    Task<IReadOnlyList<LanguageDto>> ListAsync(CancellationToken ct);
+    void Invalidate();
+}
+
+/// <summary>
+/// The preferred languages of the current request: its requested languages, then every remaining content language
+/// in fallback order. Translated values resolve to the first of these that has a value.
+/// </summary>
+public interface ILanguagePreferences
+{
+    IReadOnlyList<string> Current { get; }
 }
 
 /// <summary>Commits all pending changes atomically. Unique-key violations surface as <see cref="DomainValidationException"/>.</summary>

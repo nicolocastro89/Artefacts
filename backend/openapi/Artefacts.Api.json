@@ -640,7 +640,7 @@
         "tags": [
           "Regions"
         ],
-        "operationId": "renameRegion",
+        "operationId": "setRegionNames",
         "parameters": [
           {
             "name": "id",
@@ -656,7 +656,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RenameRegionRequest"
+                "$ref": "#/components/schemas/SetNamesRequest"
               }
             }
           },
@@ -923,7 +923,7 @@
         "tags": [
           "Object types"
         ],
-        "operationId": "renameObjectType",
+        "operationId": "setObjectTypeNames",
         "parameters": [
           {
             "name": "id",
@@ -939,7 +939,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RenameObjectTypeRequest"
+                "$ref": "#/components/schemas/SetNamesRequest"
               }
             }
           },
@@ -991,6 +991,153 @@
             "schema": {
               "type": "string",
               "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/languages": {
+      "get": {
+        "tags": [
+          "Languages"
+        ],
+        "operationId": "listLanguages",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LanguageDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Languages"
+        ],
+        "operationId": "addLanguage",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddLanguageRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LanguageDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/languages/order": {
+      "put": {
+        "tags": [
+          "Languages"
+        ],
+        "operationId": "setLanguageOrder",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetLanguageOrderRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LanguageDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/languages/{code}": {
+      "delete": {
+        "tags": [
+          "Languages"
+        ],
+        "operationId": "deleteLanguage",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -1131,12 +1278,19 @@
           "other"
         ]
       },
-      "AddObjectTypeRequest": {
+      "AddLanguageRequest": {
         "required": [
+          "code",
           "name"
         ],
         "type": "object",
         "properties": {
+          "code": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
           "name": {
             "type": [
               "null",
@@ -1145,17 +1299,37 @@
           }
         }
       },
-      "AddRegionRequest": {
+      "AddObjectTypeRequest": {
         "required": [
-          "name"
+          "names"
         ],
         "type": "object",
         "properties": {
-          "name": {
+          "names": {
             "type": [
               "null",
-              "string"
-            ]
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "AddRegionRequest": {
+        "required": [
+          "names"
+        ],
+        "type": "object",
+        "properties": {
+          "names": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
           },
           "parentId": {
             "type": [
@@ -1176,6 +1350,9 @@
           "medium",
           "dimensions",
           "description",
+          "descriptionLanguage",
+          "descriptions",
+          "language",
           "acquisition",
           "provenance",
           "primaryImage",
@@ -1235,6 +1412,21 @@
               "null",
               "string"
             ]
+          },
+          "descriptionLanguage": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "descriptions": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "language": {
+            "type": "string"
           },
           "acquisition": {
             "oneOf": [
@@ -1610,11 +1802,14 @@
               "string"
             ]
           },
-          "description": {
+          "descriptions": {
             "type": [
               "null",
-              "string"
-            ]
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
           },
           "acquisition": {
             "oneOf": [
@@ -1945,6 +2140,26 @@
           }
         }
       },
+      "LanguageDto": {
+        "required": [
+          "code",
+          "name",
+          "position"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "position": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "MoneyDto": {
         "required": [
           "amount",
@@ -1981,6 +2196,8 @@
         "required": [
           "id",
           "name",
+          "nameLanguage",
+          "names",
           "artefactCount"
         ],
         "type": "object",
@@ -1991,6 +2208,15 @@
           },
           "name": {
             "type": "string"
+          },
+          "nameLanguage": {
+            "type": "string"
+          },
+          "names": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
           },
           "artefactCount": {
             "type": "integer",
@@ -2141,6 +2367,8 @@
         "required": [
           "id",
           "name",
+          "nameLanguage",
+          "names",
           "parentId",
           "parentName"
         ],
@@ -2153,6 +2381,15 @@
           "name": {
             "type": "string"
           },
+          "nameLanguage": {
+            "type": "string"
+          },
+          "names": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
           "parentId": {
             "type": [
               "null",
@@ -2161,34 +2398,6 @@
             "format": "uuid"
           },
           "parentName": {
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        }
-      },
-      "RenameObjectTypeRequest": {
-        "required": [
-          "name"
-        ],
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": [
-              "null",
-              "string"
-            ]
-          }
-        }
-      },
-      "RenameRegionRequest": {
-        "required": [
-          "name"
-        ],
-        "type": "object",
-        "properties": {
-          "name": {
             "type": [
               "null",
               "string"
@@ -2207,6 +2416,40 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "SetLanguageOrderRequest": {
+        "required": [
+          "codes"
+        ],
+        "type": "object",
+        "properties": {
+          "codes": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "SetNamesRequest": {
+        "required": [
+          "names"
+        ],
+        "type": "object",
+        "properties": {
+          "names": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
           }
         }
       },
@@ -2251,6 +2494,9 @@
     },
     {
       "name": "Object types"
+    },
+    {
+      "name": "Languages"
     }
   ]
 }

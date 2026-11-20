@@ -57,6 +57,32 @@ defineWidget({
   },
 })
 
+// ---------- translated text: long text resolved in the reader's language, marked when it fell back ----------
+const languageNames = typeof Intl !== 'undefined' && 'DisplayNames' in Intl ? new Intl.DisplayNames(['en'], { type: 'language' }) : null
+
+defineWidget({
+  id: 'translated-text',
+  label: 'Translated text',
+  slots: { text: { type: 'text', required: true }, language: { type: 'text' }, requested: { type: 'text' } },
+  config: { emptyText: '' },
+  print: {},
+  component: ({ values, config }) => {
+    const text = formatValue(values.text?.value)
+    const language = formatValue(values.language?.value)
+    const requested = formatValue(values.requested?.value)
+    if (!text) return config.emptyText ? <p className="muted">{config.emptyText}</p> : null
+    const fallback = language && requested && language !== requested
+    return (
+      <div className="text-block" lang={language || undefined}>
+        {fallback && <p className="text-block__language">In {languageNames?.of(language) ?? language}</p>}
+        {text.split(/\n{2,}/).map((para, i) => (
+          <p key={i}>{para}</p>
+        ))}
+      </div>
+    )
+  },
+})
+
 // ---------- text list: an ordered list of free-text entries (e.g. exhibitions) ----------
 defineWidget({
   id: 'text-list',

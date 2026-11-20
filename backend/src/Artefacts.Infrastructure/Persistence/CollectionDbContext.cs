@@ -1,6 +1,7 @@
 using Artefacts.Domain.Catalogue;
 using Artefacts.Domain.Classification;
 using Artefacts.Domain.Common;
+using Artefacts.Domain.Languages;
 using Artefacts.Domain.Media;
 using Artefacts.Domain.Regions;
 using Microsoft.EntityFrameworkCore;
@@ -12,13 +13,15 @@ namespace Artefacts.Infrastructure.Persistence;
 public sealed class CollectionDbContext(DbContextOptions<CollectionDbContext> options) : DbContext(options)
 {
     public const string InventoryNumberIndex = "ux_artefacts_inventory_number";
-    public const string RegionNameIndex = "ux_regions_normalized_name";
-    public const string ObjectTypeNameIndex = "ux_object_types_normalized_name";
+    public const string RegionNameIndex = "ux_region_names_language_normalized_name";
+    public const string ObjectTypeNameIndex = "ux_object_type_names_language_normalized_name";
+    public const string LanguageForeignKeyPrefix = "fk_language_";
 
     public DbSet<Artefact> Artefacts => Set<Artefact>();
     public DbSet<Region> Regions => Set<Region>();
     public DbSet<MediaAsset> MediaAssets => Set<MediaAsset>();
     public DbSet<ObjectType> ObjectTypes => Set<ObjectType>();
+    public DbSet<Language> Languages => Set<Language>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder builder)
     {
@@ -30,16 +33,27 @@ public sealed class CollectionDbContext(DbContextOptions<CollectionDbContext> op
 
     protected override void OnModelCreating(ModelBuilder model)
     {
+        model.Entity<Language>(b =>
+        {
+            b.ToTable("languages");
+            b.HasKey(l => l.Code);
+            b.Property(l => l.Code).HasMaxLength(10);
+            b.Property(l => l.Name).HasMaxLength(Language.MaxNameLength).IsRequired();
+            // Initial content languages; more are added as data.
+            b.HasData(
+                new { Code = "en", Name = "English", Position = 1 },
+                new { Code = "it", Name = "Italian", Position = 2 });
+        });
+
         model.Entity<Region>(b =>
         {
             b.ToTable("regions");
             b.HasKey(r => r.Id);
             b.Property(r => r.Id).ValueGeneratedNever();
-            b.Property(r => r.Name).HasMaxLength(Region.MaxNameLength).IsRequired();
-            b.Property(r => r.NormalizedName).HasMaxLength(Region.MaxNameLength).IsRequired();
-            b.HasIndex(r => r.NormalizedName).IsUnique().HasDatabaseName(RegionNameIndex);
             b.Property(r => r.ParentId).HasConversion(new RegionIdConverter());
             b.HasOne<Region>().WithMany().HasForeignKey(r => r.ParentId).OnDelete(DeleteBehavior.Restrict);
+            b.OwnsMany(r => r.Names, n => MapNames(n, "region_names", "RegionId", Region.MaxNameLength, RegionNameIndex));
+            b.Navigation(r => r.Names).HasField("_names").UsePropertyAccessMode(PropertyAccessMode.Field);
         });
 
         model.Entity<ObjectType>(b =>
@@ -47,9 +61,8 @@ public sealed class CollectionDbContext(DbContextOptions<CollectionDbContext> op
             b.ToTable("object_types");
             b.HasKey(t => t.Id);
             b.Property(t => t.Id).ValueGeneratedNever();
-            b.Property(t => t.Name).HasMaxLength(ObjectType.MaxNameLength).IsRequired();
-            b.Property(t => t.NormalizedName).HasMaxLength(ObjectType.MaxNameLength).IsRequired();
-            b.HasIndex(t => t.NormalizedName).IsUnique().HasDatabaseName(ObjectTypeNameIndex);
+            b.OwnsMany(t => t.Names, n => MapNames(n, "object_type_names", "ObjectTypeId", ObjectType.MaxNameLength, ObjectTypeNameIndex));
+            b.Navigation(t => t.Names).HasField("_names").UsePropertyAccessMode(PropertyAccessMode.Field);
         });
 
         model.Entity<MediaAsset>(b =>
@@ -74,7 +87,6 @@ public sealed class CollectionDbContext(DbContextOptions<CollectionDbContext> op
             b.Property(a => a.Maker).HasMaxLength(Artefact.MaxShortTextLength);
             b.Property(a => a.Medium).HasMaxLength(Artefact.MaxShortTextLength);
             b.Property(a => a.Dimensions).HasMaxLength(Artefact.MaxShortTextLength);
-            b.Property(a => a.Description).HasMaxLength(Artefact.MaxDescriptionLength);
             b.Ignore(a => a.PrimaryImage);
 
             b.Property(a => a.ObjectTypeId).HasConversion(new ObjectTypeIdConverter());
@@ -109,6 +121,18 @@ public sealed class CollectionDbContext(DbContextOptions<CollectionDbContext> op
                 e.Property(x => x.Text).HasMaxLength(Exhibition.MaxTextLength).IsRequired();
             });
             b.Navigation(a => a.Exhibitions).HasField("_exhibitions").UsePropertyAccessMode(PropertyAccessMode.Field);
+
+            b.OwnsMany(a => a.Translations, t =>
+            {
+                t.ToTable("artefact_translations");
+                t.WithOwner().HasForeignKey("ArtefactId");
+                t.HasKey("ArtefactId", nameof(ArtefactTranslation.Language));
+                t.Property(x => x.Language).HasMaxLength(10);
+                t.Property(x => x.Description).HasMaxLength(Artefact.MaxDescriptionLength);
+                t.HasOne<Language>().WithMany().HasForeignKey(x => x.Language)
+                    .HasConstraintName($"{LanguageForeignKeyPrefix}artefact_translations").OnDelete(DeleteBehavior.Restrict);
+            });
+            b.Navigation(a => a.Translations).HasField("_translations").UsePropertyAccessMode(PropertyAccessMode.Field);
 
             b.OwnsOne(a => a.CreationDate, d =>
             {
@@ -166,6 +190,23 @@ public sealed class CollectionDbContext(DbContextOptions<CollectionDbContext> op
             });
             b.Navigation(a => a.Images).HasField("_images").UsePropertyAccessMode(PropertyAccessMode.Field);
         });
+    }
+
+    /// <summary>Per-language names of a reference entry: one row per (owner, language), unique name per language.</summary>
+    private static void MapNames<TOwner>(
+        Microsoft.EntityFrameworkCore.Metadata.Builders.OwnedNavigationBuilder<TOwner, LocalizedName> n,
+        string table, string ownerKey, int maxLength, string uniqueIndex) where TOwner : class
+    {
+        n.ToTable(table);
+        n.WithOwner().HasForeignKey(ownerKey);
+        n.HasKey(ownerKey, nameof(LocalizedName.Language));
+        n.Property(x => x.Language).HasMaxLength(10);
+        n.Property(x => x.Name).HasMaxLength(maxLength).IsRequired();
+        n.Property(x => x.NormalizedName).HasMaxLength(maxLength).IsRequired();
+        n.HasIndex(x => new { x.Language, x.NormalizedName }).IsUnique().HasDatabaseName(uniqueIndex);
+        n.HasIndex(x => x.NormalizedName);
+        n.HasOne<Language>().WithMany().HasForeignKey(x => x.Language)
+            .HasConstraintName($"{LanguageForeignKeyPrefix}{table}").OnDelete(DeleteBehavior.Restrict);
     }
 
     private sealed class ArtefactIdConverter() : ValueConverter<ArtefactId, Guid>(id => id.Value, v => new ArtefactId(v));

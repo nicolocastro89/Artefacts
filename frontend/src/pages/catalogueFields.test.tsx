@@ -2,7 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useEffect } from 'react'
 import { Route, Routes, useLocation } from 'react-router'
-import { mockFetch, problem } from '../test/fetchMock'
+import { languagesRoute, mockFetch, problem } from '../test/fetchMock'
 import { renderWithProviders } from '../test/render'
 import { artefactDetailPage } from './definitions/artefactDetail'
 import { artefactNewPage } from './definitions/artefactEdit'
@@ -178,8 +178,9 @@ describe('artefact form with catalogue fields', () => {
   it('adds an object type inline and saves it with the exhibitions in order', async () => {
     const user = userEvent.setup()
     const { calls } = renderNew({
+      ...languagesRoute,
       'GET /api/object-types': () => [],
-      'POST /api/object-types': () => ({ id: 't9', name: 'Metalwork', artefactCount: 0 }),
+      'POST /api/object-types': () => ({ id: 't9', name: 'Metalwork', nameLanguage: 'en', names: { en: 'Metalwork' }, artefactCount: 0 }),
       'POST /api/artefacts': () => ({ id: 'new1' }),
     })
 
@@ -205,6 +206,7 @@ describe('artefact form with catalogue fields', () => {
   it('shows server errors on the new fields', async () => {
     const user = userEvent.setup()
     renderNew({
+      ...languagesRoute,
       'POST /api/artefacts': () =>
         problem(400, { title: 'Validation failed', errors: { 'valuation.currency': ['"XYZ" is not a recognised ISO 4217 currency code.'] } }),
     })
@@ -224,7 +226,8 @@ describe('object types page', () => {
     const user = userEvent.setup()
     vi.spyOn(window, 'confirm').mockReturnValue(true)
     mockFetch({
-      'GET /api/object-types': () => [{ id: 't1', name: 'Ceramics', artefactCount: 70 }],
+      ...languagesRoute,
+      'GET /api/object-types': () => [{ id: 't1', name: 'Ceramics', nameLanguage: 'en', names: { en: 'Ceramics', it: 'Ceramiche' }, artefactCount: 70 }],
       'DELETE /api/object-types/t1': () =>
         problem(409, { title: 'Conflict', detail: '"Ceramics" is the object type of artefacts and cannot be deleted.', code: 'object_type_in_use' }),
     })

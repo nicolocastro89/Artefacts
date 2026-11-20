@@ -26,6 +26,8 @@ if (System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name == "GetDocumen
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddScoped<RequestLanguages>();
+builder.Services.AddScoped<Artefacts.Application.Abstractions.ILanguagePreferences>(sp => sp.GetRequiredService<RequestLanguages>());
 
 builder.Services.ConfigureHttpJsonOptions(o =>
 {
@@ -41,6 +43,7 @@ var app = builder.Build();
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();
+app.UseWhen(context => context.Request.Path.StartsWithSegments("/api"), api => api.UseRequestLanguages());
 
 app.MapOpenApi();
 if (app.Environment.IsDevelopment())
@@ -49,6 +52,7 @@ if (app.Environment.IsDevelopment())
 app.MapArtefactEndpoints();
 app.MapRegionEndpoints();
 app.MapObjectTypeEndpoints();
+app.MapLanguageEndpoints();
 app.MapSupportEndpoints();
 
 if (app.Configuration.GetValue("Database:MigrateOnStartup", false))

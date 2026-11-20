@@ -42,6 +42,8 @@ public static class DependencyInjection
         services.AddScoped<IArtefactRepository, ArtefactRepository>();
         services.AddScoped<IRegionRepository, RegionRepository>();
         services.AddScoped<IObjectTypeRepository, ObjectTypeRepository>();
+        services.AddScoped<ILanguageRepository, LanguageRepository>();
+        services.AddSingleton<IContentLanguages, ContentLanguages>();
         services.AddScoped<IMediaAssetRepository, MediaAssetRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IArtefactListQuery, ArtefactListQuery>();

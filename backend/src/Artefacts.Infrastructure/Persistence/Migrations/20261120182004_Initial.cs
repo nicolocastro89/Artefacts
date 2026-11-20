@@ -5,6 +5,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
 namespace Artefacts.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
@@ -13,6 +15,19 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.CreateTable(
+                name: "languages",
+                columns: table => new
+                {
+                    code = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
+                    name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    position = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_languages", x => x.code);
+                });
+
             migrationBuilder.CreateTable(
                 name: "media_assets",
                 columns: table => new
@@ -33,9 +48,7 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                 name: "object_types",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    normalized_name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false)
+                    id = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -47,8 +60,6 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
-                    name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    normalized_name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     parent_id = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
@@ -60,6 +71,32 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                         principalTable: "regions",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "object_type_names",
+                columns: table => new
+                {
+                    language = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
+                    object_type_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    normalized_name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_object_type_names", x => new { x.object_type_id, x.language });
+                    table.ForeignKey(
+                        name: "fk_language_object_type_names",
+                        column: x => x.language,
+                        principalTable: "languages",
+                        principalColumn: "code",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_object_type_names_object_types_object_type_id",
+                        column: x => x.object_type_id,
+                        principalTable: "object_types",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -76,7 +113,6 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                     creation_date_precision = table.Column<string>(type: "character varying(16)", maxLength: 16, nullable: true),
                     medium = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     dimensions = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
-                    description = table.Column<string>(type: "character varying(10000)", maxLength: 10000, nullable: true),
                     acquisition_method = table.Column<string>(type: "character varying(16)", maxLength: 16, nullable: true),
                     acquisition_date = table.Column<DateOnly>(type: "date", nullable: true),
                     acquisition_source = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: true),
@@ -110,6 +146,32 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                         principalTable: "regions",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "region_names",
+                columns: table => new
+                {
+                    language = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
+                    region_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    normalized_name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_region_names", x => new { x.region_id, x.language });
+                    table.ForeignKey(
+                        name: "fk_language_region_names",
+                        column: x => x.language,
+                        principalTable: "languages",
+                        principalColumn: "code",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_region_names_regions_region_id",
+                        column: x => x.region_id,
+                        principalTable: "regions",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -194,6 +256,40 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                         onDelete: ReferentialAction.Restrict);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "artefact_translations",
+                columns: table => new
+                {
+                    language = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
+                    artefact_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    description = table.Column<string>(type: "character varying(10000)", maxLength: 10000, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_artefact_translations", x => new { x.artefact_id, x.language });
+                    table.ForeignKey(
+                        name: "fk_artefact_translations_artefacts_artefact_id",
+                        column: x => x.artefact_id,
+                        principalTable: "artefacts",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "fk_language_artefact_translations",
+                        column: x => x.language,
+                        principalTable: "languages",
+                        principalColumn: "code",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.InsertData(
+                table: "languages",
+                columns: new[] { "code", "name", "position" },
+                values: new object[,]
+                {
+                    { "en", "English", 1 },
+                    { "it", "Italian", 2 }
+                });
+
             migrationBuilder.CreateIndex(
                 name: "ix_artefact_exhibitions_artefact_id",
                 table: "artefact_exhibitions",
@@ -221,6 +317,11 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                 column: "region_id");
 
             migrationBuilder.CreateIndex(
+                name: "ix_artefact_translations_language",
+                table: "artefact_translations",
+                column: "language");
+
+            migrationBuilder.CreateIndex(
                 name: "ix_artefacts_object_type_id",
                 table: "artefacts",
                 column: "object_type_id");
@@ -243,9 +344,25 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "ux_object_types_normalized_name",
-                table: "object_types",
-                column: "normalized_name",
+                name: "ix_object_type_names_normalized_name",
+                table: "object_type_names",
+                column: "normalized_name");
+
+            migrationBuilder.CreateIndex(
+                name: "ux_object_type_names_language_normalized_name",
+                table: "object_type_names",
+                columns: new[] { "language", "normalized_name" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "ix_region_names_normalized_name",
+                table: "region_names",
+                column: "normalized_name");
+
+            migrationBuilder.CreateIndex(
+                name: "ux_region_names_language_normalized_name",
+                table: "region_names",
+                columns: new[] { "language", "normalized_name" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -253,17 +370,12 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                 table: "regions",
                 column: "parent_id");
 
-            migrationBuilder.CreateIndex(
-                name: "ux_regions_normalized_name",
-                table: "regions",
-                column: "normalized_name",
-                unique: true);
-
-            // Grouping keys for free-text groupings (see the view) and the read view itself.
+            // Grouping keys for free-text groupings, the name-resolving functions, and the read view.
             migrationBuilder.Sql(
                 @"CREATE INDEX ix_artefacts_collection_group_key ON artefacts (lower(regexp_replace(btrim(collection_group), '\s+', ' ', 'g')));");
             migrationBuilder.Sql(
                 @"CREATE INDEX ix_artefacts_dynasty_key ON artefacts (lower(regexp_replace(btrim(dynasty), '\s+', ' ', 'g')));");
+            migrationBuilder.Sql(ViewSql.Load("localized_names"));
             migrationBuilder.Sql(ViewSql.Load("v_artefact"));
         }
 
@@ -271,6 +383,7 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.Sql("DROP VIEW IF EXISTS v_artefact;");
+            migrationBuilder.Sql("DROP FUNCTION IF EXISTS region_name(uuid, text[]); DROP FUNCTION IF EXISTS object_type_name(uuid, text[]);");
 
             migrationBuilder.DropTable(
                 name: "artefact_exhibitions");
@@ -282,10 +395,22 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                 name: "artefact_provenance");
 
             migrationBuilder.DropTable(
+                name: "artefact_translations");
+
+            migrationBuilder.DropTable(
+                name: "object_type_names");
+
+            migrationBuilder.DropTable(
+                name: "region_names");
+
+            migrationBuilder.DropTable(
                 name: "media_assets");
 
             migrationBuilder.DropTable(
                 name: "artefacts");
+
+            migrationBuilder.DropTable(
+                name: "languages");
 
             migrationBuilder.DropTable(
                 name: "object_types");

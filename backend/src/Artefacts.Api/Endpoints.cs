@@ -1,6 +1,7 @@
 using Artefacts.Application.Abstractions;
 using Artefacts.Application.Artefacts;
 using Artefacts.Application.Contracts;
+using Artefacts.Application.Languages;
 using Artefacts.Application.Media;
 using Artefacts.Application.ObjectTypes;
 using Artefacts.Application.Regions;
@@ -108,9 +109,9 @@ internal static class Endpoints
             .WithName("addRegion")
             .ProducesValidationProblem();
 
-        g.MapPut("/{id:guid}", async (Guid id, RenameRegionRequest request, RegionHandler h, CancellationToken ct) =>
-                TypedResults.Ok(await h.RenameAsync(id, request, ct)))
-            .WithName("renameRegion")
+        g.MapPut("/{id:guid}", async (Guid id, SetNamesRequest request, RegionHandler h, CancellationToken ct) =>
+                TypedResults.Ok(await h.SetNamesAsync(id, request, ct)))
+            .WithName("setRegionNames")
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status404NotFound);
 
@@ -153,9 +154,9 @@ internal static class Endpoints
             .WithName("addObjectType")
             .ProducesValidationProblem();
 
-        g.MapPut("/{id:guid}", async (Guid id, RenameObjectTypeRequest request, ObjectTypeHandler h, CancellationToken ct) =>
-                TypedResults.Ok(await h.RenameAsync(id, request, ct)))
-            .WithName("renameObjectType")
+        g.MapPut("/{id:guid}", async (Guid id, SetNamesRequest request, ObjectTypeHandler h, CancellationToken ct) =>
+                TypedResults.Ok(await h.SetNamesAsync(id, request, ct)))
+            .WithName("setObjectTypeNames")
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status404NotFound);
 
@@ -165,6 +166,36 @@ internal static class Endpoints
                 return TypedResults.NoContent();
             })
             .WithName("deleteObjectType")
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+    }
+
+    public static void MapLanguageEndpoints(this IEndpointRouteBuilder app)
+    {
+        var g = app.MapGroup("/api/languages").WithTags("Languages");
+
+        g.MapGet("/", async (LanguageHandler h, CancellationToken ct) => TypedResults.Ok(await h.ListAsync(ct)))
+            .WithName("listLanguages");
+
+        g.MapPost("/", async (AddLanguageRequest request, LanguageHandler h, CancellationToken ct) =>
+            {
+                var language = await h.AddAsync(request, ct);
+                return TypedResults.Created($"/api/languages/{language.Code}", language);
+            })
+            .WithName("addLanguage")
+            .ProducesValidationProblem();
+
+        g.MapPut("/order", async (SetLanguageOrderRequest request, LanguageHandler h, CancellationToken ct) =>
+                TypedResults.Ok(await h.SetOrderAsync(request, ct)))
+            .WithName("setLanguageOrder")
+            .ProducesValidationProblem();
+
+        g.MapDelete("/{code}", async (string code, LanguageHandler h, CancellationToken ct) =>
+            {
+                await h.DeleteAsync(code, ct);
+                return TypedResults.NoContent();
+            })
+            .WithName("deleteLanguage")
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
     }

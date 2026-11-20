@@ -14,6 +14,8 @@ export type FieldType =
   | 'reference'
   | 'boolean'
   | 'list'
+  /** Values keyed by language code (names, descriptions). */
+  | 'map'
 
 /** A slot type: a concrete field type, or `any` for display widgets that format whatever scalar they receive. */
 export type SlotType = FieldType | 'any'

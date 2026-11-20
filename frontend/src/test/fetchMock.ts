@@ -32,6 +32,14 @@ export function mockFetch(routes: Record<string, Handler>) {
   return { fn, calls }
 }
 
+/** The content languages route, as the API returns it initially (English first in fallback order). */
+export const languagesRoute = {
+  'GET /api/languages': () => [
+    { code: 'en', name: 'English', position: 1 },
+    { code: 'it', name: 'Italian', position: 2 },
+  ],
+}
+
 export function problem(status: number, body: object): Response {
   return new Response(JSON.stringify({ status, ...body }), { status, headers: { 'Content-Type': 'application/problem+json' } })
 }

@@ -29,7 +29,7 @@ public class ObjectTypeApiTests(ApiFactory factory)
         var name = HttpExtensions.Unique("Carpets");
         var existing = await _client.AddObjectTypeAsync(name);
 
-        var response = await _client.PostJsonAsync("/api/object-types", new AddObjectTypeRequest($"  {name.ToLowerInvariant()} "));
+        var response = await _client.PostJsonAsync("/api/object-types", new AddObjectTypeRequest(TestData.En($"  {name.ToLowerInvariant()} ")));
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal(existing.Id, (await response.ReadAsync<ObjectTypeDto>()).Id);
@@ -46,7 +46,7 @@ public class ObjectTypeApiTests(ApiFactory factory)
         Assert.Equal(2, listed.ArtefactCount);
 
         var newName = HttpExtensions.Unique("Carpets");
-        (await _client.PutJsonAsync($"/api/object-types/{type.Id}", new RenameObjectTypeRequest(newName))).EnsureSuccessStatusCode();
+        (await _client.PutJsonAsync($"/api/object-types/{type.Id}", new SetNamesRequest(TestData.En(newName)))).EnsureSuccessStatusCode();
 
         var read = await (await _client.GetAsync($"/api/artefacts/{artefact.Id}")).ReadAsync<ArtefactDetail>();
         Assert.Equal(newName, read.ObjectType!.Name);
@@ -58,7 +58,7 @@ public class ObjectTypeApiTests(ApiFactory factory)
         var a = await _client.AddObjectTypeAsync(HttpExtensions.Unique("Metalwork"));
         var b = await _client.AddObjectTypeAsync(HttpExtensions.Unique("Textiles"));
 
-        var response = await _client.PutJsonAsync($"/api/object-types/{b.Id}", new RenameObjectTypeRequest(a.Name.ToUpperInvariant()));
+        var response = await _client.PutJsonAsync($"/api/object-types/{b.Id}", new SetNamesRequest(TestData.En(a.Name.ToUpperInvariant())));
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }

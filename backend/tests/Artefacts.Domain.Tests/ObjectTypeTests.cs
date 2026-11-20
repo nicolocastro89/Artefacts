@@ -6,27 +6,35 @@ namespace Artefacts.Domain.Tests;
 public class ObjectTypeTests
 {
     [Fact]
-    public void Normalises_name_for_uniqueness()
+    public void Normalises_names_per_language()
     {
-        var type = ObjectType.Create("  Carpets   and  Rugs ");
-        Assert.Equal("Carpets and Rugs", type.Name);
-        Assert.Equal("carpets and rugs", type.NormalizedName);
-        Assert.Equal(type.NormalizedName, ObjectType.Normalize(" carpets AND rugs"));
+        var type = ObjectType.Create(new Dictionary<string, string?> { ["en"] = "  Carpets   and  Rugs ", ["it"] = "Tappeti" });
+
+        Assert.Equal([("en", "carpets and rugs"), ("it", "tappeti")], type.Names.Select(n => (n.Language, n.NormalizedName)));
     }
 
     [Fact]
-    public void Rejects_empty_name()
+    public void Rejects_an_object_type_without_any_name()
     {
-        var ex = Assert.Throws<DomainValidationException>(() => ObjectType.Create(" "));
-        Assert.Contains("name", ex.Errors.Keys);
+        var ex = Assert.Throws<DomainValidationException>(() => ObjectType.Create(new Dictionary<string, string?> { ["en"] = " " }));
+        Assert.Contains("names", ex.Errors.Keys);
     }
 
     [Fact]
-    public void Rename_updates_name_and_key()
+    public void Too_long_name_is_keyed_by_language()
     {
-        var type = ObjectType.Create("Tappeti");
-        type.Rename("Carpets");
-        Assert.Equal("Carpets", type.Name);
-        Assert.Equal("carpets", type.NormalizedName);
+        var ex = Assert.Throws<DomainValidationException>(() =>
+            ObjectType.Create(new Dictionary<string, string?> { ["it"] = new string('x', ObjectType.MaxNameLength + 1) }));
+        Assert.Contains("names.it", ex.Errors.Keys);
+    }
+
+    [Fact]
+    public void Setting_names_replaces_them()
+    {
+        var type = ObjectType.Create(new Dictionary<string, string?> { ["it"] = "Tappeti" });
+        type.SetNames(new Dictionary<string, string?> { ["it"] = "Tappeti e kilim", ["en"] = "Carpets" });
+
+        Assert.Equal("Tappeti e kilim", type.NameIn(["it"])!.Value.Text);
+        Assert.Equal("Carpets", type.NameIn(["en"])!.Value.Text);
     }
 }

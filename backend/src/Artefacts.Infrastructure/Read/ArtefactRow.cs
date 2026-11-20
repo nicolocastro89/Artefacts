@@ -39,9 +39,6 @@ public sealed class ArtefactRow
     [CatalogField("objectType", "Object type", FieldType.Reference), Filterable, Sortable]
     public Guid? ObjectTypeId { get; init; }
 
-    [PartOf("objectType")]
-    public string? ObjectTypeName { get; init; }
-
     [CatalogField("collectionGroup", "Collection group", FieldType.Text), Filterable, Sortable]
     public string? CollectionGroup { get; init; }
 
@@ -54,9 +51,6 @@ public sealed class ArtefactRow
 
     [CatalogField("placeRegion", "Place of production (region)", FieldType.Reference), Filterable, Sortable]
     public Guid? PlaceRegionId { get; init; }
-
-    [PartOf("placeRegion")]
-    public string? PlaceRegionName { get; init; }
 
     [CatalogField("dynasty", "Dynasty or period", FieldType.Text), Filterable, Sortable]
     public string? Dynasty { get; init; }

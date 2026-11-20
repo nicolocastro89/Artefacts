@@ -1,46 +1,44 @@
 using Artefacts.Domain.Common;
+using Artefacts.Domain.Languages;
 
 namespace Artefacts.Domain.Classification;
 
 /// <summary>
 /// A kind of object in the institution's reference list (e.g. "Ceramics", "Carpets"), used to classify artefacts.
-/// Names are unique ignoring case and surrounding/repeated whitespace, like region names.
+/// It has a name in one or more content languages; names are unique per language, like region names.
 /// </summary>
 public sealed class ObjectType
 {
     public const int MaxNameLength = 200;
 
+    private readonly List<LocalizedName> _names = [];
+
     public ObjectTypeId Id { get; private set; }
-    public string Name { get; private set; } = default!;
-    public string NormalizedName { get; private set; } = default!;
+
+    /// <summary>The object type's names, one per language.</summary>
+    public IReadOnlyList<LocalizedName> Names => _names.OrderBy(n => n.Language, StringComparer.Ordinal).ToList();
 
     // For EF Core.
     private ObjectType()
     {
     }
 
-    public static ObjectType Create(string? name)
+    public static ObjectType Create(IReadOnlyDictionary<string, string?>? names)
     {
         var type = new ObjectType { Id = ObjectTypeId.New() };
-        type.Rename(name);
+        type.SetNames(names);
         return type;
     }
 
-    public void Rename(string? name)
+    /// <summary>Replaces all names (blank ones dropped; at least one required).</summary>
+    public void SetNames(IReadOnlyDictionary<string, string?>? names)
     {
-        var clean = CleanName(name);
-        Name = clean;
-        NormalizedName = Normalize(clean);
+        var list = LocalizedName.FromMap(names, MaxNameLength);
+        _names.Clear();
+        _names.AddRange(list);
     }
 
-    public static string Normalize(string? name) => CleanName(name).ToLowerInvariant();
-
-    private static string CleanName(string? name)
-    {
-        var collapsed = string.Join(' ', (name ?? "").Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
-        if (collapsed.Length == 0) throw new DomainValidationException("name", "Is required.");
-        if (collapsed.Length > MaxNameLength)
-            throw new DomainValidationException("name", $"Must be at most {MaxNameLength} characters.");
-        return collapsed;
-    }
+    /// <summary>The name in the first preferred language that has one.</summary>
+    public ResolvedText? NameIn(IReadOnlyList<string> preferences) =>
+        Localized.Resolve(_names.Select(n => (n.Language, n.Name)), preferences);
 }

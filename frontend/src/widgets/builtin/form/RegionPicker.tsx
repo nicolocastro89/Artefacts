@@ -13,14 +13,14 @@ const regionSource: RefSource = {
       name: r.name,
       secondary: r.parentName,
     })),
-  add: async (name) => unwrap(await api.POST('/api/regions', { body: { name } })),
+  add: async (name, language) => unwrap(await api.POST('/api/regions', { body: { names: { [language]: name } } })),
 }
 
 const objectTypeSource: RefSource = {
   key: 'object-types',
   noun: 'object type',
   search: async (text) => unwrap(await api.GET('/api/object-types', { params: { query: text ? { search: text } : {} } })),
-  add: async (name) => unwrap(await api.POST('/api/object-types', { body: { name } })),
+  add: async (name, language) => unwrap(await api.POST('/api/object-types', { body: { names: { [language]: name } } })),
 }
 
 interface PickerProps {

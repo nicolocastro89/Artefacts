@@ -2,7 +2,7 @@
 
 ## Why
 
-The collection is recorded today in seven Excel workbooks (ceramics, manuscripts, metalwork, miniatures, parchments, carpets, textiles: about 730 objects and 730 embedded photographs, up to 210 MB per file). Re-typing them is not realistic, and while the catalogue is empty staff keep working in the spreadsheets. An import that understands these workbooks as they are is what lets the catalogue replace them. Beads epic: art-li9. It depends on `extend-catalogue-fields`, which adds the fields these workbooks fill.
+The collection is recorded today in seven Excel workbooks (ceramics, manuscripts, metalwork, miniatures, parchments, carpets, textiles: about 730 objects and 730 embedded photographs, up to 210 MB per file). Re-typing them is not realistic, and while the catalogue is empty staff keep working in the spreadsheets. An import that understands these workbooks as they are is what lets the catalogue replace them. Beads epic: art-li9. It depends on `extend-catalogue-fields`, which adds the fields these workbooks fill, and on `translations`, which gives regions and object types names in Italian and English so the workbooks' Italian names can be matched directly.
 
 ## What Changes
 
@@ -10,7 +10,7 @@ The collection is recorded today in seven Excel workbooks (ceramics, manuscripts
   1. **Upload** an `.xlsx` workbook (up to 2 GB), choose the object type for its rows, and optionally a saved mapping template. The upload and parsing run in the background.
   2. **Map** columns to catalogue fields. Cells that hold several values on separate lines (title + dimensions; place + date + dynasty; seller + date + lot + price) are split line by line. Each line is recognised by its content (a dimension, a date, a lot, a price, a catalogue number, an item number) and assigned to a field, with "everything else goes to …" so no text is lost. Mappings are saved as named templates and reused.
   3. **Inventory numbers** come from a pattern the user sets (for example `CER-{group}-{item}`, or a catalogue number found in the row such as `W.389`). Database identifiers remain system-assigned UUIDs.
-  4. **Places**: each distinct place-of-production text is matched against the region list. Similar regions are suggested (fuzzy match, tolerant of spelling variants such as "Cina" / "China", and of names linked in earlier imports); the user links one, creates a new region, or keeps the text unlinked. Decisions are remembered in the template.
+  4. **Places**: each distinct place-of-production text is matched against the region list. Regions whose name in any language matches are suggested first ("Turchia" is the Italian name of Turkey); otherwise similar regions are suggested (fuzzy match, tolerant of spelling variants, and of names linked in earlier imports); the user links one, creates a new region, or keeps the text unlinked. Decisions are remembered in the template.
   5. **Dates** that are not understood are listed once per distinct text, so the user can give a year range or leave those rows to be fixed in the sheet.
   6. **Review**: a preview of every row as it will be imported (with its pictures), counts of ready rows, rows already in the catalogue, and problems.
   7. **Import** runs in the background with progress. Each row is imported independently: every good row is saved, and problem rows are listed in a final report (row, field, original text, reason) that can be downloaded.

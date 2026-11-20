@@ -47,6 +47,8 @@ export const responseFieldTypes = {
     "collectionGroup": "text",
     "creationDate": "historical-date",
     "description": "text",
+    "descriptionLanguage": "text",
+    "descriptions": "map",
     "dimensions": "text",
     "dynasty": "text",
     "exhibitions[]": "text",
@@ -62,6 +64,7 @@ export const responseFieldTypes = {
     "images[].uploadedAt": "date",
     "images[].urls": "image",
     "inventoryNumber": "text",
+    "language": "text",
     "maker": "text",
     "medium": "text",
     "objectType.id": "reference",
@@ -97,6 +100,8 @@ export const responseFieldTypes = {
     "collectionGroup": "text",
     "creationDate": "historical-date",
     "description": "text",
+    "descriptionLanguage": "text",
+    "descriptions": "map",
     "dimensions": "text",
     "dynasty": "text",
     "exhibitions[]": "text",
@@ -112,6 +117,7 @@ export const responseFieldTypes = {
     "images[].uploadedAt": "date",
     "images[].urls": "image",
     "inventoryNumber": "text",
+    "language": "text",
     "maker": "text",
     "medium": "text",
     "objectType.id": "reference",
@@ -147,6 +153,8 @@ export const responseFieldTypes = {
     "collectionGroup": "text",
     "creationDate": "historical-date",
     "description": "text",
+    "descriptionLanguage": "text",
+    "descriptions": "map",
     "dimensions": "text",
     "dynasty": "text",
     "exhibitions[]": "text",
@@ -162,6 +170,7 @@ export const responseFieldTypes = {
     "images[].uploadedAt": "date",
     "images[].urls": "image",
     "inventoryNumber": "text",
+    "language": "text",
     "maker": "text",
     "medium": "text",
     "objectType.id": "reference",
@@ -197,6 +206,8 @@ export const responseFieldTypes = {
     "collectionGroup": "text",
     "creationDate": "historical-date",
     "description": "text",
+    "descriptionLanguage": "text",
+    "descriptions": "map",
     "dimensions": "text",
     "dynasty": "text",
     "exhibitions[]": "text",
@@ -212,6 +223,7 @@ export const responseFieldTypes = {
     "images[].uploadedAt": "date",
     "images[].urls": "image",
     "inventoryNumber": "text",
+    "language": "text",
     "maker": "text",
     "medium": "text",
     "objectType.id": "reference",
@@ -247,6 +259,8 @@ export const responseFieldTypes = {
     "collectionGroup": "text",
     "creationDate": "historical-date",
     "description": "text",
+    "descriptionLanguage": "text",
+    "descriptions": "map",
     "dimensions": "text",
     "dynasty": "text",
     "exhibitions[]": "text",
@@ -262,6 +276,7 @@ export const responseFieldTypes = {
     "images[].uploadedAt": "date",
     "images[].urls": "image",
     "inventoryNumber": "text",
+    "language": "text",
     "maker": "text",
     "medium": "text",
     "objectType.id": "reference",
@@ -297,6 +312,8 @@ export const responseFieldTypes = {
     "collectionGroup": "text",
     "creationDate": "historical-date",
     "description": "text",
+    "descriptionLanguage": "text",
+    "descriptions": "map",
     "dimensions": "text",
     "dynasty": "text",
     "exhibitions[]": "text",
@@ -312,6 +329,7 @@ export const responseFieldTypes = {
     "images[].uploadedAt": "date",
     "images[].urls": "image",
     "inventoryNumber": "text",
+    "language": "text",
     "maker": "text",
     "medium": "text",
     "objectType.id": "reference",
@@ -347,6 +365,8 @@ export const responseFieldTypes = {
     "collectionGroup": "text",
     "creationDate": "historical-date",
     "description": "text",
+    "descriptionLanguage": "text",
+    "descriptions": "map",
     "dimensions": "text",
     "dynasty": "text",
     "exhibitions[]": "text",
@@ -362,6 +382,7 @@ export const responseFieldTypes = {
     "images[].uploadedAt": "date",
     "images[].urls": "image",
     "inventoryNumber": "text",
+    "language": "text",
     "maker": "text",
     "medium": "text",
     "objectType.id": "reference",
@@ -390,30 +411,40 @@ export const responseFieldTypes = {
     "[]": "list",
     "[].id": "reference",
     "[].name": "text",
+    "[].nameLanguage": "text",
+    "[].names": "map",
     "[].parentId": "reference",
     "[].parentName": "text"
   },
   "addRegion": {
     "id": "reference",
     "name": "text",
+    "nameLanguage": "text",
+    "names": "map",
     "parentId": "reference",
     "parentName": "text"
   },
   "getRegion": {
     "id": "reference",
     "name": "text",
+    "nameLanguage": "text",
+    "names": "map",
     "parentId": "reference",
     "parentName": "text"
   },
-  "renameRegion": {
+  "setRegionNames": {
     "id": "reference",
     "name": "text",
+    "nameLanguage": "text",
+    "names": "map",
     "parentId": "reference",
     "parentName": "text"
   },
   "setRegionParent": {
     "id": "reference",
     "name": "text",
+    "nameLanguage": "text",
+    "names": "map",
     "parentId": "reference",
     "parentName": "text"
   },
@@ -421,22 +452,47 @@ export const responseFieldTypes = {
     "[]": "list",
     "[].artefactCount": "number",
     "[].id": "reference",
-    "[].name": "text"
+    "[].name": "text",
+    "[].nameLanguage": "text",
+    "[].names": "map"
   },
   "addObjectType": {
     "artefactCount": "number",
     "id": "reference",
-    "name": "text"
+    "name": "text",
+    "nameLanguage": "text",
+    "names": "map"
   },
   "getObjectType": {
     "artefactCount": "number",
     "id": "reference",
-    "name": "text"
+    "name": "text",
+    "nameLanguage": "text",
+    "names": "map"
   },
-  "renameObjectType": {
+  "setObjectTypeNames": {
     "artefactCount": "number",
     "id": "reference",
-    "name": "text"
+    "name": "text",
+    "nameLanguage": "text",
+    "names": "map"
+  },
+  "listLanguages": {
+    "[]": "list",
+    "[].code": "text",
+    "[].name": "text",
+    "[].position": "number"
+  },
+  "addLanguage": {
+    "code": "text",
+    "name": "text",
+    "position": "number"
+  },
+  "setLanguageOrder": {
+    "[]": "list",
+    "[].code": "text",
+    "[].name": "text",
+    "[].position": "number"
   }
 } as const satisfies Record<string, Record<string, FieldType>>
 
@@ -496,7 +552,7 @@ export const operations = {
     "method": "GET",
     "path": "/api/regions/{id}"
   },
-  "renameRegion": {
+  "setRegionNames": {
     "method": "PUT",
     "path": "/api/regions/{id}"
   },
@@ -520,12 +576,28 @@ export const operations = {
     "method": "GET",
     "path": "/api/object-types/{id}"
   },
-  "renameObjectType": {
+  "setObjectTypeNames": {
     "method": "PUT",
     "path": "/api/object-types/{id}"
   },
   "deleteObjectType": {
     "method": "DELETE",
     "path": "/api/object-types/{id}"
+  },
+  "listLanguages": {
+    "method": "GET",
+    "path": "/api/languages"
+  },
+  "addLanguage": {
+    "method": "POST",
+    "path": "/api/languages"
+  },
+  "setLanguageOrder": {
+    "method": "PUT",
+    "path": "/api/languages/order"
+  },
+  "deleteLanguage": {
+    "method": "DELETE",
+    "path": "/api/languages/{code}"
   }
 } as const satisfies Record<string, { method: string; path: string }>

@@ -8,7 +8,7 @@ const formBindings: WidgetNode['bindings'] = {
   creationDate: 'creationDate',
   medium: 'medium',
   dimensions: 'dimensions',
-  description: 'description',
+  descriptions: 'descriptions',
   acquisitionMethod: 'acquisition.method',
   acquisitionDate: 'acquisition.date',
   acquisitionSource: 'acquisition.source',

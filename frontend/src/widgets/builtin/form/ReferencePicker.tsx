@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
 import { useEffect, useId, useState, type KeyboardEvent } from 'react'
+import { useReaderLanguage } from '../../../app/languages'
 
 export interface PickedRef {
   id: string
@@ -17,7 +18,8 @@ export interface RefSource {
   /** Query key root for caching and invalidation (e.g. 'regions'). */
   key: string
   search: (text: string) => Promise<RefOption[]>
-  add: (name: string) => Promise<PickedRef>
+  /** Adds an entry named `name` in `language` (the reader's language). */
+  add: (name: string, language: string) => Promise<PickedRef>
   /** "region", "object type": used in the placeholder and error messages. */
   noun: string
 }
@@ -42,6 +44,7 @@ export function ReferencePicker({
 }) {
   const id = useId()
   const queryClient = useQueryClient()
+  const readerLanguage = useReaderLanguage()
   const [text, setText] = useState(value?.name ?? '')
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(0)
@@ -74,7 +77,7 @@ export function ReferencePicker({
     setAdding(true)
     setAddError(null)
     try {
-      const added = await source.add(search)
+      const added = await source.add(search, readerLanguage)
       await queryClient.invalidateQueries({ queryKey: [source.key] })
       await queryClient.invalidateQueries({ queryKey: ['count', source.key] })
       choose({ id: added.id, name: added.name })

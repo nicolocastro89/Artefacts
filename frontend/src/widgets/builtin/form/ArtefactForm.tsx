@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router'
 import { api, type AcquisitionMethod, type ArtefactWriteRequest, type HistoricalDateInput } from '../../../api/client'
 import { ApiError, unwrap } from '../../../api/problem'
 import { defineWidget } from '../../core/registry'
+import { useContentLanguages } from '../../../app/languages'
 import { isHistoricalDate, isMoney } from '../../format'
 import { HistoricalDateField } from './HistoricalDateField'
 import type { PickedRef } from './ReferencePicker'
@@ -30,7 +31,8 @@ interface FormState {
   creationDate: HistoricalDateInput
   medium: string
   dimensions: string
-  description: string
+  /** Description per language code; languages without text are left out when saving. */
+  descriptions: Record<string, string>
   method: AcquisitionMethod | ''
   acquisitionDate: string
   source: string
@@ -94,7 +96,7 @@ function initialState(values: Record<string, { value: unknown }>): FormState {
     creationDate: dateInput(values.creationDate?.value),
     medium: str(values.medium?.value),
     dimensions: str(values.dimensions?.value),
-    description: str(values.description?.value),
+    descriptions: Object.fromEntries(Object.entries((values.descriptions?.value ?? {}) as Record<string, unknown>).map(([k, v]) => [k, str(v)])),
     method: (str(values.acquisitionMethod?.value) as AcquisitionMethod) || '',
     acquisitionDate: str(values.acquisitionDate?.value),
     source: str(values.acquisitionSource?.value),
@@ -135,7 +137,7 @@ function toRequest(s: FormState): ArtefactWriteRequest {
     creationDate: dateOrNull(s.creationDate),
     medium: opt(s.medium),
     dimensions: opt(s.dimensions),
-    description: opt(s.description),
+    descriptions: Object.fromEntries(Object.entries(s.descriptions).filter(([, text]) => text.trim() !== '')),
     acquisition: s.method
       ? {
           method: s.method,
@@ -205,7 +207,7 @@ defineWidget({
     creationDate: { type: 'historical-date' },
     medium: { type: 'text' },
     dimensions: { type: 'text' },
-    description: { type: 'text' },
+    descriptions: { type: 'map' },
     acquisitionMethod: { type: 'text' },
     acquisitionDate: { type: 'date' },
     acquisitionSource: { type: 'text' },
@@ -233,6 +235,7 @@ defineWidget({
     const navigate = useNavigate()
     const queryClient = useQueryClient()
     const [state, setState] = useState<FormState>(() => initialState(values))
+    const { data: languages = [] } = useContentLanguages()
     const [errors, setErrors] = useState<Record<string, string[]>>({})
     const [summary, setSummary] = useState<string | null>(null)
     const [saving, setSaving] = useState(false)
@@ -314,7 +317,16 @@ defineWidget({
             <TextField label="Medium" value={state.medium} onChange={(v) => set('medium', v)} errors={errorsFor(errors, 'medium')} />
             <TextField label="Dimensions" value={state.dimensions} onChange={(v) => set('dimensions', v)} errors={errorsFor(errors, 'dimensions')} hint="As written, e.g. 82 × 64 cm (framed 96 × 78 cm)" />
           </div>
-          <TextField label="Description" multiline value={state.description} onChange={(v) => set('description', v)} errors={errorsFor(errors, 'description')} />
+          {languages.map((language) => (
+            <TextField
+              key={language.code}
+              label={`Description (${language.name})`}
+              multiline
+              value={state.descriptions[language.code] ?? ''}
+              onChange={(v) => set('descriptions', { ...state.descriptions, [language.code]: v })}
+              errors={errorsFor(errors, `descriptions.${language.code}`)}
+            />
+          ))}
         </fieldset>
 
         <fieldset className="form-section">

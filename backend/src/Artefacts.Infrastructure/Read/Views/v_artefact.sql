@@ -1,4 +1,6 @@
 -- Flattened artefact read view. Columns must match ArtefactRow (verified by an integration test).
+-- Names that exist per language (object types, regions) are not columns: queries resolve them with
+-- region_name / object_type_name (localized_names.sql) in the reader's language.
 -- Group keys: normalised text (lower case, whitespace collapsed) for free-text groupings, and the century
 -- of the creation date (17 = 1601-1700; negative for BCE, -1 = 100-1 BCE).
 CREATE OR REPLACE VIEW v_artefact AS
@@ -14,12 +16,10 @@ SELECT
     a.medium,
     a.dimensions,
     a.object_type_id,
-    ot.name AS object_type_name,
     a.collection_group,
     nullif(lower(regexp_replace(btrim(a.collection_group), '\s+', ' ', 'g')), '') AS collection_group_key,
     a.place_text,
     a.place_region_id,
-    pr.name AS place_region_name,
     a.dynasty,
     nullif(lower(regexp_replace(btrim(a.dynasty), '\s+', ' ', 'g')), '') AS dynasty_key,
     CASE
@@ -44,7 +44,5 @@ SELECT
     (SELECT count(*) FROM artefact_images ai WHERE ai.artefact_id = a.id)::int AS image_count
 FROM artefacts a
 CROSS JOIN LATERAL (SELECT coalesce(a.creation_date_earliest_year, a.creation_date_latest_year) AS year) y
-LEFT JOIN object_types ot ON ot.id = a.object_type_id
-LEFT JOIN regions pr ON pr.id = a.place_region_id
 LEFT JOIN artefact_images pi ON pi.artefact_id = a.id AND pi.is_primary
 LEFT JOIN media_assets pm ON pm.id = pi.media_asset_id;

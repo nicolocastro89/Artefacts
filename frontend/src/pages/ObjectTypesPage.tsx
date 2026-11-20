@@ -1,8 +1,11 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Check, Pencil, Plus, Search, Trash2, X } from 'lucide-react'
 import { useEffect, useId, useMemo, useState, type FormEvent } from 'react'
-import { api, type ObjectType } from '../api/client'
+import { api, type Language, type ObjectType } from '../api/client'
 import { ApiError, unwrap } from '../api/problem'
+import { useContentLanguages } from '../app/languages'
+import { namesOf, type NameDraft } from './names'
+import { NameCells, NameInputs } from './referenceNames'
 import { ReferenceTabs } from './ReferenceTabs'
 import './RegionsPage.css'
 
@@ -16,6 +19,7 @@ export function ObjectTypesPage() {
   const queryClient = useQueryClient()
   const searchId = useId()
   const [search, setSearch] = useState('')
+  const { data: languages = [] } = useContentLanguages()
   const { data: types = [], isPending, isError, error } = useQuery({
     queryKey: ['object-types', 'all'],
     queryFn: async () => unwrap(await api.GET('/api/object-types')),
@@ -34,7 +38,7 @@ export function ObjectTypesPage() {
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase()
-    return q ? types.filter((t) => t.name.toLowerCase().includes(q)) : types
+    return q ? types.filter((t) => Object.values(t.names).some((n) => n.toLowerCase().includes(q))) : types
   }, [types, search])
 
   return (
@@ -43,17 +47,17 @@ export function ObjectTypesPage() {
       <div className="page-head">
         <div className="page-head__titles">
           <h1>Object types</h1>
-          <p className="page-head__sub">The kinds of object in the collection. Renaming a type updates every artefact of that type.</p>
+          <p className="page-head__sub">The kinds of object in the collection, named in each language. Renaming a type updates every artefact of that type.</p>
         </div>
       </div>
 
-      <AddObjectType onAdded={refresh} />
+      <AddObjectType languages={languages} onAdded={refresh} />
 
       <div className="toolbar__row regions__filter">
         <label className="search" htmlFor={searchId}>
           <span className="visually-hidden">Filter object types</span>
           <Search aria-hidden="true" />
-          <input id={searchId} className="input input--search" type="search" placeholder="Filter object types" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <input id={searchId} className="input input--search" type="search" placeholder="Filter object types in any language" value={search} onChange={(e) => setSearch(e.target.value)} />
         </label>
       </div>
 
@@ -76,7 +80,11 @@ export function ObjectTypesPage() {
             <caption className="visually-hidden">Object types</caption>
             <thead>
               <tr>
-                <th scope="col">Name</th>
+                {languages.map((l) => (
+                  <th key={l.code} scope="col">
+                    {l.name}
+                  </th>
+                ))}
                 <th scope="col" className="regions__count">
                   Artefacts
                 </th>
@@ -87,7 +95,7 @@ export function ObjectTypesPage() {
             </thead>
             <tbody>
               {visible.map((type) => (
-                <ObjectTypeRow key={type.id} type={type} onChanged={refresh} />
+                <ObjectTypeRow key={type.id} type={type} languages={languages} onChanged={refresh} />
               ))}
             </tbody>
           </table>
@@ -97,9 +105,9 @@ export function ObjectTypesPage() {
   )
 }
 
-function AddObjectType({ onAdded }: { onAdded: () => Promise<unknown> }) {
-  const nameId = useId()
-  const [name, setName] = useState('')
+function AddObjectType({ languages, onAdded }: { languages: Language[]; onAdded: () => Promise<unknown> }) {
+  const [draft, setDraft] = useState<NameDraft>({})
+  const names = namesOf(draft)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -110,10 +118,10 @@ function AddObjectType({ onAdded }: { onAdded: () => Promise<unknown> }) {
     setError(null)
     setNotice(null)
     try {
-      const result = await api.POST('/api/object-types', { body: { name } })
+      const result = await api.POST('/api/object-types', { body: { names } })
       const type = unwrap(result)
       setNotice(result.response.status === 200 ? `“${type.name}” already exists.` : `Added “${type.name}”.`)
-      setName('')
+      setDraft({})
       await onAdded()
     } catch (err) {
       setError(message(err))
@@ -123,14 +131,9 @@ function AddObjectType({ onAdded }: { onAdded: () => Promise<unknown> }) {
   }
 
   return (
-    <form className="plate regions__add regions__add--single" onSubmit={submit}>
-      <div className={`field${error ? ' field--invalid' : ''}`}>
-        <label className="field__label" htmlFor={nameId}>
-          New object type
-        </label>
-        <input id={nameId} className="input" value={name} required onChange={(e) => setName(e.target.value)} placeholder="e.g. Ceramics" aria-invalid={!!error} />
-      </div>
-      <button type="submit" className="btn btn--primary" disabled={saving || !name.trim()}>
+    <form className="plate regions__add regions__add--single" onSubmit={submit} style={{ '--name-columns': languages.length } as React.CSSProperties}>
+      <NameInputs languages={languages} value={draft} onChange={setDraft} noun="object type" placeholder={{ en: 'e.g. Ceramics', it: 'es. Ceramiche' }} invalid={!!error} />
+      <button type="submit" className="btn btn--primary" disabled={saving || Object.keys(names).length === 0}>
         <Plus aria-hidden="true" /> Add object type
       </button>
       <p className="regions__add-feedback" aria-live="polite">
@@ -141,9 +144,9 @@ function AddObjectType({ onAdded }: { onAdded: () => Promise<unknown> }) {
   )
 }
 
-function ObjectTypeRow({ type, onChanged }: { type: ObjectType; onChanged: () => Promise<unknown> }) {
+function ObjectTypeRow({ type, languages, onChanged }: { type: ObjectType; languages: Language[]; onChanged: () => Promise<unknown> }) {
   const [editing, setEditing] = useState(false)
-  const [name, setName] = useState(type.name)
+  const [draft, setDraft] = useState<NameDraft>(type.names)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -163,45 +166,48 @@ function ObjectTypeRow({ type, onChanged }: { type: ObjectType; onChanged: () =>
   }
 
   const path = { params: { path: { id: type.id } } }
-  const rename = async (e: FormEvent) => {
-    e.preventDefault()
-    if (await run(async () => unwrap(await api.PUT('/api/object-types/{id}', { ...path, body: { name } })))) setEditing(false)
+  const save = async () => {
+    if (await run(async () => unwrap(await api.PUT('/api/object-types/{id}', { ...path, body: { names: namesOf(draft) } })))) setEditing(false)
+  }
+  const cancel = () => {
+    setEditing(false)
+    setDraft(type.names)
+    setError(null)
   }
 
   return (
     <tr aria-busy={busy}>
-      <td>
+      <NameCells
+        languages={languages}
+        names={type.names}
+        editing={editing}
+        draft={draft}
+        onDraft={setDraft}
+        onSave={() => void save()}
+        onCancel={cancel}
+        label={type.name}
+        note={
+          error && (
+            <p className="field__error" role="alert">
+              {error}
+            </p>
+          )
+        }
+      />
+      <td className="regions__count" data-label="Artefacts">
+        {type.artefactCount.toLocaleString()}
+      </td>
+      <td className="regions__actions">
         {editing ? (
-          <form className="regions__rename" onSubmit={rename}>
-            <input className="input" aria-label={`New name for ${type.name}`} value={name} autoFocus onChange={(e) => setName(e.target.value)} />
-            <button type="submit" className="btn btn--icon btn--sm" aria-label="Save name" disabled={busy}>
+          <>
+            <button type="button" className="btn btn--icon btn--sm" aria-label="Save names" disabled={busy} onClick={() => void save()}>
               <Check aria-hidden="true" />
             </button>
-            <button
-              type="button"
-              className="btn btn--icon btn--sm"
-              aria-label="Cancel renaming"
-              onClick={() => {
-                setEditing(false)
-                setName(type.name)
-                setError(null)
-              }}
-            >
+            <button type="button" className="btn btn--icon btn--sm" aria-label="Cancel renaming" onClick={cancel}>
               <X aria-hidden="true" />
             </button>
-          </form>
+          </>
         ) : (
-          <span className="cell-title">{type.name}</span>
-        )}
-        {error && (
-          <p className="field__error" role="alert">
-            {error}
-          </p>
-        )}
-      </td>
-      <td className="regions__count">{type.artefactCount.toLocaleString()}</td>
-      <td className="regions__actions">
-        {!editing && (
           <button type="button" className="btn btn--sm" onClick={() => setEditing(true)}>
             <Pencil aria-hidden="true" /> Rename
           </button>

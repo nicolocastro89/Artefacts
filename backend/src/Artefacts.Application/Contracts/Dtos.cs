@@ -54,6 +54,9 @@ public sealed record ArtefactDetail(
     string? Medium,
     string? Dimensions,
     string? Description,
+    string? DescriptionLanguage,
+    IReadOnlyDictionary<string, string> Descriptions,
+    string Language,
     AcquisitionDto? Acquisition,
     IReadOnlyList<ProvenanceEntryDto> Provenance,
     ArtefactImageDto? PrimaryImage,
@@ -140,7 +143,7 @@ public sealed record ArtefactWriteRequest(
     HistoricalDateInput? CreationDate = null,
     string? Medium = null,
     string? Dimensions = null,
-    string? Description = null,
+    IReadOnlyDictionary<string, string?>? Descriptions = null,
     AcquisitionInput? Acquisition = null,
     IReadOnlyList<ProvenanceEntryInput>? Provenance = null,
     Guid? ObjectTypeId = null,
@@ -157,22 +160,33 @@ public sealed record SetCaptionRequest(string? Caption);
 
 // ---------- Object types ----------
 
-public sealed record ObjectTypeDto(Guid Id, string Name, int ArtefactCount);
+public sealed record ObjectTypeDto(Guid Id, string Name, string NameLanguage, IReadOnlyDictionary<string, string> Names, int ArtefactCount);
 
-public sealed record AddObjectTypeRequest(string? Name);
-
-public sealed record RenameObjectTypeRequest(string? Name);
+/// <summary>Names keyed by content language code, e.g. { "it": "Tappeti", "en": "Carpets" }.</summary>
+public sealed record AddObjectTypeRequest(IReadOnlyDictionary<string, string?>? Names);
 
 /// <summary>Outcome of adding an object type: <see cref="Created"/> is false when an existing one was returned.</summary>
 public sealed record AddObjectTypeResult(ObjectTypeDto ObjectType, bool Created);
 
 // ---------- Regions ----------
 
-public sealed record RegionDto(Guid Id, string Name, Guid? ParentId, string? ParentName);
+public sealed record RegionDto(
+    Guid Id, string Name, string NameLanguage, IReadOnlyDictionary<string, string> Names, Guid? ParentId, string? ParentName);
 
-public sealed record AddRegionRequest(string? Name, Guid? ParentId = null);
+/// <summary>Names keyed by content language code, e.g. { "it": "Turchia", "en": "Turkey" }.</summary>
+public sealed record AddRegionRequest(IReadOnlyDictionary<string, string?>? Names, Guid? ParentId = null);
 
-public sealed record RenameRegionRequest(string? Name);
+/// <summary>Replaces all names of a region or object type; a language left out has no name afterwards.</summary>
+public sealed record SetNamesRequest(IReadOnlyDictionary<string, string?>? Names);
+
+// ---------- Languages ----------
+
+public sealed record LanguageDto(string Code, string Name, int Position);
+
+public sealed record AddLanguageRequest(string? Code, string? Name);
+
+/// <summary>Every content language code, in the new fallback order.</summary>
+public sealed record SetLanguageOrderRequest(IReadOnlyList<string>? Codes);
 
 public sealed record SetRegionParentRequest(Guid? ParentId);
 

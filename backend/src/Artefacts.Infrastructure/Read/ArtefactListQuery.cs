@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Artefacts.Infrastructure.Read;
 
-internal sealed class ArtefactListQuery(ReadDbContext db, IImageUrlBuilder imageUrls) : IArtefactListQuery
+internal sealed class ArtefactListQuery(ReadDbContext db, IImageUrlBuilder imageUrls, ILanguagePreferences preferences) : IArtefactListQuery
 {
     public const int MaxPageSize = 100;
 
@@ -30,18 +30,23 @@ internal sealed class ArtefactListQuery(ReadDbContext db, IImageUrlBuilder image
                 (r.StorageLocation != null && EF.Functions.ILike(r.StorageLocation, pattern, Like.EscapeChar)));
         }
 
+        // Names of object types and regions resolve in the reader's languages, in SQL, so that ordering and
+        // grouping by them are right across pages.
+        var languages = preferences.Current.ToArray();
         var total = await query.CountAsync(ct);
-        var groups = await GroupsAsync(query, request.Group, ct);
+        var groups = await GroupsAsync(query, request.Group, languages, ct);
 
-        var ordered = ThenSort(OrderByGroup(query, request.Group), request.Sort, request.Direction == SortDirection.Desc);
-        var rows = await ordered.ThenBy(r => r.InventoryNumber)
+        var ordered = ThenSort(OrderByGroup(query, request.Group, languages), request.Sort, request.Direction == SortDirection.Desc);
+        var pageRows = await ordered.ThenBy(r => r.InventoryNumber)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
+            .Select(r => new { Row = r, ObjectTypeName = LocalizedSql.ObjectTypeName(r.ObjectTypeId, languages) })
             .ToListAsync(ct);
 
         var labels = groups.ToDictionary(g => g.Key ?? "", g => g.Label);
-        var items = rows.Select(r =>
+        var items = pageRows.Select(x =>
         {
+            var r = x.Row;
             var key = request.Group == ArtefactGrouping.None ? null : GroupKeyOf(r, request.Group);
             return new ArtefactListItem(
                 r.Id,
@@ -55,7 +60,7 @@ internal sealed class ArtefactListQuery(ReadDbContext db, IImageUrlBuilder image
                 r.Medium,
                 r.PrimaryImageKey is null ? null : imageUrls.Build(r.PrimaryImageKey),
                 r.ImageCount,
-                r.ObjectTypeName,
+                x.ObjectTypeName,
                 r.CollectionGroup,
                 r.PlaceText,
                 r.Dynasty,
@@ -70,11 +75,13 @@ internal sealed class ArtefactListQuery(ReadDbContext db, IImageUrlBuilder image
     /// Orders by group first: groups with a value come first, ordered by their label (names) or key (century),
     /// and artefacts without a value form the last group. Without grouping this is a no-op ordering.
     /// </summary>
-    private static IOrderedQueryable<ArtefactRow> OrderByGroup(IQueryable<ArtefactRow> q, ArtefactGrouping group) => group switch
+    private static IOrderedQueryable<ArtefactRow> OrderByGroup(IQueryable<ArtefactRow> q, ArtefactGrouping group, string[] languages) => group switch
     {
-        ArtefactGrouping.ObjectType => q.OrderBy(r => r.ObjectTypeId == null).ThenBy(r => r.ObjectTypeName).ThenBy(r => r.ObjectTypeId),
+        ArtefactGrouping.ObjectType => q.OrderBy(r => r.ObjectTypeId == null)
+            .ThenBy(r => LocalizedSql.ObjectTypeName(r.ObjectTypeId, languages)).ThenBy(r => r.ObjectTypeId),
         ArtefactGrouping.CollectionGroup => q.OrderBy(r => r.CollectionGroupKey == null).ThenBy(r => r.CollectionGroupKey),
-        ArtefactGrouping.Origin => q.OrderBy(r => r.PlaceRegionId == null).ThenBy(r => r.PlaceRegionName).ThenBy(r => r.PlaceRegionId),
+        ArtefactGrouping.Origin => q.OrderBy(r => r.PlaceRegionId == null)
+            .ThenBy(r => LocalizedSql.RegionName(r.PlaceRegionId, languages)).ThenBy(r => r.PlaceRegionId),
         ArtefactGrouping.Century => q.OrderBy(r => r.Century == null).ThenBy(r => r.Century),
         ArtefactGrouping.Dynasty => q.OrderBy(r => r.DynastyKey == null).ThenBy(r => r.DynastyKey),
         _ => q.OrderBy(r => 0),
@@ -94,14 +101,16 @@ internal sealed class ArtefactListQuery(ReadDbContext db, IImageUrlBuilder image
     };
 
     /// <summary>Every group of the current search with its label and count, in display order (no-value group last).</summary>
-    private static async Task<IReadOnlyList<ArtefactGroupDto>> GroupsAsync(IQueryable<ArtefactRow> q, ArtefactGrouping group, CancellationToken ct)
+    private static async Task<IReadOnlyList<ArtefactGroupDto>> GroupsAsync(
+        IQueryable<ArtefactRow> q, ArtefactGrouping group, string[] languages, CancellationToken ct)
     {
         List<ArtefactGroupDto> groups;
         switch (group)
         {
             case ArtefactGrouping.ObjectType:
-                groups = (await q.GroupBy(r => new { r.ObjectTypeId, r.ObjectTypeName })
-                        .Select(g => new { g.Key.ObjectTypeId, g.Key.ObjectTypeName, Count = g.Count() }).ToListAsync(ct))
+                groups = (await q.GroupBy(r => r.ObjectTypeId)
+                        .Select(g => new { ObjectTypeId = g.Key, ObjectTypeName = LocalizedSql.ObjectTypeName(g.Key, languages), Count = g.Count() })
+                        .ToListAsync(ct))
                     .OrderBy(g => g.ObjectTypeId is null).ThenBy(g => g.ObjectTypeName, StringComparer.CurrentCultureIgnoreCase)
                     .Select(g => new ArtefactGroupDto(g.ObjectTypeId?.ToString(), g.ObjectTypeName, g.Count)).ToList();
                 break;
@@ -110,8 +119,9 @@ internal sealed class ArtefactListQuery(ReadDbContext db, IImageUrlBuilder image
                     .Select(g => new TextVariant(g.Key.Key, g.Key.Text, g.Count())).ToListAsync(ct));
                 break;
             case ArtefactGrouping.Origin:
-                groups = (await q.GroupBy(r => new { r.PlaceRegionId, r.PlaceRegionName })
-                        .Select(g => new { g.Key.PlaceRegionId, g.Key.PlaceRegionName, Count = g.Count() }).ToListAsync(ct))
+                groups = (await q.GroupBy(r => r.PlaceRegionId)
+                        .Select(g => new { PlaceRegionId = g.Key, PlaceRegionName = LocalizedSql.RegionName(g.Key, languages), Count = g.Count() })
+                        .ToListAsync(ct))
                     .OrderBy(g => g.PlaceRegionId is null).ThenBy(g => g.PlaceRegionName, StringComparer.CurrentCultureIgnoreCase)
                     .Select(g => new ArtefactGroupDto(g.PlaceRegionId?.ToString(), g.PlaceRegionName, g.Count)).ToList();
                 break;

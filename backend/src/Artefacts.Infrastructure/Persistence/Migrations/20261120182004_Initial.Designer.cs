@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Artefacts.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(CollectionDbContext))]
-    [Migration("20261120172511_Initial")]
+    [Migration("20261120182004_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -40,11 +40,6 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
                         .HasColumnName("collection_group");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(10000)
-                        .HasColumnType("character varying(10000)")
-                        .HasColumnName("description");
 
                     b.Property<string>("Dimensions")
                         .HasMaxLength(500)
@@ -111,26 +106,47 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("name");
-
-                    b.Property<string>("NormalizedName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("normalized_name");
-
                     b.HasKey("Id")
                         .HasName("pk_object_types");
 
-                    b.HasIndex("NormalizedName")
-                        .IsUnique()
-                        .HasDatabaseName("ux_object_types_normalized_name");
-
                     b.ToTable("object_types", (string)null);
+                });
+
+            modelBuilder.Entity("Artefacts.Domain.Languages.Language", b =>
+                {
+                    b.Property<string>("Code")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("code");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("integer")
+                        .HasColumnName("position");
+
+                    b.HasKey("Code")
+                        .HasName("pk_languages");
+
+                    b.ToTable("languages", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Code = "en",
+                            Name = "English",
+                            Position = 1
+                        },
+                        new
+                        {
+                            Code = "it",
+                            Name = "Italian",
+                            Position = 2
+                        });
                 });
 
             modelBuilder.Entity("Artefacts.Domain.Media.MediaAsset", b =>
@@ -181,28 +197,12 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("name");
-
-                    b.Property<string>("NormalizedName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("normalized_name");
-
                     b.Property<Guid?>("ParentId")
                         .HasColumnType("uuid")
                         .HasColumnName("parent_id");
 
                     b.HasKey("Id")
                         .HasName("pk_regions");
-
-                    b.HasIndex("NormalizedName")
-                        .IsUnique()
-                        .HasDatabaseName("ux_regions_normalized_name");
 
                     b.HasIndex("ParentId")
                         .HasDatabaseName("ix_regions_parent_id");
@@ -347,6 +347,42 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                             b1.WithOwner()
                                 .HasForeignKey("ArtefactId")
                                 .HasConstraintName("fk_artefacts_artefacts_id");
+                        });
+
+                    b.OwnsMany("Artefacts.Domain.Catalogue.ArtefactTranslation", "Translations", b1 =>
+                        {
+                            b1.Property<Guid>("ArtefactId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("artefact_id");
+
+                            b1.Property<string>("Language")
+                                .HasMaxLength(10)
+                                .HasColumnType("character varying(10)")
+                                .HasColumnName("language");
+
+                            b1.Property<string>("Description")
+                                .HasMaxLength(10000)
+                                .HasColumnType("character varying(10000)")
+                                .HasColumnName("description");
+
+                            b1.HasKey("ArtefactId", "Language")
+                                .HasName("pk_artefact_translations");
+
+                            b1.HasIndex("Language")
+                                .HasDatabaseName("ix_artefact_translations_language");
+
+                            b1.ToTable("artefact_translations", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("ArtefactId")
+                                .HasConstraintName("fk_artefact_translations_artefacts_artefact_id");
+
+                            b1.HasOne("Artefacts.Domain.Languages.Language", null)
+                                .WithMany()
+                                .HasForeignKey("Language")
+                                .OnDelete(DeleteBehavior.Restrict)
+                                .IsRequired()
+                                .HasConstraintName("fk_language_artefact_translations");
                         });
 
                     b.OwnsMany("Artefacts.Domain.Catalogue.Exhibition", "Exhibitions", b1 =>
@@ -571,7 +607,61 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
 
                     b.Navigation("Provenance");
 
+                    b.Navigation("Translations");
+
                     b.Navigation("Valuation");
+                });
+
+            modelBuilder.Entity("Artefacts.Domain.Classification.ObjectType", b =>
+                {
+                    b.OwnsMany("Artefacts.Domain.Languages.LocalizedName", "Names", b1 =>
+                        {
+                            b1.Property<Guid>("ObjectTypeId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("object_type_id");
+
+                            b1.Property<string>("Language")
+                                .HasMaxLength(10)
+                                .HasColumnType("character varying(10)")
+                                .HasColumnName("language");
+
+                            b1.Property<string>("Name")
+                                .IsRequired()
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)")
+                                .HasColumnName("name");
+
+                            b1.Property<string>("NormalizedName")
+                                .IsRequired()
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)")
+                                .HasColumnName("normalized_name");
+
+                            b1.HasKey("ObjectTypeId", "Language")
+                                .HasName("pk_object_type_names");
+
+                            b1.HasIndex("NormalizedName")
+                                .HasDatabaseName("ix_object_type_names_normalized_name");
+
+                            b1.HasIndex("Language", "NormalizedName")
+                                .IsUnique()
+                                .HasDatabaseName("ux_object_type_names_language_normalized_name");
+
+                            b1.ToTable("object_type_names", (string)null);
+
+                            b1.HasOne("Artefacts.Domain.Languages.Language", null)
+                                .WithMany()
+                                .HasForeignKey("Language")
+                                .OnDelete(DeleteBehavior.Restrict)
+                                .IsRequired()
+                                .HasConstraintName("fk_language_object_type_names");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ObjectTypeId")
+                                .HasConstraintName("fk_object_type_names_object_types_object_type_id");
+                        });
+
+                    b.Navigation("Names");
                 });
 
             modelBuilder.Entity("Artefacts.Domain.Regions.Region", b =>
@@ -581,6 +671,54 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                         .HasForeignKey("ParentId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_regions_regions_parent_id");
+
+                    b.OwnsMany("Artefacts.Domain.Languages.LocalizedName", "Names", b1 =>
+                        {
+                            b1.Property<Guid>("RegionId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("region_id");
+
+                            b1.Property<string>("Language")
+                                .HasMaxLength(10)
+                                .HasColumnType("character varying(10)")
+                                .HasColumnName("language");
+
+                            b1.Property<string>("Name")
+                                .IsRequired()
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)")
+                                .HasColumnName("name");
+
+                            b1.Property<string>("NormalizedName")
+                                .IsRequired()
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)")
+                                .HasColumnName("normalized_name");
+
+                            b1.HasKey("RegionId", "Language");
+
+                            b1.HasIndex("NormalizedName")
+                                .HasDatabaseName("ix_region_names_normalized_name");
+
+                            b1.HasIndex("Language", "NormalizedName")
+                                .IsUnique()
+                                .HasDatabaseName("ux_region_names_language_normalized_name");
+
+                            b1.ToTable("region_names", (string)null);
+
+                            b1.HasOne("Artefacts.Domain.Languages.Language", null)
+                                .WithMany()
+                                .HasForeignKey("Language")
+                                .OnDelete(DeleteBehavior.Restrict)
+                                .IsRequired()
+                                .HasConstraintName("fk_language_region_names");
+
+                            b1.WithOwner()
+                                .HasForeignKey("RegionId")
+                                .HasConstraintName("fk_region_names_regions_region_id");
+                        });
+
+                    b.Navigation("Names");
                 });
 #pragma warning restore 612, 618
         }

@@ -2,9 +2,11 @@ using Artefacts.Application.Abstractions;
 using Artefacts.Domain.Catalogue;
 using Artefacts.Domain.Classification;
 using Artefacts.Domain.Common;
+using Artefacts.Domain.Languages;
 using Artefacts.Domain.Media;
 using Artefacts.Domain.Regions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 
 namespace Artefacts.Infrastructure.Persistence;
@@ -41,19 +43,19 @@ internal sealed class ObjectTypeRepository(CollectionDbContext db) : IObjectType
     public Task<ObjectType?> GetAsync(ObjectTypeId id, CancellationToken ct) =>
         db.ObjectTypes.SingleOrDefaultAsync(t => t.Id == id, ct);
 
-    public Task<ObjectType?> FindByNormalizedNameAsync(string normalizedName, CancellationToken ct) =>
-        db.ObjectTypes.SingleOrDefaultAsync(t => t.NormalizedName == normalizedName, ct);
+    public Task<ObjectType?> FindByNameAsync(string language, string normalizedName, CancellationToken ct) =>
+        db.ObjectTypes.FirstOrDefaultAsync(t => t.Names.Any(n => n.Language == language && n.NormalizedName == normalizedName), ct);
 
     public async Task<IReadOnlyList<ObjectType>> SearchAsync(string? text, CancellationToken ct)
     {
         var query = db.ObjectTypes.AsQueryable();
         if (!string.IsNullOrWhiteSpace(text))
         {
-            var pattern = $"%{Like.Escape(text.Trim().ToLowerInvariant())}%";
-            query = query.Where(t => EF.Functions.Like(t.NormalizedName, pattern, Like.EscapeChar));
+            var pattern = $"%{Like.Escape(LocalizedName.Normalize(text))}%";
+            query = query.Where(t => t.Names.Any(n => EF.Functions.Like(n.NormalizedName, pattern, Like.EscapeChar)));
         }
 
-        return await query.OrderBy(t => t.Name).ToListAsync(ct);
+        return await query.ToListAsync(ct);
     }
 
     public void Add(ObjectType objectType) => db.ObjectTypes.Add(objectType);
@@ -72,19 +74,19 @@ internal sealed class RegionRepository(CollectionDbContext db) : IRegionReposito
         return await db.Regions.Where(r => list.Contains(r.Id)).ToDictionaryAsync(r => r.Id, ct);
     }
 
-    public Task<Region?> FindByNormalizedNameAsync(string normalizedName, CancellationToken ct) =>
-        db.Regions.SingleOrDefaultAsync(r => r.NormalizedName == normalizedName, ct);
+    public Task<Region?> FindByNameAsync(string language, string normalizedName, CancellationToken ct) =>
+        db.Regions.FirstOrDefaultAsync(r => r.Names.Any(n => n.Language == language && n.NormalizedName == normalizedName), ct);
 
     public async Task<IReadOnlyList<Region>> SearchAsync(string? text, CancellationToken ct)
     {
         var query = db.Regions.AsQueryable();
         if (!string.IsNullOrWhiteSpace(text))
         {
-            var pattern = $"%{Like.Escape(text.Trim().ToLowerInvariant())}%";
-            query = query.Where(r => EF.Functions.Like(r.NormalizedName, pattern, Like.EscapeChar));
+            var pattern = $"%{Like.Escape(LocalizedName.Normalize(text))}%";
+            query = query.Where(r => r.Names.Any(n => EF.Functions.Like(n.NormalizedName, pattern, Like.EscapeChar)));
         }
 
-        return await query.OrderBy(r => r.Name).ToListAsync(ct);
+        return await query.ToListAsync(ct);
     }
 
     public async Task<IReadOnlyDictionary<RegionId, RegionId?>> GetParentMapAsync(CancellationToken ct) =>
@@ -95,6 +97,42 @@ internal sealed class RegionRepository(CollectionDbContext db) : IRegionReposito
 
     public void Add(Region region) => db.Regions.Add(region);
     public void Remove(Region region) => db.Regions.Remove(region);
+}
+
+internal sealed class LanguageRepository(CollectionDbContext db) : ILanguageRepository
+{
+    public async Task<IReadOnlyList<Language>> ListAsync(CancellationToken ct) =>
+        await db.Languages.OrderBy(l => l.Position).ThenBy(l => l.Code).ToListAsync(ct);
+
+    public Task<Language?> GetAsync(string code, CancellationToken ct) =>
+        db.Languages.SingleOrDefaultAsync(l => l.Code == code, ct);
+
+    public async Task<bool> InUseAsync(string code, CancellationToken ct) =>
+        await db.Regions.AnyAsync(r => r.Names.Any(n => n.Language == code), ct) ||
+        await db.ObjectTypes.AnyAsync(t => t.Names.Any(n => n.Language == code), ct) ||
+        await db.Artefacts.AnyAsync(a => a.Translations.Any(t => t.Language == code), ct);
+
+    public void Add(Language language) => db.Languages.Add(language);
+    public void Remove(Language language) => db.Languages.Remove(language);
+}
+
+/// <summary>The content languages in fallback order, read once and kept until a change invalidates them.</summary>
+internal sealed class ContentLanguages(IServiceScopeFactory scopes) : IContentLanguages
+{
+    private volatile IReadOnlyList<Application.Contracts.LanguageDto>? _cached;
+
+    public async Task<IReadOnlyList<Application.Contracts.LanguageDto>> ListAsync(CancellationToken ct)
+    {
+        if (_cached is { } cached) return cached;
+        using var scope = scopes.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<CollectionDbContext>();
+        var list = await db.Languages.AsNoTracking().OrderBy(l => l.Position).ThenBy(l => l.Code)
+            .Select(l => new Application.Contracts.LanguageDto(l.Code, l.Name, l.Position)).ToListAsync(ct);
+        _cached = list;
+        return list;
+    }
+
+    public void Invalidate() => _cached = null;
 }
 
 internal sealed class MediaAssetRepository(CollectionDbContext db) : IMediaAssetRepository
@@ -129,9 +167,11 @@ internal sealed class UnitOfWork(CollectionDbContext db) : IUnitOfWork
                 { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: CollectionDbContext.InventoryNumberIndex } =>
                     new DomainValidationException("inventoryNumber", "This inventory number is already used by another artefact."),
                 { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: CollectionDbContext.RegionNameIndex } =>
-                    new DomainValidationException("name", "A region with this name already exists."),
+                    new DomainValidationException("names", "Another region already has this name in the same language."),
                 { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: CollectionDbContext.ObjectTypeNameIndex } =>
-                    new DomainValidationException("name", "An object type with this name already exists."),
+                    new DomainValidationException("names", "Another object type already has this name in the same language."),
+                { SqlState: PostgresErrorCodes.ForeignKeyViolation } when pg.ConstraintName?.StartsWith(CollectionDbContext.LanguageForeignKeyPrefix) == true =>
+                    new ConflictException("language_in_use", "The language is used by names or descriptions."),
                 { SqlState: PostgresErrorCodes.ForeignKeyViolation } when pg.TableName == "object_types" ||
                                                                           pg.ConstraintName?.Contains("object_types") == true =>
                     new ConflictException("object_type_in_use", "The object type is in use and cannot be deleted."),

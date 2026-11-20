@@ -8,7 +8,41 @@
 // - Several records share a collection group written in different case ("OLANDA" / "Olanda"), which must group together.
 // - Exhibitions in a given order on a few records; long English catalogue entries with line breaks on two.
 
-export const objectTypes = ['Paintings', 'Drawings and prints', 'Ceramics', 'Textiles', 'Carpets', 'Metalwork', 'Coins and medals', 'Lacquer', 'Miniatures', 'Sculpture']
+/** Object types with their English and Italian names; records refer to them by the English name. */
+export const objectTypes = [
+  { en: 'Paintings', it: 'Dipinti' },
+  { en: 'Drawings and prints', it: 'Disegni e stampe' },
+  { en: 'Ceramics', it: 'Ceramiche' },
+  { en: 'Textiles', it: 'Tessuti' },
+  { en: 'Carpets', it: 'Tappeti' },
+  { en: 'Metalwork', it: 'Metalli' },
+  { en: 'Coins and medals', it: 'Monete e medaglie' },
+  { en: 'Lacquer', it: 'Lacche' },
+  { en: 'Miniatures', it: 'Miniature' },
+  { en: 'Sculpture', it: 'Scultura' },
+]
+
+/** Italian names of the regions in data.mjs (keyed by their English name). A few are left English-only on purpose. */
+export const regionNamesIt = {
+  Europe: 'Europa', 'Low Countries': 'Paesi Bassi', Flanders: 'Fiandre', Holland: 'Olanda', Amsterdam: 'Amsterdam', Antwerp: 'Anversa',
+  France: 'Francia', Paris: 'Parigi', Lyon: 'Lione', Italy: 'Italia', Venice: 'Venezia', Florence: 'Firenze', Naples: 'Napoli',
+  England: 'Inghilterra', London: 'Londra', 'German lands': 'Terre tedesche', Saxony: 'Sassonia', Switzerland: 'Svizzera', Geneva: 'Ginevra',
+  'East Asia': 'Asia orientale', China: 'Cina', Jingdezhen: 'Jingdezhen', Japan: 'Giappone', Kyoto: 'Kyoto', 'Ottoman Empire': 'Impero ottomano',
+  Istanbul: 'Istanbul', Persia: 'Persia', Isfahan: 'Isfahan',
+}
+
+/**
+ * Descriptions per language. data.mjs holds the English descriptions; these add Italian ones. Records listed in
+ * `italianOnly` keep only the Italian text, so readers in English see the fallback marked as Italian.
+ */
+export const descriptionsIt = {
+  'COL-1998-014': 'Una tavola apparecchiata con un limone parzialmente sbucciato, un roemer e un piatto di peltro. La buccia pende oltre il bordo del tavolo secondo il gusto dell’epoca.',
+  'COL-1987-112': 'Un grande piatto con una fenice al centro tra peonie e una tesa a otto riserve. La lunga provenienza documenta un percorso attraverso collezioni europee.',
+  'COL-1971-130': 'Tappeto da preghiera con mihrab e colonne, in vello di lana su fondazione di lana.',
+  'COL-2006-015': 'Brocca in forma di gallo, in fritta con invetriatura turchese.',
+  'COL-2015-044': 'Frammento di kosode con glicine, seta tinta a riserva e ricamata.',
+}
+export const italianOnly = ['COL-2006-015', 'COL-2015-044']
 
 /** Keyed by inventory number. `place.region` names a region from data.mjs; `place.text` is kept as written. */
 export const catalogue = {

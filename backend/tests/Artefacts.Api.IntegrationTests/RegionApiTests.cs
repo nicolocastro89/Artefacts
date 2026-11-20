@@ -27,7 +27,7 @@ public class RegionApiTests(ApiFactory factory)
     public async Task Adding_new_region_creates_it()
     {
         var name = HttpExtensions.Unique("Tuscany");
-        var response = await _client.PostJsonAsync("/api/regions", new AddRegionRequest(name));
+        var response = await _client.PostJsonAsync("/api/regions", new AddRegionRequest(TestData.En(name)));
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         Assert.Equal(name, (await response.ReadAsync<RegionDto>()).Name);
@@ -39,7 +39,7 @@ public class RegionApiTests(ApiFactory factory)
         var name = HttpExtensions.Unique("Flanders");
         var existing = await _client.AddRegionAsync(name);
 
-        var response = await _client.PostJsonAsync("/api/regions", new AddRegionRequest($"  {name.ToLowerInvariant()}  "));
+        var response = await _client.PostJsonAsync("/api/regions", new AddRegionRequest(TestData.En($"  {name.ToLowerInvariant()}  ")));
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal(existing.Id, (await response.ReadAsync<RegionDto>()).Id);
@@ -55,7 +55,7 @@ public class RegionApiTests(ApiFactory factory)
             Provenance: [new ProvenanceEntryInput(region.Id, new HistoricalDateInput("1700"), null)]));
         var newName = HttpExtensions.Unique("Netherlands");
 
-        (await _client.PutJsonAsync($"/api/regions/{region.Id}", new RenameRegionRequest(newName))).EnsureSuccessStatusCode();
+        (await _client.PutJsonAsync($"/api/regions/{region.Id}", new SetNamesRequest(TestData.En(newName)))).EnsureSuccessStatusCode();
 
         var read = await (await _client.GetAsync($"/api/artefacts/{artefact.Id}")).ReadAsync<ArtefactDetail>();
         Assert.Equal(newName, read.Provenance.Single().RegionName);
@@ -67,10 +67,10 @@ public class RegionApiTests(ApiFactory factory)
         var a = await _client.AddRegionAsync(HttpExtensions.Unique("A"));
         var b = await _client.AddRegionAsync(HttpExtensions.Unique("B"));
 
-        var response = await _client.PutJsonAsync($"/api/regions/{b.Id}", new RenameRegionRequest(a.Name));
+        var response = await _client.PutJsonAsync($"/api/regions/{b.Id}", new SetNamesRequest(TestData.En(a.Name)));
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        Assert.Contains("name", (await response.ValidationErrorsAsync()).Keys);
+        Assert.Contains("names.en", (await response.ValidationErrorsAsync()).Keys);
     }
 
     [Fact]

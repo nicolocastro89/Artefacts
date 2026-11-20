@@ -1,6 +1,7 @@
 using Artefacts.Domain.Common;
 using Artefacts.Domain.Dating;
 using Artefacts.Domain.Finance;
+using Artefacts.Domain.Languages;
 
 namespace Artefacts.Domain.Catalogue;
 
@@ -19,6 +20,7 @@ public sealed class Artefact
 
     private readonly List<ProvenanceEntry> _provenance = [];
     private readonly List<Exhibition> _exhibitions = [];
+    private readonly List<ArtefactTranslation> _translations = [];
     private readonly List<ImageAttachment> _images = [];
 
     public ArtefactId Id { get; private set; }
@@ -28,7 +30,6 @@ public sealed class Artefact
     public HistoricalDate? CreationDate { get; private set; }
     public string? Medium { get; private set; }
     public string? Dimensions { get; private set; }
-    public string? Description { get; private set; }
     public Acquisition? Acquisition { get; private set; }
 
     /// <summary>Kind of object, from the object type reference list.</summary>
@@ -53,6 +54,9 @@ public sealed class Artefact
 
     /// <summary>Current valuation. Financially sensitive.</summary>
     public Money? Valuation { get; private set; }
+
+    /// <summary>Texts per language (the description), one row per language that has any.</summary>
+    public IReadOnlyList<ArtefactTranslation> Translations => _translations.OrderBy(t => t.Language, StringComparer.Ordinal).ToList();
 
     /// <summary>Exhibitions in the order entered.</summary>
     public IReadOnlyList<Exhibition> Exhibitions => _exhibitions.OrderBy(e => e.Position).ToList();
@@ -91,14 +95,35 @@ public sealed class Artefact
         Title = t!;
     }
 
-    public void Describe(string? maker, HistoricalDate? creationDate, string? medium, string? dimensions, string? description)
+    public void Describe(string? maker, HistoricalDate? creationDate, string? medium, string? dimensions)
     {
         Maker = Guard.Optional(maker, "maker", MaxShortTextLength);
         Medium = Guard.Optional(medium, "medium", MaxShortTextLength);
         Dimensions = Guard.Optional(dimensions, "dimensions", MaxShortTextLength);
-        Description = Guard.Optional(description, "description", MaxDescriptionLength);
         CreationDate = creationDate;
     }
+
+    /// <summary>
+    /// Replaces the description in every language from a language → text map. Text is kept as entered apart from
+    /// trimming; blank entries mean no description in that language.
+    /// </summary>
+    public void ReplaceDescriptions(IReadOnlyDictionary<string, string?>? descriptions)
+    {
+        var rows = new List<ArtefactTranslation>();
+        foreach (var (code, text) in descriptions ?? new Dictionary<string, string?>())
+        {
+            var language = code.Trim().ToLowerInvariant();
+            var clean = Guard.Optional(text, $"descriptions.{language}", MaxDescriptionLength);
+            if (clean is null || rows.Any(r => r.Language == language)) continue;
+            rows.Add(ArtefactTranslation.Create(language, clean));
+        }
+        _translations.Clear();
+        _translations.AddRange(rows);
+    }
+
+    /// <summary>The description in the first preferred language that has one.</summary>
+    public ResolvedText? DescriptionIn(IReadOnlyList<string> preferences) =>
+        Localized.Resolve(_translations.Where(t => t.Description is not null).Select(t => (t.Language, t.Description!)), preferences);
 
     public void SetAcquisition(Acquisition? acquisition) => Acquisition = acquisition;
 

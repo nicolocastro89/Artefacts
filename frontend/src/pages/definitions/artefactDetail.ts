@@ -44,7 +44,7 @@ export const artefactRecordBody: PageNode[] = [
                   labels: { inventoryNumber: 'Inventory no.', maker: 'Maker', creationDate: 'Date', medium: 'Medium', dimensions: 'Dimensions' },
                 },
               },
-              { type: 'widget', id: 'description', widgetId: 'text-block', bindings: { text: 'description' } },
+              { type: 'widget', id: 'description', widgetId: 'translated-text', bindings: { text: 'description', language: 'descriptionLanguage', requested: 'language' } },
             ],
           },
           classificationSection,

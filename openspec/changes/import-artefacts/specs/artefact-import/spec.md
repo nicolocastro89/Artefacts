@@ -63,7 +63,11 @@ The system SHALL assign each imported record an inventory number built from a us
 - **THEN** row 14 is ready to import and row 15 is a problem that names row 14
 
 ### Requirement: Place of production matching
-The system SHALL list every distinct place-of-production text in the workbook with the number of rows that use it and up to three similar regions from the region reference list, ranked by a similarity score that tolerates accents, case, punctuation and spelling variants. Names the user has linked to a region before (from the place decisions of any template) also count as names of that region. For each text the user SHALL be able to link a suggested or searched region, create a new region (with an editable name and optional parent) and link it, or keep the text without a region. Place texts that a template has already decided SHALL be pre-filled with that decision. The place text itself is always imported exactly as written.
+The system SHALL list every distinct place-of-production text in the workbook with the number of rows that use it and up to three similar regions from the region reference list. A place text that equals a region's name in any content language (ignoring case, accents and surrounding punctuation) is an exact match and is suggested first; other regions are ranked by a similarity score over their names in every language that tolerates accents, case, punctuation and spelling variants. Names the user has linked to a region before (from the place decisions of any template) also count as names of that region. For each text the user SHALL be able to link a suggested or searched region, create a new region (with editable names per language and an optional parent) and link it, or keep the text without a region. Place texts that a template has already decided SHALL be pre-filled with that decision. The place text itself is always imported exactly as written.
+
+#### Scenario: Italian name matches exactly
+- **WHEN** a workbook uses the place "Turchia" and the region "Turkey" has the Italian name "Turchia"
+- **THEN** "Turkey" is suggested first, as an exact match
 
 #### Scenario: Similar region suggested
 - **WHEN** a workbook uses the place "Cina" and the region list contains "China"

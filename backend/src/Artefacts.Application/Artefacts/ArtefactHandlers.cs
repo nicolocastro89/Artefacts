@@ -1,6 +1,7 @@
 using Artefacts.Application.Abstractions;
 using Artefacts.Application.Common;
 using Artefacts.Application.Contracts;
+using Artefacts.Application.Languages;
 using Artefacts.Domain.Catalogue;
 using Artefacts.Domain.Classification;
 using Artefacts.Domain.Common;
@@ -14,6 +15,7 @@ public sealed class ArtefactCommandHandler(
     IArtefactRepository artefacts,
     IRegionRepository regions,
     IObjectTypeRepository objectTypes,
+    IContentLanguages contentLanguages,
     IUnitOfWork unitOfWork,
     ArtefactDetailQueryHandler detail)
 {
@@ -53,7 +55,9 @@ public sealed class ArtefactCommandHandler(
         var creationDate = request.CreationDate is { Text: not null } cd && !string.IsNullOrWhiteSpace(cd.Text)
             ? v.Try("creationDate", () => HistoricalDate.Create(cd.Text, cd.EarliestYear, cd.LatestYear))
             : null;
-        v.Try("", () => artefact.Describe(request.Maker, creationDate, request.Medium, request.Dimensions, request.Description));
+        v.Try("", () => artefact.Describe(request.Maker, creationDate, request.Medium, request.Dimensions));
+        var descriptions = TranslationInput.Check(request.Descriptions, await contentLanguages.ListAsync(ct), "descriptions", v);
+        v.Try("", () => artefact.ReplaceDescriptions(descriptions));
 
         if (request.Acquisition is { } acq)
         {
@@ -121,6 +125,7 @@ public sealed class ArtefactDetailQueryHandler(
     IArtefactRepository artefacts,
     IRegionRepository regions,
     IObjectTypeRepository objectTypes,
+    ILanguagePreferences preferences,
     IMediaAssetRepository mediaAssets,
     IImageUrlBuilder imageUrls)
 {
@@ -132,6 +137,8 @@ public sealed class ArtefactDetailQueryHandler(
         if (a.PlaceOfProduction?.RegionId is { } placeRegionId) regionIds.Add(placeRegionId);
         var regionMap = await regions.GetManyAsync(regionIds.Distinct(), ct);
         var objectType = a.ObjectTypeId is { } typeId ? await objectTypes.GetAsync(typeId, ct) : null;
+        var languages = preferences.Current;
+        var description = a.DescriptionIn(languages);
         var assetMap = await mediaAssets.GetManyAsync(a.Images.Select(i => i.MediaAssetId), ct);
 
         var images = a.Images
@@ -152,7 +159,10 @@ public sealed class ArtefactDetailQueryHandler(
             HistoricalDateDto.From(a.CreationDate),
             a.Medium,
             a.Dimensions,
-            a.Description,
+            description?.Text,
+            description?.Language,
+            a.Translations.Where(t => t.Description is not null).ToDictionary(t => t.Language, t => t.Description!),
+            languages.FirstOrDefault() ?? "",
             a.Acquisition is { } acq
                 ? new AcquisitionDto(acq.Method, acq.Date, acq.Source,
                     acq.Price is { } p ? new MoneyDto(p.Amount, p.Currency) : null, acq.Lot, acq.Note)
@@ -160,18 +170,18 @@ public sealed class ArtefactDetailQueryHandler(
             a.Provenance
                 .Select(p => new ProvenanceEntryDto(
                     p.RegionId.Value,
-                    regionMap.TryGetValue(p.RegionId, out var r) ? r.Name : "(unknown region)",
+                    regionMap.TryGetValue(p.RegionId, out var r) ? r.NameIn(languages)?.Text ?? "" : "(unknown region)",
                     HistoricalDateDto.From(p.Period)!,
                     p.Note))
                 .ToList(),
             images.SingleOrDefault(i => i.IsPrimary),
             images,
-            objectType is null ? null : new NamedRefDto(objectType.Id.Value, objectType.Name),
+            objectType is null ? null : new NamedRefDto(objectType.Id.Value, objectType.NameIn(languages)?.Text ?? ""),
             a.CollectionGroup,
             a.PlaceOfProduction is { } place
                 ? new PlaceOfProductionDto(place.Text,
                     place.RegionId is { } pr && regionMap.TryGetValue(pr, out var placeRegion)
-                        ? new NamedRefDto(placeRegion.Id.Value, placeRegion.Name)
+                        ? new NamedRefDto(placeRegion.Id.Value, placeRegion.NameIn(languages)?.Text ?? "")
                         : null)
                 : null,
             a.Dynasty,
