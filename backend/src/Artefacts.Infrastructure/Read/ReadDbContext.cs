@@ -10,6 +10,10 @@ namespace Artefacts.Infrastructure.Read;
 public sealed class ReadDbContext(DbContextOptions<ReadDbContext> options) : DbContext(options)
 {
     public IQueryable<ArtefactRow> Artefacts => Set<ArtefactRow>();
+    public IQueryable<ProvenanceRow> Provenance => Set<ProvenanceRow>();
+    public IQueryable<ImageRow> Images => Set<ImageRow>();
+    public IQueryable<ExhibitionRow> Exhibitions => Set<ExhibitionRow>();
+    public IQueryable<DescriptionRow> Descriptions => Set<DescriptionRow>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -26,5 +30,10 @@ public sealed class ReadDbContext(DbContextOptions<ReadDbContext> options) : DbC
             b.Property(r => r.AcquisitionPriceAmount).HasPrecision(19, 4);
             b.Property(r => r.ValuationAmount).HasPrecision(19, 4);
         });
+
+        model.Entity<ProvenanceRow>(b => { b.HasNoKey(); b.ToView("v_artefact_provenance"); });
+        model.Entity<ImageRow>(b => { b.HasNoKey(); b.ToView("v_artefact_image"); });
+        model.Entity<ExhibitionRow>(b => { b.HasNoKey(); b.ToView("v_artefact_exhibition"); });
+        model.Entity<DescriptionRow>(b => { b.HasNoKey(); b.ToView("v_artefact_description"); });
     }
 }

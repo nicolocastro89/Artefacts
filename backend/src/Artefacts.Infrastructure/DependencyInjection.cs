@@ -11,6 +11,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
+using Artefacts.Infrastructure.Graph;
+
 namespace Artefacts.Infrastructure;
 
 public sealed class ConnectionStringOptions
@@ -36,7 +38,8 @@ public static class DependencyInjection
         services.AddDbContext<CollectionDbContext>(o => o
             .UseNpgsql(ConnectionString(), npg => npg.MigrationsHistoryTable("__ef_migrations_history"))
             .UseSnakeCaseNamingConvention());
-        services.AddDbContext<ReadDbContext>(o => o
+        // A factory as well as the scoped context: GraphQL resolvers and DataLoaders run in parallel and each takes its own.
+        services.AddDbContextFactory<ReadDbContext>(o => o
             .UseNpgsql(ConnectionString())
             .UseSnakeCaseNamingConvention()
             .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
@@ -52,6 +55,8 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IArtefactListQuery, ArtefactListQuery>();
         services.AddSingleton<IFieldCatalog, FieldCatalog>();
+        services.AddSingleton<Graph.IStoredQueryDocuments, Graph.InMemoryStoredQueryDocuments>();
+        services.AddArtefactsGraph();
         services.AddScoped<IImportRepository, ImportRepository>();
         services.AddScoped<IImportTemplateRepository, ImportTemplateRepository>();
         services.AddSingleton<IImportSignal, ImportSignal>();

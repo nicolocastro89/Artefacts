@@ -109,6 +109,41 @@ public class ReadSideTests(ApiFactory factory)
     }
 
     [Fact]
+    public async Task Field_catalog_describes_the_list_views()
+    {
+        var catalog = await (await _client.GetAsync("/api/catalog")).ReadAsync<FieldCatalogDto>();
+
+        var views = catalog.Entities.ToDictionary(e => e.Id, e => e.View);
+        Assert.Equal("v_artefact_provenance", views["ProvenanceEntry"]);
+        Assert.Equal("v_artefact_image", views["ArtefactImage"]);
+        Assert.Equal("v_artefact_exhibition", views["Exhibition"]);
+        Assert.Equal("v_artefact_description", views["Description"]);
+        var provenance = catalog.Entities.Single(e => e.Id == "ProvenanceEntry");
+        Assert.Equal(FieldType.HistoricalDate, provenance.Fields.Single(f => f.Id == "period").Type);
+        Assert.Equal(["period_display", "period_earliest_year", "period_latest_year", "period_precision"],
+            provenance.Fields.Single(f => f.Id == "period").Columns);
+        Assert.Equal(FieldType.Image, catalog.Entities.Single(e => e.Id == "ArtefactImage").Fields.Single(f => f.Id == "image").Type);
+    }
+
+    [Fact]
+    public async Task Provenance_view_follows_the_entered_order()
+    {
+        var first = await _client.AddRegionAsync(HttpExtensions.Unique("Flanders"));
+        var second = await _client.AddRegionAsync(HttpExtensions.Unique("Paris"));
+        var artefact = await _client.CreateArtefactAsync(new ArtefactWriteRequest(HttpExtensions.Unique("INV"), "Still life",
+            Provenance: [new ProvenanceEntryInput(first.Id, new HistoricalDateInput("c. 1650"), null), new ProvenanceEntryInput(second.Id, new HistoricalDateInput("1780s"), null)]));
+        await _client.PutJsonAsync($"/api/artefacts/{artefact.Id}", new ArtefactWriteRequest(artefact.InventoryNumber, artefact.Title,
+            Provenance: [new ProvenanceEntryInput(second.Id, new HistoricalDateInput("1780s"), null), new ProvenanceEntryInput(first.Id, new HistoricalDateInput("c. 1650"), null)]));
+
+        using var scope = factory.Services.CreateScope();
+        var rows = await scope.ServiceProvider.GetRequiredService<ReadDbContext>().Provenance
+            .Where(p => p.ArtefactId == artefact.Id).OrderBy(p => p.Position).ToListAsync();
+
+        Assert.Equal([second.Id, first.Id], rows.Select(r => r.RegionId));
+        Assert.Equal("1780s", rows[0].PeriodDisplay);
+    }
+
+    [Fact]
     public async Task Read_model_mapping_matches_view_columns()
     {
         using var scope = factory.Services.CreateScope();

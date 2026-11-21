@@ -43,7 +43,8 @@ var app = builder.Build();
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();
-app.UseWhen(context => context.Request.Path.StartsWithSegments("/api"), api => api.UseRequestLanguages());
+app.UseWhen(context => context.Request.Path.StartsWithSegments("/api") || context.Request.Path.StartsWithSegments("/graphql"),
+    api => api.UseRequestLanguages());
 
 app.MapOpenApi();
 if (app.Environment.IsDevelopment())
@@ -57,6 +58,7 @@ app.MapPartyEndpoints();
 app.MapLanguageEndpoints();
 app.MapImportEndpoints();
 app.MapSupportEndpoints();
+app.MapGraphQL("/graphql");
 
 if (app.Configuration.GetValue("Database:MigrateOnStartup", false))
 {

@@ -8,40 +8,22 @@ namespace Artefacts.Infrastructure.Read;
 
 internal sealed class ArtefactListQuery(ReadDbContext db, IImageUrlBuilder imageUrls, ILanguagePreferences preferences) : IArtefactListQuery
 {
-    public const int MaxPageSize = 100;
-
     public async Task<ArtefactListPage> ListAsync(ArtefactListRequest request, CancellationToken ct)
     {
         var page = Math.Max(1, request.Page);
-        var pageSize = Math.Clamp(request.PageSize, 1, MaxPageSize);
+        var pageSize = Math.Clamp(request.PageSize, 1, ArtefactListSteps.MaxPageSize);
 
-        var query = db.Artefacts;
-        if (!string.IsNullOrWhiteSpace(request.Search))
-        {
-            var pattern = $"%{Like.Escape(request.Search.Trim())}%";
-            // List entries match on a name in any language; parties on their name.
-            query = query.Where(r =>
-                EF.Functions.ILike(r.InventoryNumber, pattern, Like.EscapeChar) ||
-                EF.Functions.ILike(r.Title, pattern, Like.EscapeChar) ||
-                (r.Maker != null && EF.Functions.ILike(r.Maker, pattern, Like.EscapeChar)) ||
-                (r.PlaceText != null && EF.Functions.ILike(r.PlaceText, pattern, Like.EscapeChar)) ||
-                (r.CollectionGroupId != null && LocalizedSql.ReferenceEntryMatches(r.CollectionGroupId, pattern)) ||
-                (r.DynastyId != null && LocalizedSql.ReferenceEntryMatches(r.DynastyId, pattern)) ||
-                (r.StorageLocationId != null && LocalizedSql.ReferenceEntryMatches(r.StorageLocationId, pattern)) ||
-                (r.HolderId != null && EF.Functions.ILike(LocalizedSql.PartyName(r.HolderId)!, pattern, Like.EscapeChar)) ||
-                (r.AcquisitionSourceId != null && EF.Functions.ILike(LocalizedSql.PartyName(r.AcquisitionSourceId)!, pattern, Like.EscapeChar)));
-        }
+        var query = ArtefactListSteps.Search(db.Artefacts, request.Search);
 
         // Names of object types, regions and list entries resolve in the reader's languages, in SQL, so that ordering and
         // grouping by them are right across pages.
         var languages = preferences.Current.ToArray();
         var total = await query.CountAsync(ct);
-        var groups = await GroupsAsync(query, request.Group, languages, ct);
+        var groups = await ArtefactListSteps.GroupsAsync(query, request.Group, languages, ct);
 
-        var ordered = ThenSort(OrderByGroup(query, request.Group, languages), request.Sort, request.Direction == SortDirection.Desc);
-        var pageRows = await ordered.ThenBy(r => r.InventoryNumber)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
+        var ordered = ArtefactListSteps.ThenSort(ArtefactListSteps.OrderByGroup(query, request.Group, languages), request.Sort,
+            request.Direction == SortDirection.Desc);
+        var pageRows = await ArtefactListSteps.Page(ordered, page, pageSize)
             .Select(r => new
             {
                 Row = r,
@@ -55,7 +37,7 @@ internal sealed class ArtefactListQuery(ReadDbContext db, IImageUrlBuilder image
         var items = pageRows.Select(x =>
         {
             var r = x.Row;
-            var key = request.Group == ArtefactGrouping.None ? null : GroupKeyOf(r, request.Group);
+            var key = request.Group == ArtefactGrouping.None ? null : ArtefactListSteps.GroupKeyOf(r, request.Group);
             return new ArtefactListItem(
                 r.Id,
                 r.InventoryNumber,
@@ -78,12 +60,47 @@ internal sealed class ArtefactListQuery(ReadDbContext db, IImageUrlBuilder image
 
         return new ArtefactListPage(items, total, page, pageSize, groups);
     }
+}
+
+/// <summary>
+/// The artefact list's steps, composable over any <see cref="ArtefactRow"/> query: free-text search, group-first
+/// ordering with a sort, every group's label and count, and paging. The REST list and the GraphQL list share them, so
+/// both find, order and group alike.
+/// </summary>
+internal static class ArtefactListSteps
+{
+    public const int MaxPageSize = 100;
+
+    /// <summary>
+    /// Artefacts whose inventory number, title, maker or place contains <paramref name="search"/> (ignoring case), or
+    /// whose collection group, dynasty or storage location has a name in any language, or whose holder or source has a
+    /// name, that contains it. All artefacts when the search is empty.
+    /// </summary>
+    public static IQueryable<ArtefactRow> Search(IQueryable<ArtefactRow> query, string? search)
+    {
+        if (string.IsNullOrWhiteSpace(search)) return query;
+        var pattern = $"%{Like.Escape(search.Trim())}%";
+        return query.Where(r =>
+            EF.Functions.ILike(r.InventoryNumber, pattern, Like.EscapeChar) ||
+            EF.Functions.ILike(r.Title, pattern, Like.EscapeChar) ||
+            (r.Maker != null && EF.Functions.ILike(r.Maker, pattern, Like.EscapeChar)) ||
+            (r.PlaceText != null && EF.Functions.ILike(r.PlaceText, pattern, Like.EscapeChar)) ||
+            (r.CollectionGroupId != null && LocalizedSql.ReferenceEntryMatches(r.CollectionGroupId, pattern)) ||
+            (r.DynastyId != null && LocalizedSql.ReferenceEntryMatches(r.DynastyId, pattern)) ||
+            (r.StorageLocationId != null && LocalizedSql.ReferenceEntryMatches(r.StorageLocationId, pattern)) ||
+            (r.HolderId != null && EF.Functions.ILike(LocalizedSql.PartyName(r.HolderId)!, pattern, Like.EscapeChar)) ||
+            (r.AcquisitionSourceId != null && EF.Functions.ILike(LocalizedSql.PartyName(r.AcquisitionSourceId)!, pattern, Like.EscapeChar)));
+    }
+
+    /// <summary>One page of an ordered query; the inventory number breaks remaining ties so pages never overlap.</summary>
+    public static IQueryable<ArtefactRow> Page(IOrderedQueryable<ArtefactRow> ordered, int page, int pageSize) =>
+        ordered.ThenBy(r => r.InventoryNumber).Skip((page - 1) * pageSize).Take(pageSize);
 
     /// <summary>
     /// Orders by group first: groups with a value come first, ordered by their label (names) or key (century),
     /// and artefacts without a value form the last group. Without grouping this is a no-op ordering.
     /// </summary>
-    private static IOrderedQueryable<ArtefactRow> OrderByGroup(IQueryable<ArtefactRow> q, ArtefactGrouping group, string[] languages) => group switch
+    public static IOrderedQueryable<ArtefactRow> OrderByGroup(IQueryable<ArtefactRow> q, ArtefactGrouping group, string[] languages) => group switch
     {
         ArtefactGrouping.ObjectType => q.OrderBy(r => r.ObjectTypeId == null)
             .ThenBy(r => LocalizedSql.ObjectTypeName(r.ObjectTypeId, languages)).ThenBy(r => r.ObjectTypeId),
@@ -97,7 +114,7 @@ internal sealed class ArtefactListQuery(ReadDbContext db, IImageUrlBuilder image
         _ => q.OrderBy(r => 0),
     };
 
-    private static IOrderedQueryable<ArtefactRow> ThenSort(IOrderedQueryable<ArtefactRow> q, ArtefactSort sort, bool desc) => sort switch
+    public static IOrderedQueryable<ArtefactRow> ThenSort(IOrderedQueryable<ArtefactRow> q, ArtefactSort sort, bool desc) => sort switch
     {
         ArtefactSort.Title => desc ? q.ThenByDescending(r => r.Title) : q.ThenBy(r => r.Title),
         ArtefactSort.CreationDate =>
@@ -111,7 +128,7 @@ internal sealed class ArtefactListQuery(ReadDbContext db, IImageUrlBuilder image
     };
 
     /// <summary>Every group of the current search with its label and count, in display order (no-value group last).</summary>
-    private static async Task<IReadOnlyList<ArtefactGroupDto>> GroupsAsync(
+    public static async Task<IReadOnlyList<ArtefactGroupDto>> GroupsAsync(
         IQueryable<ArtefactRow> q, ArtefactGrouping group, string[] languages, CancellationToken ct)
     {
         List<ArtefactGroupDto> groups;
@@ -160,7 +177,7 @@ internal sealed class ArtefactListQuery(ReadDbContext db, IImageUrlBuilder image
             .Select(g => new ArtefactGroupDto(g.Id?.ToString(), g.Name, g.Count))
             .ToList();
 
-    private static string? GroupKeyOf(ArtefactRow r, ArtefactGrouping group) => group switch
+    public static string? GroupKeyOf(ArtefactRow r, ArtefactGrouping group) => group switch
     {
         ArtefactGrouping.ObjectType => r.ObjectTypeId?.ToString(),
         ArtefactGrouping.CollectionGroup => r.CollectionGroupId?.ToString(),
@@ -171,7 +188,7 @@ internal sealed class ArtefactListQuery(ReadDbContext db, IImageUrlBuilder image
     };
 
     /// <summary>"17th century", "1st century BCE".</summary>
-    internal static string CenturyLabel(int century)
+    public static string CenturyLabel(int century)
     {
         var n = Math.Abs(century);
         var suffix = (n % 100) is 11 or 12 or 13 ? "th" : (n % 10) switch { 1 => "st", 2 => "nd", 3 => "rd", _ => "th" };

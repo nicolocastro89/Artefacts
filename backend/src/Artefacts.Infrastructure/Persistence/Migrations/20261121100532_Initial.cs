@@ -641,11 +641,14 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
             // The name-resolving functions and the read view.
             migrationBuilder.Sql(ViewSql.Load("localized_names"));
             migrationBuilder.Sql(ViewSql.Load("v_artefact"));
+            migrationBuilder.Sql(ViewSql.Load("v_artefact_lists"));
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.Sql("DROP VIEW IF EXISTS v_artefact_description; DROP VIEW IF EXISTS v_artefact_exhibition; " +
+                                 "DROP VIEW IF EXISTS v_artefact_image; DROP VIEW IF EXISTS v_artefact_provenance;");
             migrationBuilder.Sql("DROP VIEW IF EXISTS v_artefact;");
             migrationBuilder.Sql("DROP FUNCTION IF EXISTS region_name(uuid, text[]); DROP FUNCTION IF EXISTS object_type_name(uuid, text[]); " +
                                  "DROP FUNCTION IF EXISTS reference_entry_name(uuid, text[]); DROP FUNCTION IF EXISTS reference_entry_matches(uuid, text); " +

@@ -1,0 +1,9 @@
+# name: Artefact detail
+query ArtefactDetail($id: UUID!) {
+  language
+  artefact(id: $id) {
+    id
+    inventoryNumber
+    title
+  }
+}
