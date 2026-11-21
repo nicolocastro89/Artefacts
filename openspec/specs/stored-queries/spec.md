@@ -1,11 +1,8 @@
-# Spec Delta
+# stored-queries Specification
 
 ## Purpose
-
-Keeps named GraphQL queries as data, so the built-in views and the views users build later read their data the same way, by naming a stored query and giving its variables.
-
-## ADDED Requirements
-
+TBD - created by archiving change graphql-query-layer. Update Purpose after archive.
+## Requirements
 ### Requirement: Stored queries
 The system SHALL keep stored queries, each with a stable identifier, a name, a GraphQL document holding exactly one query operation, and whether it is a system query. The document MUST be valid against the schema and within the query limits; a document that is not SHALL be rejected with a validation error that gives the problem and its position in the document.
 
@@ -63,4 +60,5 @@ For every stored query the system SHALL describe its result as a map from each v
 
 #### Scenario: Describe the list query
 - **WHEN** a client asks for the description of `artefact-list`
-- **THEN** it includes `artefacts.items[].primaryImage` of type image, `artefacts.items[].title` of type text and `artefacts.groups[]` of type list, and the variable `page` of type number
+- **THEN** it includes `artefacts.items[].primaryImage.urls` of type image, `artefacts.items[].title` of type text and `artefacts.groups[]` of type list, and the variable `page` of type number
+

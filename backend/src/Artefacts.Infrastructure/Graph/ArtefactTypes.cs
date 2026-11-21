@@ -2,6 +2,7 @@ using Artefacts.Application.Abstractions;
 using Artefacts.Application.Contracts;
 using Artefacts.Domain.Catalogue;
 using Artefacts.Domain.Dating;
+using Artefacts.Domain.Media;
 using Artefacts.Domain.Parties;
 using Artefacts.Infrastructure.Read;
 using HotChocolate;
@@ -34,6 +35,32 @@ public sealed record PartyRef(Guid Id, string Name, PartyKind Kind);
 /// <summary>A text in one language.</summary>
 public sealed record Translation(string Language, string Text);
 
+/// <summary>One step of an artefact's provenance: where it was, and when.</summary>
+public sealed class ProvenanceEntry(ProvenanceRow row)
+{
+    public Task<NamedRef?> GetRegion(RegionNamesDataLoader names, CancellationToken cancellationToken) =>
+        names.RefAsync(row.RegionId, cancellationToken);
+
+    public HistoricalDate Period =>
+        HistoricalDate.From(row.PeriodDisplay, row.PeriodEarliestYear, row.PeriodLatestYear, row.PeriodPrecision)!;
+
+    public string? Note => row.Note;
+}
+
+/// <summary>An image attached to an artefact, with its file details and signed URLs.</summary>
+public sealed class ArtefactImage(ImageRow row)
+{
+    public Guid MediaAssetId => row.MediaAssetId;
+    public string OriginalFileName => row.OriginalFileName;
+    public ImageFormat Format => Enum.Parse<ImageFormat>(row.Format, ignoreCase: true);
+    public long SizeBytes => row.SizeBytes;
+    public DateTimeOffset UploadedAt => row.UploadedAt;
+    public string? Caption => row.Caption;
+    public bool IsPrimary => row.IsPrimary;
+
+    public ImageUrls GetUrls([Service] IImageUrlBuilder imageUrls) => imageUrls.Build(row.StorageKey);
+}
+
 /// <summary>Where an artefact was made: the text as written and the linked region, if any.</summary>
 public sealed class PlaceOfProduction(string? text, Guid? regionId)
 {
@@ -51,7 +78,7 @@ public sealed class Acquisition(ArtefactRow row)
     public string? Lot => row.AcquisitionLot;
     public string? Note => row.AcquisitionNote;
 
-    [Sensitive("financial")]
+    [SensitiveField(nameof(ArtefactRow.AcquisitionPriceAmount))]
     public Money? Price => Money.From(row.AcquisitionPriceAmount, row.AcquisitionPriceCurrency);
 
     public async Task<PartyRef?> GetSource(PartiesDataLoader parties, CancellationToken cancellationToken) =>
@@ -83,8 +110,11 @@ public sealed class Artefact(ArtefactRow row, string? groupKey = null, string? g
     /// <summary>The label of the artefact's group in a grouped list.</summary>
     public string? GroupLabel => groupLabel;
 
-    public ImageUrls? GetPrimaryImage([Service] IImageUrlBuilder imageUrls) =>
-        row.PrimaryImageKey is null ? null : imageUrls.Build(row.PrimaryImageKey);
+    /// <summary>The image shown for the artefact, with its file details, caption and signed URLs; null when it has none.</summary>
+    public async Task<ArtefactImage?> GetPrimaryImage(ImagesDataLoader loader, CancellationToken cancellationToken) =>
+        row.ImageCount == 0
+            ? null
+            : ((await loader.LoadAsync(row.Id, cancellationToken)) ?? []).Where(i => i.IsPrimary).Select(i => new ArtefactImage(i)).FirstOrDefault();
 
     public Task<NamedRef?> GetObjectType(ObjectTypeNamesDataLoader names, CancellationToken cancellationToken) =>
         names.RefAsync(row.ObjectTypeId, cancellationToken);
@@ -107,6 +137,52 @@ public sealed class Artefact(ArtefactRow row, string? groupKey = null, string? g
 
     public Acquisition? Acquisition => row.AcquisitionMethod is null ? null : new Acquisition(row);
 
-    [Sensitive("financial")]
+    [SensitiveField(nameof(ArtefactRow.ValuationAmount))]
     public Money? Valuation => Money.From(row.ValuationAmount, row.ValuationCurrency);
+
+    /// <summary>The description in the reader's first language that has one; see <see cref="GetDescriptionLanguage"/>.</summary>
+    public async Task<string?> GetDescription(DescriptionsDataLoader loader, [Service] ILanguagePreferences preferences, CancellationToken cancellationToken) =>
+        (await DescriptionIn(loader, preferences, cancellationToken))?.Description;
+
+    /// <summary>The language of <see cref="GetDescription"/>, which differs from the reader's when the description is a fallback.</summary>
+    public async Task<string?> GetDescriptionLanguage(DescriptionsDataLoader loader, [Service] ILanguagePreferences preferences, CancellationToken cancellationToken) =>
+        (await DescriptionIn(loader, preferences, cancellationToken))?.Language;
+
+    /// <summary>The description in every language that has one.</summary>
+    public async Task<IReadOnlyList<Translation>> GetDescriptions(DescriptionsDataLoader loader, CancellationToken cancellationToken) =>
+        ((await loader.LoadAsync(row.Id, cancellationToken)) ?? []).Select(d => new Translation(d.Language, d.Description)).ToList();
+
+    public async Task<IReadOnlyList<string>> GetExhibitions(ExhibitionsDataLoader loader, CancellationToken cancellationToken) =>
+        ((await loader.LoadAsync(row.Id, cancellationToken)) ?? []).Select(e => e.Text).ToList();
+
+    public async Task<IReadOnlyList<ProvenanceEntry>> GetProvenance(ProvenanceDataLoader loader, CancellationToken cancellationToken) =>
+        ((await loader.LoadAsync(row.Id, cancellationToken)) ?? []).Select(p => new ProvenanceEntry(p)).ToList();
+
+    /// <summary>Every image, in the order attached.</summary>
+    public async Task<IReadOnlyList<ArtefactImage>> GetImages(ImagesDataLoader loader, CancellationToken cancellationToken) =>
+        ((await loader.LoadAsync(row.Id, cancellationToken)) ?? []).Select(i => new ArtefactImage(i)).ToList();
+
+    /// <summary>The catalogue entry in the reader's first language that has one; see <see cref="GetCatalogueEntryLanguage"/>.</summary>
+    public async Task<string?> GetCatalogueEntry(CatalogueEntriesDataLoader loader, [Service] ILanguagePreferences preferences, CancellationToken cancellationToken) =>
+        (await CatalogueEntryIn(loader, preferences, cancellationToken))?.CatalogueEntry;
+
+    /// <summary>The language of <see cref="GetCatalogueEntry"/>, which differs from the reader's when the entry is a fallback.</summary>
+    public async Task<string?> GetCatalogueEntryLanguage(CatalogueEntriesDataLoader loader, [Service] ILanguagePreferences preferences, CancellationToken cancellationToken) =>
+        (await CatalogueEntryIn(loader, preferences, cancellationToken))?.Language;
+
+    /// <summary>The catalogue entry in every language that has one.</summary>
+    public async Task<IReadOnlyList<Translation>> GetCatalogueEntries(CatalogueEntriesDataLoader loader, CancellationToken cancellationToken) =>
+        ((await loader.LoadAsync(row.Id, cancellationToken)) ?? []).Select(e => new Translation(e.Language, e.CatalogueEntry)).ToList();
+
+    private async Task<CatalogueEntryRow?> CatalogueEntryIn(CatalogueEntriesDataLoader loader, ILanguagePreferences preferences, CancellationToken cancellationToken)
+    {
+        var entries = await loader.LoadAsync(row.Id, cancellationToken) ?? [];
+        return preferences.Current.Select(l => entries.FirstOrDefault(e => e.Language == l)).FirstOrDefault(e => e is not null);
+    }
+
+    private async Task<DescriptionRow?> DescriptionIn(DescriptionsDataLoader loader, ILanguagePreferences preferences, CancellationToken cancellationToken)
+    {
+        var descriptions = await loader.LoadAsync(row.Id, cancellationToken) ?? [];
+        return preferences.Current.Select(l => descriptions.FirstOrDefault(d => d.Language == l)).FirstOrDefault(d => d is not null);
+    }
 }

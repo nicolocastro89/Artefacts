@@ -18,7 +18,7 @@ public static class MappingEngine
     /// <summary>Long text fields: values are joined with line breaks rather than spaces.</summary>
     public static readonly IReadOnlySet<ImportField> LongText = new HashSet<ImportField>
     {
-        ImportField.Description, ImportField.AcquisitionNote, ImportField.CatalogueEntryEn,
+        ImportField.Description, ImportField.AcquisitionNote, ImportField.CatalogueEntry,
     };
 
     /// <summary>

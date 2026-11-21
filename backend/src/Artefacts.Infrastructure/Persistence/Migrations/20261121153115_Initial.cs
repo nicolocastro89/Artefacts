@@ -119,6 +119,23 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "stored_queries",
+                columns: table => new
+                {
+                    id = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    normalized_name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    document = table.Column<string>(type: "text", nullable: false),
+                    is_system = table.Column<bool>(type: "boolean", nullable: false),
+                    created_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    updated_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_stored_queries", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "import_jobs",
                 columns: table => new
                 {
@@ -243,7 +260,6 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                     place_text = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: true),
                     place_region_id = table.Column<Guid>(type: "uuid", nullable: true),
                     dynasty_id = table.Column<Guid>(type: "uuid", nullable: true),
-                    catalogue_entry_en = table.Column<string>(type: "character varying(20000)", maxLength: 20000, nullable: true),
                     holder_id = table.Column<Guid>(type: "uuid", nullable: true),
                     storage_location_id = table.Column<Guid>(type: "uuid", nullable: true),
                     valuation_amount = table.Column<decimal>(type: "numeric(19,4)", precision: 19, scale: 4, nullable: true),
@@ -439,7 +455,8 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                 {
                     language = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
                     artefact_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    description = table.Column<string>(type: "character varying(10000)", maxLength: 10000, nullable: true)
+                    description = table.Column<string>(type: "character varying(10000)", maxLength: 10000, nullable: true),
+                    catalogue_entry = table.Column<string>(type: "character varying(20000)", maxLength: 20000, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -638,6 +655,12 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                 table: "regions",
                 column: "parent_id");
 
+            migrationBuilder.CreateIndex(
+                name: "ux_stored_queries_normalized_name",
+                table: "stored_queries",
+                column: "normalized_name",
+                unique: true);
+
             // The name-resolving functions and the read view.
             migrationBuilder.Sql(ViewSql.Load("localized_names"));
             migrationBuilder.Sql(ViewSql.Load("v_artefact"));
@@ -647,7 +670,7 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.Sql("DROP VIEW IF EXISTS v_artefact_description; DROP VIEW IF EXISTS v_artefact_exhibition; " +
+            migrationBuilder.Sql("DROP VIEW IF EXISTS v_artefact_catalogue_entry; DROP VIEW IF EXISTS v_artefact_description; DROP VIEW IF EXISTS v_artefact_exhibition; " +
                                  "DROP VIEW IF EXISTS v_artefact_image; DROP VIEW IF EXISTS v_artefact_provenance;");
             migrationBuilder.Sql("DROP VIEW IF EXISTS v_artefact;");
             migrationBuilder.Sql("DROP FUNCTION IF EXISTS region_name(uuid, text[]); DROP FUNCTION IF EXISTS object_type_name(uuid, text[]); " +
@@ -676,6 +699,9 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "region_names");
+
+            migrationBuilder.DropTable(
+                name: "stored_queries");
 
             migrationBuilder.DropTable(
                 name: "media_assets");

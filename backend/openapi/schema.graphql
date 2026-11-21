@@ -1,0 +1,360 @@
+schema {
+  query: GraphQuery
+}
+
+type GraphQuery {
+  language: String!
+  artefact(id: UUID!): Artefact @cost(weight: "10")
+  artefacts(
+    search: String
+    sort: ArtefactSort! = INVENTORY_NUMBER
+    direction: SortDirection! = ASC
+    group: ArtefactGrouping! = NONE
+    page: Int! = 1
+    pageSize: Int! = 25
+    where: ArtefactFilterInput @cost(weight: "10")
+    order: [ArtefactSortInput!] @cost(weight: "10")
+  ): ArtefactPage! @cost(weight: "10")
+}
+
+type Acquisition {
+  source: PartyRef @cost(weight: "10")
+  method: AcquisitionMethod!
+  date: LocalDate
+  lot: String
+  note: String
+  price: Money @sensitive(tag: "financial")
+}
+
+type Artefact {
+  primaryImage: ArtefactImage @cost(weight: "10")
+  objectType: NamedRef @cost(weight: "10")
+  collectionGroup: NamedRef @cost(weight: "10")
+  dynasty: NamedRef @cost(weight: "10")
+  storageLocation: NamedRef @cost(weight: "10")
+  holder: PartyRef @cost(weight: "10")
+  description: String @cost(weight: "10")
+  descriptionLanguage: String @cost(weight: "10")
+  descriptions: [Translation!]! @cost(weight: "10")
+  exhibitions: [String!]! @cost(weight: "10")
+  provenance: [ProvenanceEntry!]! @cost(weight: "10")
+  images: [ArtefactImage!]! @cost(weight: "10")
+  catalogueEntry: String @cost(weight: "10")
+  catalogueEntryLanguage: String @cost(weight: "10")
+  catalogueEntries: [Translation!]! @cost(weight: "10")
+  id: UUID!
+  inventoryNumber: String!
+  title: String!
+  maker: String
+  creationDate: HistoricalDate
+  medium: String
+  dimensions: String
+  century: Int
+  exhibitionCount: Int!
+  imageCount: Int!
+  groupKey: String
+  groupLabel: String
+  placeOfProduction: PlaceOfProduction
+  acquisition: Acquisition
+  valuation: Money @sensitive(tag: "financial")
+}
+
+type ArtefactGroup {
+  key: String
+  label: String
+  count: Int!
+}
+
+type ArtefactImage {
+  urls: ImageUrls!
+  mediaAssetId: UUID!
+  originalFileName: String!
+  format: ImageFormat!
+  sizeBytes: Long!
+  uploadedAt: DateTime!
+  caption: String
+  isPrimary: Boolean!
+}
+
+type ArtefactPage {
+  items: [Artefact!]!
+  total: Int!
+  page: Int!
+  pageSize: Int!
+  groups: [ArtefactGroup!]!
+}
+
+type HistoricalDate {
+  display: String!
+  earliestYear: Int
+  latestYear: Int
+  precision: HistoricalDatePrecision!
+}
+
+type ImageUrls {
+  thumb: String!
+  web: String!
+  print: String!
+}
+
+type Money {
+  amount: Decimal!
+  currency: String!
+}
+
+type NamedRef {
+  id: UUID!
+  name: String!
+}
+
+type PartyRef {
+  id: UUID!
+  name: String!
+  kind: PartyKind!
+}
+
+type PlaceOfProduction {
+  region: NamedRef @cost(weight: "10")
+  text: String
+}
+
+type ProvenanceEntry {
+  region: NamedRef @cost(weight: "10")
+  period: HistoricalDate!
+  note: String
+}
+
+type Translation {
+  language: String!
+  text: String!
+}
+
+input ArtefactFilterInput {
+  and: [ArtefactFilterInput!]
+  or: [ArtefactFilterInput!]
+  id: UuidOperationFilterInput
+  inventoryNumber: StringOperationFilterInput
+  title: StringOperationFilterInput
+  maker: StringOperationFilterInput
+  creationDateDisplay: StringOperationFilterInput
+  creationDateEarliestYear: IntOperationFilterInput
+  creationDateLatestYear: IntOperationFilterInput
+  creationDatePrecision: StringOperationFilterInput
+  medium: StringOperationFilterInput
+  dimensions: StringOperationFilterInput
+  objectTypeId: UuidOperationFilterInput
+  collectionGroupId: UuidOperationFilterInput
+  placeText: StringOperationFilterInput
+  placeRegionId: UuidOperationFilterInput
+  dynastyId: UuidOperationFilterInput
+  century: IntOperationFilterInput
+  holderId: UuidOperationFilterInput
+  storageLocationId: UuidOperationFilterInput
+  acquisitionMethod: StringOperationFilterInput
+  acquisitionDate: LocalDateOperationFilterInput
+  acquisitionSourceId: UuidOperationFilterInput
+  acquisitionLot: StringOperationFilterInput
+  acquisitionNote: StringOperationFilterInput
+  acquisitionPriceAmount: DecimalOperationFilterInput
+  acquisitionPriceCurrency: StringOperationFilterInput
+  valuationAmount: DecimalOperationFilterInput
+  valuationCurrency: StringOperationFilterInput
+  exhibitionCount: IntOperationFilterInput
+  primaryImageKey: StringOperationFilterInput
+  imageCount: IntOperationFilterInput
+}
+
+input ArtefactSortInput {
+  id: SortEnumType @cost(weight: "10")
+  inventoryNumber: SortEnumType @cost(weight: "10")
+  title: SortEnumType @cost(weight: "10")
+  maker: SortEnumType @cost(weight: "10")
+  creationDateDisplay: SortEnumType @cost(weight: "10")
+  creationDateEarliestYear: SortEnumType @cost(weight: "10")
+  creationDateLatestYear: SortEnumType @cost(weight: "10")
+  creationDatePrecision: SortEnumType @cost(weight: "10")
+  medium: SortEnumType @cost(weight: "10")
+  dimensions: SortEnumType @cost(weight: "10")
+  objectTypeId: SortEnumType @cost(weight: "10")
+  collectionGroupId: SortEnumType @cost(weight: "10")
+  placeText: SortEnumType @cost(weight: "10")
+  placeRegionId: SortEnumType @cost(weight: "10")
+  dynastyId: SortEnumType @cost(weight: "10")
+  century: SortEnumType @cost(weight: "10")
+  holderId: SortEnumType @cost(weight: "10")
+  storageLocationId: SortEnumType @cost(weight: "10")
+  acquisitionMethod: SortEnumType @cost(weight: "10")
+  acquisitionDate: SortEnumType @cost(weight: "10")
+  acquisitionSourceId: SortEnumType @cost(weight: "10")
+  acquisitionLot: SortEnumType @cost(weight: "10")
+  acquisitionNote: SortEnumType @cost(weight: "10")
+  acquisitionPriceAmount: SortEnumType @cost(weight: "10")
+  acquisitionPriceCurrency: SortEnumType @cost(weight: "10")
+  valuationAmount: SortEnumType @cost(weight: "10")
+  valuationCurrency: SortEnumType @cost(weight: "10")
+  exhibitionCount: SortEnumType @cost(weight: "10")
+  primaryImageKey: SortEnumType @cost(weight: "10")
+  imageCount: SortEnumType @cost(weight: "10")
+}
+
+input DecimalOperationFilterInput {
+  eq: Decimal @cost(weight: "10")
+  neq: Decimal @cost(weight: "10")
+  in: [Decimal] @cost(weight: "10")
+  nin: [Decimal] @cost(weight: "10")
+  gt: Decimal @cost(weight: "10")
+  ngt: Decimal @cost(weight: "10")
+  gte: Decimal @cost(weight: "10")
+  ngte: Decimal @cost(weight: "10")
+  lt: Decimal @cost(weight: "10")
+  nlt: Decimal @cost(weight: "10")
+  lte: Decimal @cost(weight: "10")
+  nlte: Decimal @cost(weight: "10")
+}
+
+input IntOperationFilterInput {
+  eq: Int @cost(weight: "10")
+  neq: Int @cost(weight: "10")
+  in: [Int] @cost(weight: "10")
+  nin: [Int] @cost(weight: "10")
+  gt: Int @cost(weight: "10")
+  ngt: Int @cost(weight: "10")
+  gte: Int @cost(weight: "10")
+  ngte: Int @cost(weight: "10")
+  lt: Int @cost(weight: "10")
+  nlt: Int @cost(weight: "10")
+  lte: Int @cost(weight: "10")
+  nlte: Int @cost(weight: "10")
+}
+
+input LocalDateOperationFilterInput {
+  eq: LocalDate @cost(weight: "10")
+  neq: LocalDate @cost(weight: "10")
+  in: [LocalDate] @cost(weight: "10")
+  nin: [LocalDate] @cost(weight: "10")
+  gt: LocalDate @cost(weight: "10")
+  ngt: LocalDate @cost(weight: "10")
+  gte: LocalDate @cost(weight: "10")
+  ngte: LocalDate @cost(weight: "10")
+  lt: LocalDate @cost(weight: "10")
+  nlt: LocalDate @cost(weight: "10")
+  lte: LocalDate @cost(weight: "10")
+  nlte: LocalDate @cost(weight: "10")
+}
+
+input StringOperationFilterInput {
+  and: [StringOperationFilterInput!]
+  or: [StringOperationFilterInput!]
+  eq: String @cost(weight: "10")
+  neq: String @cost(weight: "10")
+  contains: String @cost(weight: "20")
+  ncontains: String @cost(weight: "20")
+  in: [String] @cost(weight: "10")
+  nin: [String] @cost(weight: "10")
+  startsWith: String @cost(weight: "20")
+  nstartsWith: String @cost(weight: "20")
+  endsWith: String @cost(weight: "20")
+  nendsWith: String @cost(weight: "20")
+}
+
+input UuidOperationFilterInput {
+  eq: UUID @cost(weight: "10")
+  neq: UUID @cost(weight: "10")
+  in: [UUID] @cost(weight: "10")
+  nin: [UUID] @cost(weight: "10")
+  gt: UUID @cost(weight: "10")
+  ngt: UUID @cost(weight: "10")
+  gte: UUID @cost(weight: "10")
+  ngte: UUID @cost(weight: "10")
+  lt: UUID @cost(weight: "10")
+  nlt: UUID @cost(weight: "10")
+  lte: UUID @cost(weight: "10")
+  nlte: UUID @cost(weight: "10")
+}
+
+enum AcquisitionMethod {
+  PURCHASE
+  GIFT
+  BEQUEST
+  TRANSFER
+  OTHER
+}
+
+enum ArtefactGrouping {
+  NONE
+  OBJECT_TYPE
+  COLLECTION_GROUP
+  ORIGIN
+  CENTURY
+  DYNASTY
+}
+
+enum ArtefactSort {
+  INVENTORY_NUMBER
+  TITLE
+  CREATION_DATE
+}
+
+enum HistoricalDatePrecision {
+  YEAR
+  DECADE
+  CENTURY
+  APPROXIMATE
+}
+
+enum ImageFormat {
+  JPEG
+  PNG
+  TIFF
+  WEB_P
+}
+
+enum PartyKind {
+  PERSON
+  ORGANISATION
+}
+
+enum SortDirection {
+  ASC
+  DESC
+}
+
+enum SortEnumType {
+  ASC
+  DESC
+}
+
+"The `DateTime` scalar type represents a date and time with time zone offset information."
+scalar DateTime
+  @specifiedBy(url: "https://scalars.graphql.org/chillicream/date-time.html")
+
+"The `Decimal` scalar type represents a decimal floating-point number with high precision."
+scalar Decimal
+  @specifiedBy(url: "https://scalars.graphql.org/chillicream/decimal.html")
+
+"The `LocalDate` scalar type represents a date without time or time zone information."
+scalar LocalDate
+  @specifiedBy(url: "https://scalars.graphql.org/chillicream/local-date.html")
+
+"The `Long` scalar type represents a signed 64-bit integer."
+scalar Long
+  @specifiedBy(url: "https://scalars.graphql.org/chillicream/long.html")
+
+"The `UUID` scalar type represents a Universally Unique Identifier (UUID) as defined by RFC 9562."
+scalar UUID
+  @specifiedBy(url: "https://scalars.graphql.org/chillicream/uuid.html")
+
+"The purpose of the `cost` directive is to define a `weight` for GraphQL types, fields, and arguments. Static analysis can use these weights when calculating the overall cost of a query or response."
+directive @cost(
+  "The `weight` argument defines what value to add to the overall cost for every appearance, or possible appearance, of a type, field, argument, etc."
+  weight: String!
+) on
+  | SCALAR
+  | OBJECT
+  | FIELD_DEFINITION
+  | ARGUMENT_DEFINITION
+  | ENUM
+  | INPUT_FIELD_DEFINITION
+
+"The field exposes sensitive data of this kind. Informational until access is restricted by role."
+directive @sensitive(tag: String!) on FIELD_DEFINITION

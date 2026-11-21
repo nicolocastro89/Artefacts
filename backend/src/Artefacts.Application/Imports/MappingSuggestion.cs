@@ -68,6 +68,10 @@ public static class MappingSuggestion
             Rest: ImportField.AcquisitionNote);
     }
 
+    /// <summary>The language a catalogue entry column says it is in; English when the heading does not say.</summary>
+    private static string EntryLanguage(string foldedHeading) =>
+        foldedHeading.Contains("italian") ? "it" : "en";
+
     private static ColumnRule Suggest(ColumnSummary s, bool isFirst)
     {
         var h = Fold(s.Heading);
@@ -79,7 +83,7 @@ public static class MappingSuggestion
         if (Has("zona", "produzione", "origine", "luogo")) return Rules.Origin(s.Column, s.Heading);
         if (Has("provenienza", "acquist", "acquisiz", "fornitore", "venditore")) return Rules.Acquisition(s.Column, s.Heading);
         if (Has("mostr", "esposizion", "exhibition")) return Whole(s, ImportField.Exhibitions);
-        if (Has("william", "english", "inglese", "catalog")) return Whole(s, ImportField.CatalogueEntryEn);
+        if (Has("william", "english", "inglese", "catalog")) return Whole(s, ImportField.CatalogueEntry) with { Language = EntryLanguage(h) };
         if (Has("valore", "stima", "valuation", "value")) return Whole(s, ImportField.Valuation);
         if (Has("formato", "immagine", "image", "foto")) return new ColumnRule(s.Column, s.Heading);
         if (Has("dinastia", "dynasty")) return Whole(s, ImportField.Dynasty);

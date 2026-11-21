@@ -1,0 +1,17 @@
+{
+  "comment": "Value types of query results and REST responses. Each case gives a GraphQL type, the OpenAPI schema the REST responses use for the same value, and the type both describe it as. Tested by the backend (StoredQueryDescriberTests) and the frontend (scripts/fieldTypeRules.test.ts).",
+  "cases": [
+    { "graphql": "UUID", "openapi": { "type": "string", "format": "uuid" }, "type": "reference" },
+    { "graphql": "String", "openapi": { "type": "string" }, "type": "text" },
+    { "graphql": "Int", "openapi": { "type": "integer" }, "type": "number" },
+    { "graphql": "Long", "openapi": { "type": "integer" }, "type": "number" },
+    { "graphql": "Float", "openapi": { "type": "number" }, "type": "number" },
+    { "graphql": "Decimal", "openapi": { "type": "number" }, "type": "number" },
+    { "graphql": "Boolean", "openapi": { "type": "boolean" }, "type": "boolean" },
+    { "graphql": "LocalDate", "openapi": { "type": "string", "format": "date" }, "type": "date" },
+    { "graphql": "DateTime", "openapi": { "type": "string", "format": "date-time" }, "type": "date" },
+    { "graphql": "ImageUrls", "openapi": { "$ref": "#/components/schemas/ImageUrls" }, "type": "image" },
+    { "graphql": "HistoricalDate", "openapi": { "$ref": "#/components/schemas/HistoricalDateDto" }, "type": "historical-date" },
+    { "graphql": "Money", "openapi": { "$ref": "#/components/schemas/MoneyDto" }, "type": "money" }
+  ]
+}

@@ -3,9 +3,7 @@
 ## Purpose
 
 Lets collection staff record and maintain the core catalogue entry for every artefact in the institution's collection: identity, description, historical dating, acquisition and provenance.
-
 ## Requirements
-
 ### Requirement: Create an artefact
 The system SHALL allow a user to create an artefact with a unique inventory number and a title. Optional fields are maker, creation date, medium, dimensions, description, and the classification, origin and holding fields. The system MUST reject an artefact whose inventory number is missing, is blank, or is already used by another artefact.
 
@@ -150,7 +148,7 @@ The system SHALL allow an artefact to have an ordered list of provenance entries
 - **THEN** the system rejects the request with a validation error
 
 ### Requirement: Classification, origin and holding fields
-The system SHALL allow an artefact to record, in addition to its identity and description: an object type from the object type reference list; a collection group from the collection group list; a place of production as text exactly as written, with an optional reference to a region from the region reference list; a dynasty from the dynasty list; an ordered list of exhibitions, each a free-text entry; a catalogue entry in English (long free text); a holder, which is a party; a storage location from the storage location list; and a valuation, which is an optional monetary value with the same rules as an acquisition price. All of these fields are optional. An artefact without a holder is held by the collection itself. Text fields SHALL be stored exactly as entered, apart from removing leading and trailing whitespace. The system MUST reject a reference to an object type, collection group, dynasty, storage location, party or place-of-production region that does not exist.
+The system SHALL allow an artefact to record, in addition to its identity, description and catalogue entry: an object type from the object type reference list; a collection group from the collection group list; a place of production as text exactly as written, with an optional reference to a region from the region reference list; a dynasty from the dynasty list; an ordered list of exhibitions, each a free-text entry; a holder, which is a party; a storage location from the storage location list; and a valuation, which is an optional monetary value with the same rules as an acquisition price. All of these fields are optional. An artefact without a holder is held by the collection itself. Text fields SHALL be stored exactly as entered, apart from removing leading and trailing whitespace. The system MUST reject a reference to an object type, collection group, dynasty, storage location, party or place-of-production region that does not exist.
 
 #### Scenario: Artefact with classification and origin
 - **WHEN** a user saves an artefact with object type "Ceramics", collection group "CINA", place of production "Cina" linked to the region "China", and dynasty "Sung"
@@ -196,12 +194,32 @@ The system SHALL store an artefact's description separately for each content lan
 - **THEN** the Italian description is returned with language "it"
 
 ### Requirement: Artefact reads in the request's language
-Reading a single artefact or the artefact list SHALL resolve every translated value it includes in the request's language: the object type name, the region names of provenance entries and of the place of production, the description, and, when the list is grouped by object type or origin, the group labels. Ordering by group follows the resolved labels.
+Reading a single artefact or the artefact list SHALL resolve every translated value it includes in the request's language: the object type name, the region names of provenance entries and of the place of production, the description, the catalogue entry, and, when the list is grouped by object type or origin, the group labels. Ordering by group follows the resolved labels.
 
 #### Scenario: Provenance region named in the reader's language
 - **WHEN** a provenance entry references the region with names "Turchia" (it) and "Turkey" (en) and the artefact is read with `lang=it`
 - **THEN** the entry's region name is "Turchia"
 
+#### Scenario: Catalogue entry in the reader's language
+- **WHEN** an artefact has catalogue entries in Italian and English and is read with `lang=en`
+- **THEN** the returned catalogue entry is the English one, with language "en"
+
 #### Scenario: Group labels in the reader's language
 - **WHEN** the list is grouped by object type and read with `lang=it`
 - **THEN** the group for the object type "Carpets" / "Tappeti" is labelled "Tappeti"
+
+### Requirement: Catalogue entry per language
+The system SHALL store an artefact's catalogue entry (long free text) separately for each content language, in the same way as its description. Create and update requests carry the catalogue entries of all languages together; reading an artefact returns the entry resolved in the request's language with its language, and, for editing, the entries in every language. Each entry keeps its line breaks and text exactly as entered, apart from removing leading and trailing whitespace. A catalogue entry for a language that is not a content language MUST be rejected.
+
+#### Scenario: Catalogue entry in two languages
+- **WHEN** a user saves an artefact with the catalogue entries { "it": "Coppa in celadon", "en": "Celadon bowl" }
+- **THEN** reading it with `lang=it` returns "Coppa in celadon" in language "it", and with `lang=en` returns "Celadon bowl" in language "en"
+
+#### Scenario: Catalogue entry only in one language
+- **WHEN** an artefact has only an English catalogue entry and it is read with `lang=it`
+- **THEN** the English entry is returned with language "en"
+
+#### Scenario: Unknown language
+- **WHEN** a user saves a catalogue entry for a language that is not a content language
+- **THEN** the system rejects the request with a validation error that names the catalogue entries field
+

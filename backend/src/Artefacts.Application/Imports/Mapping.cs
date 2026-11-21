@@ -25,7 +25,7 @@ public enum ImportField
     AcquisitionPrice = 15,
     AcquisitionNote = 16,
     Exhibitions = 17,
-    CatalogueEntryEn = 18,
+    CatalogueEntry = 18,
     Holder = 19,
     StorageLocation = 20,
     Valuation = 21,
@@ -44,9 +44,10 @@ public sealed record LineRule(ImportField Target, LineDetector? Detector = null,
 /// <summary>
 /// How one column is mapped, identified by its heading text with its 1-based index as a fallback. Either the whole
 /// cell goes to <see cref="Target"/>, or its lines are assigned by <see cref="Lines"/> with every other line going to
-/// <see cref="Rest"/>. A column with neither is ignored.
+/// <see cref="Rest"/>. A column with neither is ignored. <see cref="Language"/> is the language of the column's text
+/// where that matters (the catalogue entry); null means English.
 /// </summary>
-public sealed record ColumnRule(int Column, string? Heading, ImportField? Target = null, IReadOnlyList<LineRule>? Lines = null, ImportField? Rest = null)
+public sealed record ColumnRule(int Column, string? Heading, ImportField? Target = null, IReadOnlyList<LineRule>? Lines = null, ImportField? Rest = null, string? Language = null)
 {
     [JsonIgnore] public bool UsesLines => Lines is { Count: > 0 };
     [JsonIgnore] public bool Ignored => Target is null && !UsesLines;

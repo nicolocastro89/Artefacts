@@ -73,7 +73,7 @@ public sealed class ImportJob
     public static ImportJob Create(string? fileName, long fileSize, Guid objectTypeId, Guid? templateId, string? sheet,
         string? mapping, string decisions, DateTimeOffset now)
     {
-        var name = Path.GetFileName(fileName ?? "").Trim();
+        var name = FileNames.Leaf(fileName).Trim();
         if (name.Length == 0) throw new DomainValidationException("file", "The file has no name.");
         if (name.Length > MaxFileNameLength) name = name[^MaxFileNameLength..];
         return new ImportJob

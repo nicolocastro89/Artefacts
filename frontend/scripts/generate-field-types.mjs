@@ -7,13 +7,13 @@
 //
 // Usage: node scripts/generate-field-types.mjs [openapi.json] [out.ts]
 import { readFileSync, writeFileSync } from 'node:fs'
+import { SPECIAL, leafType } from './fieldTypeRules.mjs'
 
 const input = process.argv[2] ?? '../backend/openapi/Artefacts.Api.json'
 const output = process.argv[3] ?? 'src/api/fieldTypes.generated.ts'
 const doc = JSON.parse(readFileSync(input, 'utf8'))
 const schemas = doc.components?.schemas ?? {}
 
-const SPECIAL = { ImageUrls: 'image', HistoricalDateDto: 'historical-date', MoneyDto: 'money' }
 const MAX_DEPTH = 6
 
 function refName(schema) {
@@ -46,7 +46,7 @@ function walk(schema, path, out, depth) {
   }
   if (name) return walk(schemas[name], path, out, depth + 1)
 
-  if (schema.enum) return void (out[path] = 'text')
+  if (schema.enum || ['string', 'integer', 'number', 'boolean'].includes(schema.type)) return void (out[path] = leafType(schema))
   switch (schema.type) {
     case 'array':
       out[path + '[]'] = 'list'
@@ -57,15 +57,6 @@ function walk(schema, path, out, depth) {
       for (const [prop, propSchema] of Object.entries(schema.properties ?? {}))
         walk(propSchema, path ? `${path}.${prop}` : prop, out, depth + 1)
       return
-    case 'string':
-      if (schema.format === 'uuid') return void (out[path] = 'reference')
-      if (schema.format === 'date' || schema.format === 'date-time') return void (out[path] = 'date')
-      return void (out[path] = 'text')
-    case 'integer':
-    case 'number':
-      return void (out[path] = 'number')
-    case 'boolean':
-      return void (out[path] = 'boolean')
   }
 }
 

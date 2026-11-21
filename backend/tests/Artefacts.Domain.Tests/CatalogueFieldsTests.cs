@@ -1,3 +1,4 @@
+using Artefacts.Domain.Languages;
 using Artefacts.Domain.Catalogue;
 using Artefacts.Domain.Common;
 using Artefacts.Domain.Finance;
@@ -59,7 +60,7 @@ public class CatalogueFieldsTests
         a.Classify(type, group);
         a.SetOrigin(PlaceOfProduction.Create("Cina", null), dynasty);
         a.SetHolding(holder, location, Money.Create(200_000m, "GBP"));
-        a.SetCatalogueEntry("A JUNYAO DISH\nJIN DYNASTY (1115-1234)\n");
+        a.ReplaceCatalogueEntries(new Dictionary<string, string?> { ["en"] = "A JUNYAO DISH\nJIN DYNASTY (1115-1234)\n" });
 
         Assert.Equal(type, a.ObjectTypeId);
         Assert.Equal(group, a.CollectionGroupId);
@@ -67,7 +68,7 @@ public class CatalogueFieldsTests
         Assert.Equal(holder, a.HolderId);
         Assert.Equal(location, a.StorageLocationId);
         Assert.Equal(200_000m, a.Valuation!.Amount);
-        Assert.Equal("A JUNYAO DISH\nJIN DYNASTY (1115-1234)", a.CatalogueEntryEn);
+        Assert.Equal(new ResolvedText("A JUNYAO DISH\nJIN DYNASTY (1115-1234)", "en"), a.CatalogueEntryIn(["en"]));
     }
 
     [Fact]

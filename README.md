@@ -29,7 +29,7 @@ docker compose -f docker/docker-compose.yml up -d --wait
 # 2. Start the API on http://localhost:5032. In Development it applies database migrations on startup.
 dotnet run --project backend/src/Artefacts.Api
 
-# 3. In a second terminal: start the frontend on http://localhost:5173 (it proxies /api to the API).
+# 3. In a second terminal: start the frontend on http://localhost:5173 (it proxies /api and /graphql to the API).
 cd frontend
 npm install
 npm run dev

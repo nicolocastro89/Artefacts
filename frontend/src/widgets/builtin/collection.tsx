@@ -372,7 +372,7 @@ defineWidget({
   slots: { rows: { type: 'list', required: true }, groups: { type: 'list' } },
   config: {
     idPath: 'id',
-    imagePath: 'primaryImage',
+    imagePath: 'primaryImage.urls',
     tagPath: 'inventoryNumber',
     titlePath: 'title',
     metaPaths: [] as string[],
@@ -442,7 +442,7 @@ defineWidget({
   id: 'rack-panel',
   label: 'Pull-out rack',
   slots: { rows: { type: 'list', required: true } },
-  config: { idPath: 'id', imagePath: 'primaryImage', tagPath: 'inventoryNumber', titlePath: 'title', facts: [] as RackFact[], openHref: '', editHref: '' },
+  config: { idPath: 'id', imagePath: 'primaryImage.urls', tagPath: 'inventoryNumber', titlePath: 'title', facts: [] as RackFact[], openHref: '', editHref: '' },
   print: { hideInPrint: true },
   component: function RackPanel({ values, config }) {
     const { selected, update } = useListParams()

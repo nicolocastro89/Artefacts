@@ -55,7 +55,8 @@ interface FormState {
   placeRegion: PickedRef | null
   dynasty: PickedRef | null
   exhibitions: ExhibitionRow[]
-  catalogueEntryEn: string
+  /** Catalogue entry per language code; languages without text are left out when saving. */
+  catalogueEntries: Record<string, string>
   /** None means the collection itself holds the artefact. */
   holder: PickedRef | null
   storageLocation: PickedRef | null
@@ -119,7 +120,7 @@ function initialState(values: Record<string, { value: unknown }>): FormState {
     placeRegion: ref(values.placeRegionId?.value, values.placeRegionName?.value),
     dynasty: ref(values.dynastyId?.value, values.dynastyName?.value),
     exhibitions: exhibitions.map((text) => ({ key: newRowKey(), text: str(text) })),
-    catalogueEntryEn: str(values.catalogueEntryEn?.value),
+    catalogueEntries: Object.fromEntries(Object.entries((values.catalogueEntries?.value ?? {}) as Record<string, unknown>).map(([k, v]) => [k, str(v)])),
     holder: ref(values.holderId?.value, values.holderName?.value),
     storageLocation: ref(values.storageLocationId?.value, values.storageLocationName?.value),
     valuationAmount: isMoney(valuation) ? String(valuation.amount) : '',
@@ -162,7 +163,7 @@ function toRequest(s: FormState): ArtefactWriteRequest {
     placeOfProduction: s.placeText.trim() || s.placeRegion ? { text: opt(s.placeText), regionId: s.placeRegion?.id ?? null } : null,
     dynastyId: s.dynasty?.id ?? null,
     exhibitions: s.exhibitions.map((e) => e.text.trim()).filter((t) => t !== ''),
-    catalogueEntryEn: opt(s.catalogueEntryEn),
+    catalogueEntries: Object.fromEntries(Object.entries(s.catalogueEntries).filter(([, text]) => text.trim() !== '')),
     holderId: s.holder?.id ?? null,
     storageLocationId: s.storageLocation?.id ?? null,
     valuation: valuation === null ? null : { amount: valuation, currency: s.valuationCurrency.trim().toUpperCase() },
@@ -235,7 +236,7 @@ defineWidget({
     dynastyId: { type: 'reference' },
     dynastyName: { type: 'text' },
     exhibitions: { type: 'any' },
-    catalogueEntryEn: { type: 'text' },
+    catalogueEntries: { type: 'map' },
     holderId: { type: 'reference' },
     holderName: { type: 'text' },
     storageLocationId: { type: 'reference' },
@@ -445,8 +446,17 @@ defineWidget({
         </fieldset>
 
         <fieldset className="form-section">
-          <legend>Catalogue entry (English)</legend>
-          <TextField label="Catalogue entry" multiline value={state.catalogueEntryEn} onChange={(v) => set('catalogueEntryEn', v)} errors={errorsFor(errors, 'catalogueEntryEn')} />
+          <legend>Catalogue entry</legend>
+          {languages.map((language) => (
+            <TextField
+              key={language.code}
+              label={`Catalogue entry (${language.name})`}
+              multiline
+              value={state.catalogueEntries[language.code] ?? ''}
+              onChange={(v) => set('catalogueEntries', { ...state.catalogueEntries, [language.code]: v })}
+              errors={errorsFor(errors, `catalogueEntries.${language.code}`)}
+            />
+          ))}
         </fieldset>
 
         <fieldset className="form-section">

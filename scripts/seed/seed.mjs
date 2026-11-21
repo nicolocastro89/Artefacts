@@ -118,7 +118,7 @@ function catalogueFields(a, regionIds, typeIds, lists) {
     placeOfProduction: c.place ? { text: c.place.text ?? null, regionId: region } : null,
     dynastyId: c.dynasty ? lists.dynasty.get(c.dynasty) : null,
     exhibitions: c.exhibitions ?? [],
-    catalogueEntryEn: c.entry ?? null,
+    catalogueEntries: c.entry ? { en: c.entry } : null,
     holderId: c.holder ? lists.party.get(c.holder) : null,
     storageLocationId: c.location ? lists.location.get(c.location) : null,
     valuation: c.valuation ?? null,

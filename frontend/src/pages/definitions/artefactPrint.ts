@@ -11,7 +11,7 @@ export const artefactPrintPage: PageDefinition = {
   root: {
     type: 'container',
     id: 'artefact',
-    dataSource: { kind: 'endpoint', operationId: 'getArtefact', params: { id: { from: 'route', name: 'id' } } },
+    dataSource: { kind: 'query', queryId: 'artefact-detail', variables: { id: { from: 'route', name: 'id' } }, require: 'artefact' },
     children: [
       {
         type: 'layout',
@@ -23,11 +23,11 @@ export const artefactPrintPage: PageDefinition = {
             id: 'head',
             layout: 'row',
             children: [
-              { type: 'widget', id: 'title', widgetId: 'heading', bindings: { text: 'title', subtitle: 'maker' } },
-              { type: 'widget', id: 'tag', widgetId: 'inventory-tag', bindings: { text: 'inventoryNumber' } },
+              { type: 'widget', id: 'title', widgetId: 'heading', bindings: { text: 'artefact.title', subtitle: 'artefact.maker' } },
+              { type: 'widget', id: 'tag', widgetId: 'inventory-tag', bindings: { text: 'artefact.inventoryNumber' } },
             ],
           },
-          { type: 'widget', id: 'primary', widgetId: 'image', bindings: { src: 'primaryImage.urls', caption: 'primaryImage.caption', alt: 'title' }, config: { size: 'print', aspect: 'auto' } },
+          { type: 'widget', id: 'primary', widgetId: 'image', bindings: { src: 'artefact.primaryImage.urls', caption: 'artefact.primaryImage.caption', alt: 'artefact.title' }, config: { size: 'print', aspect: 'auto' } },
           {
             type: 'layout',
             id: 'catalogue',
@@ -38,10 +38,10 @@ export const artefactPrintPage: PageDefinition = {
                 type: 'widget',
                 id: 'catalogue-fields',
                 widgetId: 'field-list',
-                bindings: { inventoryNumber: 'inventoryNumber', maker: 'maker', creationDate: 'creationDate', medium: 'medium', dimensions: 'dimensions' },
+                bindings: { inventoryNumber: 'artefact.inventoryNumber', maker: 'artefact.maker', creationDate: 'artefact.creationDate', medium: 'artefact.medium', dimensions: 'artefact.dimensions' },
                 config: { labels: { inventoryNumber: 'Inventory no.', maker: 'Maker', creationDate: 'Date', medium: 'Medium', dimensions: 'Dimensions' } },
               },
-              { type: 'widget', id: 'description', widgetId: 'translated-text', bindings: { text: 'description', language: 'descriptionLanguage', requested: 'language' } },
+              { type: 'widget', id: 'description', widgetId: 'translated-text', bindings: { text: 'artefact.description', language: 'artefact.descriptionLanguage', requested: 'language' } },
             ],
           },
           classificationSection,
@@ -66,11 +66,11 @@ export const artefactPrintPage: PageDefinition = {
                 type: 'widget',
                 id: 'provenance-table',
                 widgetId: 'table',
-                bindings: { rows: 'provenance[]' },
+                bindings: { rows: 'artefact.provenance[]' },
                 config: {
                   emptyText: 'No provenance recorded.',
                   columns: [
-                    { path: 'regionName', label: 'Region' },
+                    { path: 'region.name', label: 'Region' },
                     { path: 'period', label: 'Period' },
                     { path: 'note', label: 'Note' },
                   ],
@@ -85,7 +85,7 @@ export const artefactPrintPage: PageDefinition = {
             id: 'images',
             layout: 'section',
             title: 'Images',
-            children: [{ type: 'widget', id: 'gallery', widgetId: 'image-gallery', bindings: { images: 'images[]' } }],
+            children: [{ type: 'widget', id: 'gallery', widgetId: 'image-gallery', bindings: { images: 'artefact.images[]' } }],
           },
         ],
       },

@@ -11,6 +11,7 @@ See proposal.md for the motivation.
 - The detail endpoint maps the write aggregate (provenance, images, descriptions) to a DTO.
 - Request languages come from `RequestLanguagesMiddleware` (`lang`, then Accept-Language, then the fallback order), which runs for every request.
 - Image URLs are signed per rendition by `IImageUrlBuilder`.
+- The catalogue entry is a single English column, `artefacts.catalogue_entry_en`, outside the read views.
 
 **Frontend today:**
 - Page definitions name an `endpoint` data source by OpenAPI operation id.
@@ -59,8 +60,9 @@ See proposal.md for the motivation.
   - `objectType`, `collectionGroup`, `dynasty`, `storageLocation`: `NamedRef { id name }`;
   - `placeOfProduction { text region: NamedRef }`;
   - `holder: PartyRef { id name kind }`;
-  - `primaryImage: ImageUrls`;
+  - `primaryImage: ArtefactImage`, the same object as an entry of `images` (file details, caption, `urls`), read through the images loader;
   - `description`, `descriptionLanguage`, `descriptions: [Translation { language text }]`;
+  - `catalogueEntry`, `catalogueEntryLanguage`, `catalogueEntries: [Translation { language text }]`, resolved like the description fields;
   - `exhibitions: [String!]!`;
   - `provenance: [ProvenanceEntry!]!`;
   - `images: [ArtefactImage!]!`.
@@ -87,7 +89,17 @@ Rows come from `v_artefact` (and the new views). Linked names, parties, provenan
 A test counts the SQL commands of a 25-artefact query with images and provenance.
 
 ### New read views
-`v_artefact_provenance`, `v_artefact_image` (joined to `media_assets` for the storage key, file name, format, size and upload time), `v_artefact_exhibition` and `v_artefact_description`. Each is a keyless entity in `ReadDbContext` with catalog attributes, so the catalog and the column-sync test cover them. They are appended to the regenerated migration.
+`v_artefact_provenance`, `v_artefact_image` (joined to `media_assets` for the storage key, file name, format, size and upload time), `v_artefact_exhibition`, `v_artefact_description` and `v_artefact_catalogue_entry` (artefact, language, text, like the description view). Each is a keyless entity in `ReadDbContext` with catalog attributes, so the catalog and the column-sync test cover them. They are appended to the regenerated migration.
+
+### Multilingual catalogue entry
+The catalogue entry moves from `artefacts.catalogue_entry_en` to a `catalogue_entry` column on `artefact_translations`, beside `description`, so it is translated the same way.
+- **Domain:** the artefact keeps an entry per language, replaced as a whole like the descriptions, with the same length limit and the same language check. `SetCatalogueEntry` becomes a replace of the per-language map.
+- **REST:** the write request takes `catalogueEntries` (language to text); the detail returns that map plus `catalogueEntry` and `catalogueEntryLanguage`, resolved in the reader's languages like `description`. The `*En` names go away.
+- **Import:** the catalogue-entry mapping field names a language. The header heuristic keeps matching the same headings and suggests English for them; other languages are chosen in the mapping step.
+- **Frontend:** the form edits the entry per language as it does descriptions; the detail and print pages show the resolved entry with the same fallback marker as the description.
+- **Migration:** the column moves in the regenerated `Initial`; nothing is live, so no data is carried over.
+
+*Alternative:* keep the single English column and expose it only. Rejected because the collection is bilingual and the entry should follow the reader's language like every other text.
 
 ### Limits
 - Hot Chocolate's execution depth rule, with a maximum depth of 8.
@@ -98,7 +110,7 @@ A test counts the SQL commands of a 25-artefact query with images and provenance
 ### Sensitivity as a schema directive
 A `@sensitive(tag: String!)` directive is applied to fields whose catalog property carries `[Sensitive]` (acquisition price and valuation). It is metadata only. When roles arrive, one field middleware enforces it, alongside the `ISensitiveFieldPolicy` hook planned in the foundation design.
 
-### Stored queries: table, system files and persisted operations
+### Stored queries: table, system files and running by identifier
 - **Table:** `stored_queries(id text pk, name, normalized_name unique, document text, is_system bool, created_at, updated_at)`.
   - System ids are slugs (`artefact-list`, `artefact-detail`).
   - User ids are generated as `q-` plus a short random string, so they never clash with system slugs.
@@ -107,10 +119,11 @@ A `@sensitive(tag: String!)` directive is applied to fields whose catalog proper
   - At startup, after migrations, a hosted step upserts them: it inserts missing ones and overwrites the document and name of existing system rows.
   - A system query whose document no longer validates fails the startup, and a test validates every system file.
 - **Running:**
-  - Hot Chocolate's persisted operation pipeline runs stored queries, with an `IOperationDocumentStorage` that reads the table by id.
-  - Clients post `{ "id": "artefact-list", "variables": {...} }` to `/graphql`.
-  - Ad-hoc documents stay allowed (the proposal's choice), so the pipeline is configured to accept both.
-  - Variable checks are GraphQL's own coercion, which reports the variable's name.
+  - Clients post `{ "id": "artefact-list", "variables": {...} }` to `/graphql`. A small middleware in front of the endpoint replaces the identifier by the stored document, read from the table on every request, and passes on the ordinary `{ query, variables }`. A missing identifier is answered with a "does not exist" error.
+  - Ad-hoc documents stay allowed (the proposal's choice): a body with its own `query` is left alone.
+  - Variable checks are GraphQL's own coercion; an error filter puts the variable's name in the message (the server reports it only in an extension).
+
+  *Why not the persisted operation pipeline:* Hot Chocolate caches documents and compiled operations by document identifier, so an edited or deleted stored query kept running as it was (seen in a test). Resolving the identifier before the server sees it makes its caches keyed by the document's text, so they are always right.
 - **`/api/queries` REST endpoints:**
   - list, get, and create with name and document;
   - update name and/or document;
@@ -118,9 +131,9 @@ A `@sensitive(tag: String!)` directive is applied to fields whose catalog proper
   - `POST /{id}/duplicate` with a new name;
   - `GET /{id}/description`.
 
-  Writes to system rows return 409 `system_query`. Saving parses the document, requires exactly one operation of type query, validates it against the schema, and applies the depth and cost rules. Errors are returned as validation problems keyed `document`, with line and column in the message. A unique-index violation on `normalized_name` maps to a `name` error, as for templates.
+  Writes to system rows return 409 `system_query`. Saving parses the document, requires exactly one operation of type query, and validates it against the schema, including the depth rule. The cost limit is enforced when the query runs, not when it is saved (the server exposes cost analysis only as part of running a request). Errors are returned as validation problems keyed `document`, with line and column in the message. A unique-index violation on `normalized_name` maps to a `name` error, as for templates.
 
-*Alternative:* a custom `POST /api/queries/{id}/run`. Rejected because the persisted pipeline already gives the GraphQL response format and error shape, and the same client code serves both ad-hoc and stored queries.
+*Alternative:* a custom `POST /api/queries/{id}/run`. Rejected because posting the identifier to `/graphql` already gives the GraphQL response format and error shape, and the same client code serves both ad-hoc and stored queries.
 
 ### Result description computed on the server
 `GET /api/queries/{id}/description` returns `{ fields: { path: type }, variables: { name: { type, required } } }`. It walks the document's selection set against the schema, following fragments and using aliases as path segments. Type rules:
@@ -161,12 +174,14 @@ These rules are the same as `generate-field-types.mjs`. A shared test table of c
 - [Runtime-fetched descriptions slow the first render of a page] → cached per query id. System query descriptions could be prefetched with the route later if needed.
 - [Bindings rebased by hand could miss a path] → the existing list, detail and print component tests run against query fixtures, and the binding validator reports any mismatch as a configuration error, which the tests assert is absent.
 
+- [The catalogue entry contract changes (`catalogueEntryEn` becomes `catalogueEntries`)] → every consumer is in this repository (form, pages, import, tests) and moves in this change; the generated client is regenerated.
+
 ## Migration Plan
 
-1. Regenerate the `Initial` migration with `stored_queries` and the four new views appended.
+1. Regenerate the `Initial` migration with `stored_queries`, the translation column `catalogue_entry` (replacing `catalogue_entry_en`) and the five new views appended.
 2. Reset the development data (`docker compose … down -v`), start the API (system queries load at startup), and run the seed.
 3. Rollback means checking out the previous commit and resetting the data, since nothing is live.
 
 ## Open Questions
 
-- Exact limit values (depth 8 and the cost maxima) are a starting point, tuned against the system queries and the parity tests.
+- Limit values: depth 8 and the cost maxima of 5,000 hold for both system queries, the list at the page-size maximum of 100 included (`SystemQueryTests`), so they were kept. Revisit them when user queries or larger pages are common.

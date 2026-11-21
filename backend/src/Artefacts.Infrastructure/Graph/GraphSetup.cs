@@ -1,5 +1,4 @@
 using HotChocolate.Execution.Configuration;
-using HotChocolate.PersistedOperations;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Artefacts.Infrastructure.Graph;
@@ -17,31 +16,45 @@ public sealed class GraphOptions
 
     /// <summary>Highest allowed estimated type cost (objects returned) of one operation.</summary>
     public double MaxTypeCost { get; set; } = 5_000;
+
+    /// <summary>Whether the start stores the shipped system queries; off where there is no database (build-time generation).</summary>
+    public bool SyncSystemQueries { get; set; } = true;
 }
 
 /// <summary>
 /// The read-only GraphQL server over the read views: a query type only (no mutations), depth and cost limits, and
-/// stored queries run by identifier through the persisted operation pipeline, next to ad-hoc documents.
+/// stored queries run by identifier (see <see cref="StoredQueryMiddleware"/>), next to ad-hoc documents.
 /// </summary>
 public static class GraphSetup
 {
     public static IRequestExecutorBuilder AddArtefactsGraph(this IServiceCollection services)
     {
-        var options = new GraphOptions();
+        // The limits themselves are applied per request from IOptions<GraphOptions> (GraphLimitsInterceptor); the defaults
+        // here only register the rules the per-request limits drive.
+        var defaults = new GraphOptions();
         return services
             .AddGraphQLServer()
             .AddQueryType<GraphQuery>()
-            .AddMaxExecutionDepthRule(options.MaxDepth)
+            .AddDirectiveType<SensitiveDirectiveType>()
+            .AddFiltering()
+            .AddSorting()
+            .AddDataLoader<RegionNamesDataLoader>()
+            .AddDataLoader<ObjectTypeNamesDataLoader>()
+            .AddDataLoader<EntryNamesDataLoader>()
+            .AddDataLoader<PartiesDataLoader>()
+            .AddDataLoader<ProvenanceDataLoader>()
+            .AddDataLoader<ImagesDataLoader>()
+            .AddDataLoader<ExhibitionsDataLoader>()
+            .AddDataLoader<DescriptionsDataLoader>()
+            .AddDataLoader<CatalogueEntriesDataLoader>()
+            .AddMaxExecutionDepthRule(defaults.MaxDepth)
             .ModifyCostOptions(o =>
             {
-                o.MaxFieldCost = options.MaxFieldCost;
-                o.MaxTypeCost = options.MaxTypeCost;
+                o.MaxFieldCost = defaults.MaxFieldCost;
+                o.MaxTypeCost = defaults.MaxTypeCost;
                 o.EnforceCostLimits = true;
             })
-            .ModifyRequestOptions(o => o.PersistedOperations.OnlyAllowPersistedDocuments = false)
-            // Stored queries are looked up in the application's services (a singleton that opens its own scopes).
-            .AddApplicationService<IStoredQueryDocuments>()
-            .ConfigureSchemaServices(s => s.AddSingleton<IOperationDocumentStorage, StoredQueryDocumentStorage>())
-            .UsePersistedOperationPipeline();
+            .AddHttpRequestInterceptor<GraphLimitsInterceptor>()
+            .AddErrorFilter<VariableErrorFilter>();
     }
 }

@@ -11,12 +11,17 @@ export type ParamValue =
   | number
   | boolean
   | { from: 'route'; name: string }
-  | { from: 'search'; name: string; default?: string | number }
+  /** `enum` converts a camelCase value (`objectType`) to the name GraphQL enums use (`OBJECT_TYPE`). */
+  | { from: 'search'; name: string; default?: string | number; enum?: boolean }
 
 export type DataSource =
   | { kind: 'endpoint'; operationId: OperationId; params?: Record<string, ParamValue> }
-  /** A stored custom query (query engine epic). Not executable yet. */
-  | { kind: 'query'; queryId: string }
+  /**
+   * A stored query, run by its identifier. Each variable is a literal or taken from the route or URL, and converted to
+   * the type the query declares. When `require` names a path of the result and it is null, the container shows the
+   * "does not exist" state (a record that was not found).
+   */
+  | { kind: 'query'; queryId: string; variables?: Record<string, ParamValue>; require?: string }
   /** Inline data, typed against an operation's response when `typedAs` is given (tests, previews). */
   | { kind: 'static'; data: unknown; typedAs?: OperationId }
 

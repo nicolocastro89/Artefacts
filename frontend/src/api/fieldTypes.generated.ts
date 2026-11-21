@@ -44,7 +44,9 @@ export const responseFieldTypes = {
     "acquisition.price": "money",
     "acquisition.source.id": "reference",
     "acquisition.source.name": "text",
-    "catalogueEntryEn": "text",
+    "catalogueEntries": "map",
+    "catalogueEntry": "text",
+    "catalogueEntryLanguage": "text",
     "collectionGroup.id": "reference",
     "collectionGroup.name": "text",
     "creationDate": "historical-date",
@@ -103,7 +105,9 @@ export const responseFieldTypes = {
     "acquisition.price": "money",
     "acquisition.source.id": "reference",
     "acquisition.source.name": "text",
-    "catalogueEntryEn": "text",
+    "catalogueEntries": "map",
+    "catalogueEntry": "text",
+    "catalogueEntryLanguage": "text",
     "collectionGroup.id": "reference",
     "collectionGroup.name": "text",
     "creationDate": "historical-date",
@@ -162,7 +166,9 @@ export const responseFieldTypes = {
     "acquisition.price": "money",
     "acquisition.source.id": "reference",
     "acquisition.source.name": "text",
-    "catalogueEntryEn": "text",
+    "catalogueEntries": "map",
+    "catalogueEntry": "text",
+    "catalogueEntryLanguage": "text",
     "collectionGroup.id": "reference",
     "collectionGroup.name": "text",
     "creationDate": "historical-date",
@@ -221,7 +227,9 @@ export const responseFieldTypes = {
     "acquisition.price": "money",
     "acquisition.source.id": "reference",
     "acquisition.source.name": "text",
-    "catalogueEntryEn": "text",
+    "catalogueEntries": "map",
+    "catalogueEntry": "text",
+    "catalogueEntryLanguage": "text",
     "collectionGroup.id": "reference",
     "collectionGroup.name": "text",
     "creationDate": "historical-date",
@@ -280,7 +288,9 @@ export const responseFieldTypes = {
     "acquisition.price": "money",
     "acquisition.source.id": "reference",
     "acquisition.source.name": "text",
-    "catalogueEntryEn": "text",
+    "catalogueEntries": "map",
+    "catalogueEntry": "text",
+    "catalogueEntryLanguage": "text",
     "collectionGroup.id": "reference",
     "collectionGroup.name": "text",
     "creationDate": "historical-date",
@@ -339,7 +349,9 @@ export const responseFieldTypes = {
     "acquisition.price": "money",
     "acquisition.source.id": "reference",
     "acquisition.source.name": "text",
-    "catalogueEntryEn": "text",
+    "catalogueEntries": "map",
+    "catalogueEntry": "text",
+    "catalogueEntryLanguage": "text",
     "collectionGroup.id": "reference",
     "collectionGroup.name": "text",
     "creationDate": "historical-date",
@@ -398,7 +410,9 @@ export const responseFieldTypes = {
     "acquisition.price": "money",
     "acquisition.source.id": "reference",
     "acquisition.source.name": "text",
-    "catalogueEntryEn": "text",
+    "catalogueEntries": "map",
+    "catalogueEntry": "text",
+    "catalogueEntryLanguage": "text",
     "collectionGroup.id": "reference",
     "collectionGroup.name": "text",
     "creationDate": "historical-date",
@@ -1003,6 +1017,45 @@ export const responseFieldTypes = {
     "mapping.locationPatterns[]": "text",
     "name": "text",
     "updatedAt": "date"
+  },
+  "listQueries": {
+    "[]": "list",
+    "[].id": "text",
+    "[].kind": "text",
+    "[].name": "text",
+    "[].updatedAt": "date"
+  },
+  "createQuery": {
+    "document": "text",
+    "id": "text",
+    "kind": "text",
+    "name": "text",
+    "updatedAt": "date"
+  },
+  "getQuery": {
+    "document": "text",
+    "id": "text",
+    "kind": "text",
+    "name": "text",
+    "updatedAt": "date"
+  },
+  "updateQuery": {
+    "document": "text",
+    "id": "text",
+    "kind": "text",
+    "name": "text",
+    "updatedAt": "date"
+  },
+  "describeQuery": {
+    "fields": "map",
+    "variables": "map"
+  },
+  "duplicateQuery": {
+    "document": "text",
+    "id": "text",
+    "kind": "text",
+    "name": "text",
+    "updatedAt": "date"
   }
 } as const satisfies Record<string, Record<string, FieldType>>
 
@@ -1237,5 +1290,33 @@ export const operations = {
   "deleteImportTemplate": {
     "method": "DELETE",
     "path": "/api/import-templates/{id}"
+  },
+  "listQueries": {
+    "method": "GET",
+    "path": "/api/queries"
+  },
+  "createQuery": {
+    "method": "POST",
+    "path": "/api/queries"
+  },
+  "getQuery": {
+    "method": "GET",
+    "path": "/api/queries/{id}"
+  },
+  "updateQuery": {
+    "method": "PUT",
+    "path": "/api/queries/{id}"
+  },
+  "deleteQuery": {
+    "method": "DELETE",
+    "path": "/api/queries/{id}"
+  },
+  "describeQuery": {
+    "method": "GET",
+    "path": "/api/queries/{id}/description"
+  },
+  "duplicateQuery": {
+    "method": "POST",
+    "path": "/api/queries/{id}/duplicate"
   }
 } as const satisfies Record<string, { method: string; path: string }>

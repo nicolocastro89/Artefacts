@@ -5,5 +5,48 @@ query ArtefactDetail($id: UUID!) {
     id
     inventoryNumber
     title
+    maker
+    creationDate { display earliestYear latestYear precision }
+    medium
+    dimensions
+    description
+    descriptionLanguage
+    catalogueEntry
+    catalogueEntryLanguage
+    acquisition {
+      method
+      date
+      lot
+      note
+      price { amount currency }
+      source { id name kind }
+    }
+    provenance {
+      region { id name }
+      period { display earliestYear latestYear precision }
+      note
+    }
+    primaryImage {
+      caption
+      urls { thumb web print }
+    }
+    images {
+      mediaAssetId
+      originalFileName
+      format
+      sizeBytes
+      uploadedAt
+      caption
+      isPrimary
+      urls { thumb web print }
+    }
+    objectType { id name }
+    collectionGroup { id name }
+    placeOfProduction { text region { id name } }
+    dynasty { id name }
+    exhibitions
+    holder { id name kind }
+    storageLocation { id name }
+    valuation { amount currency }
   }
 }

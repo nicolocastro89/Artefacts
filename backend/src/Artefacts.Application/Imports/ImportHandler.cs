@@ -526,10 +526,10 @@ public sealed class ImportHandler(
             "storageLocationId" => ListTextOf(row, ImportField.StorageLocation),
             "acquisition.sourceId" => ListTextOf(row, ImportField.AcquisitionSource),
             "creationDate" => r?.CreationDate?.Text,
-            "catalogueEntryEn" => r?.CatalogueEntryEn,
             _ when key.StartsWith("placeOfProduction") => r?.PlaceOfProduction?.Text,
             _ when key.StartsWith("exhibitions") => string.Join(" · ", r?.Exhibitions ?? []),
             _ when key.StartsWith("descriptions") => r?.Descriptions?.Values.FirstOrDefault(),
+            _ when key.StartsWith("catalogueEntries") => r?.CatalogueEntries?.Values.FirstOrDefault(),
             _ => null,
         };
     }
@@ -749,7 +749,7 @@ public sealed class ImportHandler(
         }
 
         Add(ImportField.Exhibitions, string.Join("\n", r.Exhibitions ?? []));
-        Add(ImportField.CatalogueEntryEn, r.CatalogueEntryEn);
+        Add(ImportField.CatalogueEntry, r.CatalogueEntries is { Count: > 0 } entries ? string.Join("\n", entries.Values) : null);
         AddListValue(ImportField.Holder);
         AddListValue(ImportField.StorageLocation);
         Add(ImportField.Valuation, r.Valuation is { } v ? Amount(v) : null);

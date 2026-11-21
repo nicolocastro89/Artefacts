@@ -8,12 +8,13 @@ public sealed class ArtefactTranslation
 {
     public string Language { get; private set; } = default!;
     public string? Description { get; private set; }
+    public string? CatalogueEntry { get; private set; }
 
     // For EF Core.
     private ArtefactTranslation()
     {
     }
 
-    internal static ArtefactTranslation Create(string language, string? description) =>
-        new() { Language = language, Description = description };
+    internal static ArtefactTranslation Create(string language, string? description, string? catalogueEntry = null) =>
+        new() { Language = language, Description = description, CatalogueEntry = catalogueEntry };
 }

@@ -42,6 +42,13 @@ export function formatDate(value: string): string {
 }
 
 const ENUM_LABELS: Record<string, string> = {
+  PURCHASE: 'Purchase',
+  GIFT: 'Gift',
+  BEQUEST: 'Bequest',
+  TRANSFER: 'Transfer',
+  OTHER: 'Other',
+  PERSON: 'Person',
+  ORGANISATION: 'Organisation',
   purchase: 'Purchase',
   gift: 'Gift',
   bequest: 'Bequest',

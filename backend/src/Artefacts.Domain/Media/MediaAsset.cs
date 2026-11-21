@@ -30,7 +30,7 @@ public sealed class MediaAsset
     public static MediaAsset CreateImage(string? originalFileName, ImageFormat format, long sizeBytes, DateTimeOffset uploadedAt)
     {
         if (sizeBytes <= 0) throw new DomainValidationException("file", "The file is empty.");
-        var name = Path.GetFileName(originalFileName ?? "").Trim();
+        var name = FileNames.Leaf(originalFileName).Trim();
         if (name.Length == 0) name = "image";
         if (name.Length > MaxFileNameLength) name = name[^MaxFileNameLength..];
 

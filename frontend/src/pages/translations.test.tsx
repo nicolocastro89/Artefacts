@@ -4,6 +4,7 @@ import { Route, Routes } from 'react-router'
 import { vi } from 'vitest'
 import { readerLanguageOf } from '../app/languages'
 import { languagesRoute, mockFetch, problem } from '../test/fetchMock'
+import { artefactDetailRoutes } from '../test/queryFixtures'
 import { renderWithProviders } from '../test/render'
 import { artefactDetailPage } from './definitions/artefactDetail'
 import { artefactNewPage } from './definitions/artefactEdit'
@@ -122,7 +123,8 @@ describe('description per language', () => {
 
   it('marks a description shown in a fallback language', async () => {
     mockFetch({
-      'GET /api/artefacts/a1': () => ({
+      ...artefactDetailRoutes(
+        {
         id: 'a1',
         inventoryNumber: 'COL-2006-015',
         title: 'Ewer in the Form of a Cockerel',
@@ -132,8 +134,6 @@ describe('description per language', () => {
         dimensions: null,
         description: 'Brocca in forma di gallo.',
         descriptionLanguage: 'it',
-        descriptions: { it: 'Brocca in forma di gallo.' },
-        language: 'en',
         acquisition: null,
         provenance: [],
         primaryImage: null,
@@ -143,11 +143,15 @@ describe('description per language', () => {
         placeOfProduction: null,
         dynasty: null,
         exhibitions: [],
-        catalogueEntryEn: null,
+        catalogueEntry: null,
+        catalogueEntryLanguage: null,
+        catalogueEntries: {},
         holder: null,
         storageLocation: null,
         valuation: null,
-      }),
+        },
+        'en',
+      ),
     })
     renderWithProviders(
       <Routes>
@@ -160,5 +164,75 @@ describe('description per language', () => {
     const block = text.closest('.text-block') as HTMLElement
     expect(within(block).getByText('In Italian')).toBeInTheDocument()
     expect(block).toHaveAttribute('lang', 'it')
+  })
+})
+
+describe('catalogue entry per language', () => {
+  it('sends only the languages that have a catalogue entry', async () => {
+    const user = userEvent.setup()
+    const { calls } = mockFetch({ ...languagesRoute, 'POST /api/artefacts': () => ({ id: 'new1' }) })
+    renderWithProviders(
+      <Routes>
+        <Route path="/artefacts/new" element={<PageRoute page={artefactNewPage} />} />
+        <Route path="/artefacts/:id" element={<p>Saved record</p>} />
+      </Routes>,
+      { route: '/artefacts/new' },
+    )
+
+    await user.type(await screen.findByRole('textbox', { name: 'Inventory number' }), 'INV-1')
+    await user.type(screen.getByRole('textbox', { name: 'Title' }), 'Dish')
+    await user.type(await screen.findByRole('textbox', { name: 'Catalogue entry (Italian)' }), 'Piatto con fenice')
+    expect(screen.getByRole('textbox', { name: 'Catalogue entry (English)' })).toHaveValue('')
+    await user.click(screen.getByRole('button', { name: 'Create artefact' }))
+
+    await screen.findByText('Saved record')
+    const body = calls.find((c) => c.method === 'POST' && c.url.pathname === '/api/artefacts')!.body as Record<string, unknown>
+    expect(body.catalogueEntries).toEqual({ it: 'Piatto con fenice' })
+  })
+
+  it('marks a catalogue entry shown in a fallback language', async () => {
+    mockFetch({
+      ...languagesRoute,
+      ...artefactDetailRoutes(
+        {
+        id: 'a1',
+        inventoryNumber: 'COL-2006-015',
+        title: 'Ewer in the Form of a Cockerel',
+        maker: null,
+        creationDate: null,
+        medium: null,
+        dimensions: null,
+        description: null,
+        descriptionLanguage: null,
+        acquisition: null,
+        provenance: [],
+        primaryImage: null,
+        images: [],
+        objectType: null,
+        collectionGroup: null,
+        placeOfProduction: null,
+        dynasty: null,
+        exhibitions: [],
+        catalogueEntry: 'AN EWER IN THE FORM OF A COCKEREL',
+        catalogueEntryLanguage: 'en',
+        catalogueEntries: { en: 'AN EWER IN THE FORM OF A COCKEREL' },
+        holder: null,
+        storageLocation: null,
+        valuation: null,
+        },
+        'it',
+      ),
+    })
+    renderWithProviders(
+      <Routes>
+        <Route path="/artefacts/:id" element={<PageRoute page={artefactDetailPage} />} />
+      </Routes>,
+      { route: '/artefacts/a1' },
+    )
+
+    const text = await screen.findByText('AN EWER IN THE FORM OF A COCKEREL')
+    const block = text.closest('.text-block') as HTMLElement
+    expect(within(block).getByText('In English')).toBeInTheDocument()
+    expect(block).toHaveAttribute('lang', 'en')
   })
 })

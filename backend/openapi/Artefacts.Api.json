@@ -2795,6 +2795,321 @@
           }
         }
       }
+    },
+    "/api/queries": {
+      "get": {
+        "tags": [
+          "Queries"
+        ],
+        "summary": "The stored queries: system queries first, then user queries by name.",
+        "operationId": "listQueries",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StoredQuerySummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Queries"
+        ],
+        "summary": "Saves a user query. The document must hold one query operation that is valid against the GraphQL schema.",
+        "operationId": "createQuery",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStoredQueryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoredQueryDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/queries/{id}": {
+      "get": {
+        "tags": [
+          "Queries"
+        ],
+        "operationId": "getQuery",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoredQueryDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Queries"
+        ],
+        "summary": "Renames a user query and/or replaces its document. System queries cannot be changed.",
+        "operationId": "updateQuery",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeStoredQueryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoredQueryDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Queries"
+        ],
+        "operationId": "deleteQuery",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/queries/{id}/description": {
+      "get": {
+        "tags": [
+          "Queries"
+        ],
+        "summary": "The type of every value the query returns, by path, and of its variables, so bindings can be checked.",
+        "operationId": "describeQuery",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryDescriptionDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/queries/{id}/duplicate": {
+      "post": {
+        "tags": [
+          "Queries"
+        ],
+        "summary": "Copies any stored query, system queries included, into a new user query.",
+        "operationId": "duplicateQuery",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DuplicateStoredQueryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoredQueryDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2995,7 +3310,9 @@
           "placeOfProduction",
           "dynasty",
           "exhibitions",
-          "catalogueEntryEn",
+          "catalogueEntry",
+          "catalogueEntryLanguage",
+          "catalogueEntries",
           "holder",
           "storageLocation",
           "valuation"
@@ -3139,11 +3456,23 @@
               "type": "string"
             }
           },
-          "catalogueEntryEn": {
+          "catalogueEntry": {
             "type": [
               "null",
               "string"
             ]
+          },
+          "catalogueEntryLanguage": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "catalogueEntries": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
           },
           "holder": {
             "oneOf": [
@@ -3519,11 +3848,14 @@
               "type": "string"
             }
           },
-          "catalogueEntryEn": {
+          "catalogueEntries": {
             "type": [
               "null",
-              "string"
-            ]
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
           },
           "holderId": {
             "type": [
@@ -3547,6 +3879,23 @@
               {
                 "$ref": "#/components/schemas/MoneyDto"
               }
+            ]
+          }
+        }
+      },
+      "ChangeStoredQueryRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "document": {
+            "type": [
+              "null",
+              "string"
             ]
           }
         }
@@ -3596,6 +3945,12 @@
                 "$ref": "#/components/schemas/ImportField"
               }
             ]
+          },
+          "language": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -3635,6 +3990,27 @@
           }
         }
       },
+      "CreateStoredQueryRequest": {
+        "required": [
+          "name",
+          "document"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "document": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "DateResolution": {
         "required": [
           "text",
@@ -3653,6 +4029,20 @@
           "latestYear": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "DuplicateStoredQueryRequest": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -4036,7 +4426,7 @@
           "acquisitionPrice",
           "acquisitionNote",
           "exhibitions",
-          "catalogueEntryEn",
+          "catalogueEntry",
           "holder",
           "storageLocation",
           "valuation",
@@ -5064,6 +5454,42 @@
           }
         }
       },
+      "QueryDescriptionDto": {
+        "required": [
+          "fields",
+          "variables"
+        ],
+        "type": "object",
+        "properties": {
+          "fields": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "variables": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/QueryVariableDto"
+            }
+          }
+        }
+      },
+      "QueryVariableDto": {
+        "required": [
+          "type",
+          "required"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          }
+        }
+      },
       "ReferenceEntryDto": {
         "required": [
           "id",
@@ -5465,6 +5891,64 @@
           "asc",
           "desc"
         ]
+      },
+      "StoredQueryDto": {
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "document",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/StoredQueryKind"
+          },
+          "document": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "StoredQueryKind": {
+        "enum": [
+          "system",
+          "user"
+        ]
+      },
+      "StoredQuerySummary": {
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/StoredQueryKind"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
       }
     }
   },
@@ -5498,6 +5982,9 @@
     },
     {
       "name": "Imports"
+    },
+    {
+      "name": "Queries"
     }
   ]
 }

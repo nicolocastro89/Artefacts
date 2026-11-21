@@ -14,6 +14,7 @@ public sealed class ReadDbContext(DbContextOptions<ReadDbContext> options) : DbC
     public IQueryable<ImageRow> Images => Set<ImageRow>();
     public IQueryable<ExhibitionRow> Exhibitions => Set<ExhibitionRow>();
     public IQueryable<DescriptionRow> Descriptions => Set<DescriptionRow>();
+    public IQueryable<CatalogueEntryRow> CatalogueEntries => Set<CatalogueEntryRow>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
@@ -35,5 +36,6 @@ public sealed class ReadDbContext(DbContextOptions<ReadDbContext> options) : DbC
         model.Entity<ImageRow>(b => { b.HasNoKey(); b.ToView("v_artefact_image"); });
         model.Entity<ExhibitionRow>(b => { b.HasNoKey(); b.ToView("v_artefact_exhibition"); });
         model.Entity<DescriptionRow>(b => { b.HasNoKey(); b.ToView("v_artefact_description"); });
+        model.Entity<CatalogueEntryRow>(b => { b.HasNoKey(); b.ToView("v_artefact_catalogue_entry"); });
     }
 }

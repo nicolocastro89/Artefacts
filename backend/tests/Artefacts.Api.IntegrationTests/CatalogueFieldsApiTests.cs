@@ -31,7 +31,7 @@ public class CatalogueFieldsApiTests(ApiFactory factory)
             PlaceOfProduction: new PlaceOfProductionInput("Cina", china.Id),
             DynastyId: dynasty.Id,
             Exhibitions: ["Arte Ottomana 1450-1600, Genova, 1999", "Exhibition of Persian Art, New York, 1940"],
-            CatalogueEntryEn: "A JUNYAO BOWL\nJIN DYNASTY (1115-1234)",
+            CatalogueEntries: new Dictionary<string, string?> { ["en"] = "A JUNYAO BOWL\nJIN DYNASTY (1115-1234)", ["it"] = "UNA COPPA JUNYAO" },
             HolderId: rossetti.Id,
             StorageLocationId: location.Id,
             Valuation: new MoneyDto(200_000m, "GBP"));
@@ -45,7 +45,9 @@ public class CatalogueFieldsApiTests(ApiFactory factory)
         Assert.Equal(china.Name, created.PlaceOfProduction.Region!.Name);
         Assert.Equal(new NamedRefDto(dynasty.Id, dynasty.Name), created.Dynasty);
         Assert.Equal(["Arte Ottomana 1450-1600, Genova, 1999", "Exhibition of Persian Art, New York, 1940"], created.Exhibitions);
-        Assert.Equal("A JUNYAO BOWL\nJIN DYNASTY (1115-1234)", created.CatalogueEntryEn);
+        Assert.Equal("A JUNYAO BOWL\nJIN DYNASTY (1115-1234)", created.CatalogueEntry);
+        Assert.Equal("en", created.CatalogueEntryLanguage);
+        Assert.Equal(["en", "it"], created.CatalogueEntries.Keys.Order());
         Assert.Equal(new PartyRefDto(rossetti.Id, rossetti.Name, PartyKind.Organisation), created.Holder);
         Assert.Equal(new NamedRefDto(location.Id, location.Name), created.StorageLocation);
         Assert.Equal(sothebys.Name, created.Acquisition!.Source!.Name);
@@ -244,5 +246,44 @@ public class CatalogueFieldsApiTests(ApiFactory factory)
         Assert.Equal(FieldType.Reference, dynasty.Type);
         foreach (var link in new[] { "collectionGroup", "storageLocation", "holder", "acquisitionSource" })
             Assert.Equal(FieldType.Reference, Assert.Single(artefact.Fields, f => f.Id == link).Type);
+    }
+
+    [Fact]
+    public async Task Catalogue_entry_resolves_in_the_readers_language_and_falls_back()
+    {
+        var created = await _client.CreateArtefactAsync(new ArtefactWriteRequest(HttpExtensions.Unique("INV"), "Coppa",
+            CatalogueEntries: new Dictionary<string, string?> { ["en"] = "A BOWL", ["it"] = "UNA COPPA" }));
+        var onlyEnglish = await _client.CreateArtefactAsync(new ArtefactWriteRequest(HttpExtensions.Unique("INV"), "Piatto",
+            CatalogueEntries: new Dictionary<string, string?> { ["en"] = "A DISH" }));
+
+        var italian = await (await _client.GetAsync($"/api/artefacts/{created.Id}?lang=it")).ReadAsync<ArtefactDetail>();
+        var english = await (await _client.GetAsync($"/api/artefacts/{created.Id}?lang=en")).ReadAsync<ArtefactDetail>();
+        var fallback = await (await _client.GetAsync($"/api/artefacts/{onlyEnglish.Id}?lang=it")).ReadAsync<ArtefactDetail>();
+
+        Assert.Equal(("UNA COPPA", "it"), (italian.CatalogueEntry, italian.CatalogueEntryLanguage));
+        Assert.Equal(("A BOWL", "en"), (english.CatalogueEntry, english.CatalogueEntryLanguage));
+        Assert.Equal(("A DISH", "en"), (fallback.CatalogueEntry, fallback.CatalogueEntryLanguage));
+    }
+
+    [Fact]
+    public async Task Catalogue_entry_in_an_unknown_language_is_rejected()
+    {
+        var response = await _client.PostJsonAsync("/api/artefacts", new ArtefactWriteRequest(HttpExtensions.Unique("INV"), "Coppa",
+            CatalogueEntries: new Dictionary<string, string?> { ["xx"] = "?" }));
+
+        Assert.Equal(System.Net.HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Contains("catalogueEntries.xx", (await response.ValidationErrorsAsync()).Keys);
+    }
+
+    [Fact]
+    public async Task Saving_descriptions_keeps_the_catalogue_entries()
+    {
+        var created = await _client.CreateArtefactAsync(new ArtefactWriteRequest(HttpExtensions.Unique("INV"), "Coppa",
+            Descriptions: new Dictionary<string, string?> { ["it"] = "Descrizione" },
+            CatalogueEntries: new Dictionary<string, string?> { ["it"] = "SCHEDA" }));
+
+        var read = await (await _client.GetAsync($"/api/artefacts/{created.Id}?lang=it")).ReadAsync<ArtefactDetail>();
+
+        Assert.Equal(("Descrizione", "SCHEDA"), (read.Description, read.CatalogueEntry));
     }
 }

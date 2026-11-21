@@ -27,7 +27,7 @@ const formBindings: WidgetNode['bindings'] = {
   dynastyId: 'dynasty.id',
   dynastyName: 'dynasty.name',
   exhibitions: 'exhibitions[]',
-  catalogueEntryEn: 'catalogueEntryEn',
+  catalogueEntries: 'catalogueEntries',
   holderId: 'holder.id',
   holderName: 'holder.name',
   storageLocationId: 'storageLocation.id',

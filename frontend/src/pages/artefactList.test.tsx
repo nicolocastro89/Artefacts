@@ -2,6 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Route, Routes, useLocation } from 'react-router'
 import { mockFetch } from '../test/fetchMock'
+import { artefactListRoutes, sentVariables } from '../test/queryFixtures'
 import { renderWithProviders } from '../test/render'
 import { artefactListPage } from './definitions/artefactList'
 import { PageRoute } from './PageRoute'
@@ -9,7 +10,7 @@ import { PageRoute } from './PageRoute'
 const urls = (n: string) => ({ thumb: `/img/${n}/thumb`, web: `/img/${n}/web`, print: `/img/${n}/print` })
 
 const items = [
-  { id: 'a1', inventoryNumber: 'COL-1998-014', title: 'Still Life with Lemons', maker: 'Workshop of Heda', creationDate: { display: 'c. 1650', earliestYear: 1640, latestYear: 1660, precision: 'approximate' }, medium: 'Oil on panel', primaryImage: urls('a1'), imageCount: 2 },
+  { id: 'a1', inventoryNumber: 'COL-1998-014', title: 'Still Life with Lemons', maker: 'Workshop of Heda', creationDate: { display: 'c. 1650', earliestYear: 1640, latestYear: 1660, precision: 'approximate' }, medium: 'Oil on panel', primaryImage: { urls: urls('a1') }, imageCount: 2 },
   { id: 'a2', inventoryNumber: 'COL-2011-007', title: 'Study of Hands', maker: null, creationDate: null, medium: null, primaryImage: null, imageCount: 0 },
 ]
 
@@ -37,14 +38,11 @@ describe('artefact list page', () => {
   let calls: ReturnType<typeof mockFetch>['calls']
 
   beforeEach(() => {
-    ;({ calls } = mockFetch({
-      'GET /api/artefacts': (url) => ({
-        items,
-        total: 52,
-        page: Number(url.searchParams.get('page') ?? 1),
-        pageSize: 25,
-      }),
-    }))
+    ;({ calls } = mockFetch(
+      artefactListRoutes((variables) => ({
+        artefacts: { items, total: 52, page: Number(variables.page ?? 1), pageSize: 25, groups: [] },
+      })),
+    ))
   })
 
   it('shows artefacts in a table with thumbnails, tags and dates', async () => {
@@ -55,6 +53,7 @@ describe('artefact list page', () => {
     expect(within(table).getByText('COL-1998-014')).toHaveClass('tag')
     expect(within(table).getByText('c. 1650')).toBeInTheDocument()
     expect(screen.getByText(/52 artefacts/)).toBeInTheDocument()
+    expect(document.querySelector('.widget-config-error')).toBeNull()
   })
 
   it('shows a neutral placeholder when an artefact has no image', async () => {
@@ -83,11 +82,7 @@ describe('artefact list page', () => {
     renderList('/artefacts?search=lemons&sort=creationDate&direction=desc&page=2&view=grid')
 
     await screen.findByRole('list', { name: 'Records' })
-    const request = calls.find((c) => c.url.pathname === '/api/artefacts')!.url
-    expect(request.searchParams.get('search')).toBe('lemons')
-    expect(request.searchParams.get('sort')).toBe('creationDate')
-    expect(request.searchParams.get('direction')).toBe('desc')
-    expect(request.searchParams.get('page')).toBe('2')
+    expect(sentVariables(calls).at(-1)).toEqual({ search: 'lemons', sort: 'CREATION_DATE', direction: 'DESC', page: 2, pageSize: 25 })
     expect(screen.getByRole('searchbox', { name: 'Search artefacts' })).toHaveValue('lemons')
     expect(screen.getByText('Page 2 of 3')).toBeInTheDocument()
   })
@@ -100,7 +95,7 @@ describe('artefact list page', () => {
     await user.click(screen.getByRole('button', { name: /Date/ }))
 
     await waitFor(() => expect(lastLocation).toContain('sort=creationDate'))
-    await waitFor(() => expect(calls.at(-1)!.url.searchParams.get('sort')).toBe('creationDate'))
+    await waitFor(() => expect(sentVariables(calls).at(-1)?.sort).toBe('CREATION_DATE'))
   })
 
   it('pulls the selected artefact out into the rack, and slides it back with Escape', async () => {

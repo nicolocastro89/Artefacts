@@ -148,6 +148,26 @@ public class RowEvaluatorTests
             dates ?? new Dictionary<string, DateResolution>(), ListValue: (list, text) => new ResolvedEntry(EntryFor(list, text), false));
 
     [Fact]
+    public void Catalogue_entry_columns_are_imported_in_their_own_language()
+    {
+        var headings = new Dictionary<int, string>(Headings) { [8] = "William", [9] = "Scheda" };
+        var mapping = Mapping with
+        {
+            Columns = [.. Mapping.Columns, new ColumnRule(8, "William", ImportField.CatalogueEntry), new ColumnRule(9, "Scheda", ImportField.CatalogueEntry, Language: "it")],
+        };
+        var context = Context() with { Mapping = mapping, Headings = headings };
+        var row = Row(3, "02. Piatto Celadon") with
+        {
+            Cells = new Dictionary<int, string> { [1] = "01.", [2] = "02. Piatto Celadon", [8] = "A CELADON DISH", [9] = "UN PIATTO CELADON" },
+        };
+
+        var request = Assert.Single(RowEvaluator.Evaluate([row], context)).Request!;
+
+        Assert.Equal("A CELADON DISH", request.CatalogueEntries!["en"]);
+        Assert.Equal("UN PIATTO CELADON", request.CatalogueEntries["it"]);
+    }
+
+    [Fact]
     public void Ready_row_becomes_a_complete_request()
     {
         var row = Row(3, "02. Piatto Celadon\ndiam 30", "Cina\nfine XII inizio XIII\nSung", "Sotheby's London\n12 06 1990\nlot 170 £ 7.865");

@@ -152,7 +152,9 @@ function ColumnEditor({ column, rule, onChange }: { column: ColumnSummary; rule:
   const restId = useId()
   const name = clean(column.heading) || `Column ${column.column}`
   const use = ruleUse(rule)
-  const base: ColumnRule = { column: column.column, heading: column.heading || null }
+  const { data: languages = [] } = useContentLanguages()
+  const languageId = useId()
+  const base: ColumnRule = { column: column.column, heading: column.heading || null, language: rule?.language ?? null }
   const lines = rule?.lines ?? []
 
   const setUse = (value: Use) => {
@@ -161,6 +163,9 @@ function ColumnEditor({ column, rule, onChange }: { column: ColumnSummary; rule:
       onChange({ ...base, lines: lines.length ? lines : [{ target: 'title', detector: 'itemTitle', continues: false }], rest: rule?.rest ?? 'description' })
     else onChange({ ...base, target: value })
   }
+
+  const usesCatalogueEntry =
+    rule?.target === 'catalogueEntry' || rule?.rest === 'catalogueEntry' || lines.some((l) => l.target === 'catalogueEntry')
 
   const setLine = (i: number, line: LineRule) => onChange({ ...base, lines: lines.map((l, j) => (j === i ? line : l)), rest: rule?.rest ?? null })
   const removeLine = (i: number) => {
@@ -203,6 +208,21 @@ function ColumnEditor({ column, rule, onChange }: { column: ColumnSummary; rule:
             </optgroup>
           </select>
         </div>
+        {usesCatalogueEntry && (
+          <div className="field">
+            <label className="field__label" htmlFor={languageId}>
+              {name}: language of the catalogue entry
+            </label>
+            <select id={languageId} className="select" value={rule?.language ?? 'en'} onChange={(e) => onChange({ ...(rule ?? base), language: e.target.value })}>
+              {languages.map((l) => (
+                <option key={l.code} value={l.code}>
+                  {l.name}
+                </option>
+              ))}
+            </select>
+            <p className="field__hint">Use one column per language for entries in several languages</p>
+          </div>
+        )}
         {use === 'lines' && (
           <div className="imports__rules">
             <ol className="imports__rule-list" aria-label={`Line rules of ${name}`}>

@@ -148,7 +148,8 @@ public sealed class ArtefactCommandHandler(
         v.Try("", () => artefact.SetOrigin(place, dynastyId));
 
         v.Try("", () => artefact.ReplaceExhibitions(request.Exhibitions ?? []));
-        v.Try("", () => artefact.SetCatalogueEntry(request.CatalogueEntryEn));
+        var catalogueEntries = TranslationInput.Check(request.CatalogueEntries, await contentLanguages.ListAsync(ct), "catalogueEntries", v);
+        v.Try("", () => artefact.ReplaceCatalogueEntries(catalogueEntries));
 
         var valuation = request.Valuation is { } val ? v.Try("valuation", () => Money.Create(val.Amount, val.Currency)) : null;
         PartyId? holderId = request.HolderId is { } h ? new PartyId(h) : null;
@@ -196,6 +197,7 @@ public sealed class ArtefactDetailQueryHandler(
         var objectType = a.ObjectTypeId is { } typeId ? await objectTypes.GetAsync(typeId, ct) : null;
         var languages = preferences.Current;
         var description = a.DescriptionIn(languages);
+        var catalogueEntry = a.CatalogueEntryIn(languages);
         var assetMap = await mediaAssets.GetManyAsync(a.Images.Select(i => i.MediaAssetId), ct);
         var entryMap = await listEntries.GetManyAsync(
             new[] { a.CollectionGroupId, a.DynastyId, a.StorageLocationId }.OfType<ReferenceEntryId>(), ct);
@@ -250,7 +252,9 @@ public sealed class ArtefactDetailQueryHandler(
                 : null,
             Entry(a.DynastyId),
             a.Exhibitions.Select(e => e.Text).ToList(),
-            a.CatalogueEntryEn,
+            catalogueEntry?.Text,
+            catalogueEntry?.Language,
+            a.Translations.Where(t => t.CatalogueEntry is not null).ToDictionary(t => t.Language, t => t.CatalogueEntry!),
             PartyRef(a.HolderId),
             Entry(a.StorageLocationId),
             a.Valuation is { } val ? new MoneyDto(val.Amount, val.Currency) : null);

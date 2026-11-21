@@ -43,7 +43,7 @@ export const FIELDS: { value: ImportField; label: string }[] = [
   { value: 'acquisitionPrice', label: 'Price' },
   { value: 'acquisitionNote', label: 'Acquisition note' },
   { value: 'exhibitions', label: 'Exhibitions' },
-  { value: 'catalogueEntryEn', label: 'Catalogue entry (English)' },
+  { value: 'catalogueEntry', label: 'Catalogue entry' },
   { value: 'holder', label: 'Holder' },
   { value: 'storageLocation', label: 'Storage location' },
   { value: 'valuation', label: 'Valuation' },

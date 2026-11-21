@@ -7,6 +7,7 @@ using Artefacts.Domain.Languages;
 using Artefacts.Domain.Lists;
 using Artefacts.Domain.Media;
 using Artefacts.Domain.Parties;
+using Artefacts.Domain.Queries;
 using Artefacts.Domain.Regions;
 
 namespace Artefacts.Application.Abstractions;
@@ -189,6 +190,32 @@ public interface IImportRepository
 
     /// <summary>Jobs never committed and untouched since <paramref name="before"/>.</summary>
     Task<IReadOnlyList<ImportJob>> AbandonedAsync(DateTimeOffset before, CancellationToken ct);
+}
+
+/// <summary>A problem found in a stored query's document, with its position (1-based) when it has one.</summary>
+public sealed record QueryProblem(string Message, int? Line, int? Column);
+
+/// <summary>Checks that a document can be stored: one query operation, valid against the schema and within its limits.</summary>
+public interface IStoredQueryValidator
+{
+    Task<IReadOnlyList<QueryProblem>> ValidateAsync(string? document, CancellationToken cancellationToken);
+}
+
+/// <summary>Describes the values a valid stored query document returns and the variables it takes.</summary>
+public interface IStoredQueryDescriber
+{
+    Task<QueryDescriptionDto> DescribeAsync(string document, CancellationToken cancellationToken);
+}
+
+public interface IStoredQueryRepository
+{
+    Task<StoredQuery?> GetAsync(string id, CancellationToken ct);
+
+    /// <summary>Every stored query, system queries first, then by name.</summary>
+    Task<IReadOnlyList<StoredQuery>> ListAsync(CancellationToken ct);
+
+    void Add(StoredQuery query);
+    void Remove(StoredQuery query);
 }
 
 public interface IImportTemplateRepository

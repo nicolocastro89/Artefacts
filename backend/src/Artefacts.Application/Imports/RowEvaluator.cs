@@ -227,6 +227,14 @@ public static class RowEvaluator
         }
 
         var description = Joined(ImportField.Description);
+
+        // Each catalogue entry column has the language of its rule (English when the rule gives none); columns in the
+        // same language are joined.
+        var columnLanguages = MappingEngine.Resolve(mapping, context.Headings)
+            .GroupBy(r => r.Column).ToDictionary(g => g.Key, g => g.First().Rule.Language ?? "en");
+        var catalogueEntries = mapped.Of(ImportField.CatalogueEntry).Where(v => v.Text.Length > 0)
+            .GroupBy(v => columnLanguages.GetValueOrDefault(v.Column, "en"))
+            .ToDictionary(g => g.Key, g => (string?)string.Join("\n", g.Select(v => v.Text)));
         foreach (var picture in row.Pictures.Where(p => !p.Supported))
             warnings.Add($"Picture \"{picture.Name}\" ({picture.ContentType}) is not in a format the catalogue accepts (JPEG, PNG, TIFF, WebP); the row is imported without it.");
 
@@ -245,7 +253,7 @@ public static class RowEvaluator
             place,
             dynastyId,
             mapped.Of(ImportField.Exhibitions).Select(v => v.Text).ToList(),
-            Joined(ImportField.CatalogueEntryEn),
+            catalogueEntries.Count == 0 ? null : catalogueEntries,
             holderId,
             storageLocationId,
             valuation);

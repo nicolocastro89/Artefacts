@@ -3,7 +3,7 @@ import { ArrowLeft, Printer } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { artefactPrintPage } from '../pages/definitions/artefactPrint'
-import { fetchOperation } from '../widgets/core/dataSources'
+import { runStoredQuery } from '../widgets/core/dataSources'
 import { PageRenderer } from '../widgets/core/PageRenderer'
 import { PrintContext } from './PrintContext'
 import { buildPrintCss, contentBox, imageMaxHeight, type Orientation, type Paper } from './printCss'
@@ -26,17 +26,18 @@ export function PrintPreview() {
 
   // Same query as the page's container, so this resolves when the source has its data.
   const record = useQuery({
-    queryKey: ['operation', 'getArtefact', { id }],
-    queryFn: ({ signal }) => fetchOperation('getArtefact', { id }, signal),
+    queryKey: ['query-run', 'artefact-detail', { id }],
+    queryFn: ({ signal }) => runStoredQuery('artefact-detail', { id }, signal),
   })
-  const title = (record.data as { title?: string } | undefined)?.title
+  const artefact = (record.data as { artefact: { title?: string } | null } | undefined)?.artefact
+  const title = artefact?.title
 
   useEffect(() => {
     document.title = `${title ? `Print: ${title}` : 'Print'} · Artefacts`
   }, [title])
 
   useEffect(() => {
-    if (!record.isSuccess) return
+    if (!record.isSuccess || !artefact) return
     let cancelled = false
     const run = async () => {
       setStatus({ state: 'paginating' })
@@ -108,6 +109,11 @@ export function PrintPreview() {
       {record.isError && (
         <div className="data-state data-state--error" role="alert">
           Could not load this artefact: {record.error.message}
+        </div>
+      )}
+      {record.isSuccess && !artefact && (
+        <div className="data-state data-state--error" role="alert">
+          This artefact does not exist (it may have been deleted).
         </div>
       )}
       {status.state === 'error' && (

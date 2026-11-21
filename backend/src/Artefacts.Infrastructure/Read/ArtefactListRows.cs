@@ -93,3 +93,17 @@ public sealed class DescriptionRow
     [CatalogField("description", "Description", FieldType.Text), Filterable]
     public string Description { get; init; } = default!;
 }
+
+/// <summary>One row of <c>v_artefact_catalogue_entry</c>: an artefact's catalogue entry in one language.</summary>
+[CatalogEntity("CatalogueEntry", "Catalogue entry")]
+public sealed class CatalogueEntryRow
+{
+    [CatalogField("artefact", "Artefact", FieldType.Reference), Filterable]
+    public Guid ArtefactId { get; init; }
+
+    [CatalogField("language", "Language", FieldType.Text), Filterable]
+    public string Language { get; init; } = default!;
+
+    [CatalogField("catalogueEntry", "Catalogue entry", FieldType.Text), Filterable]
+    public string CatalogueEntry { get; init; } = default!;
+}

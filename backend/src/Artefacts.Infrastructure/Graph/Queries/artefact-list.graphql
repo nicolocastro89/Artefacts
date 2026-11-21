@@ -1,0 +1,32 @@
+# name: Artefact list
+query ArtefactList(
+  $search: String
+  $sort: ArtefactSort
+  $direction: SortDirection
+  $group: ArtefactGrouping
+  $page: Int
+  $pageSize: Int
+) {
+  artefacts(search: $search, sort: $sort, direction: $direction, group: $group, page: $page, pageSize: $pageSize) {
+    total
+    page
+    pageSize
+    groups { key label count }
+    items {
+      id
+      inventoryNumber
+      title
+      maker
+      creationDate { display earliestYear latestYear precision }
+      medium
+      primaryImage { urls { thumb web print } }
+      imageCount
+      objectType { id name }
+      collectionGroup { id name }
+      placeOfProduction { text }
+      dynasty { id name }
+      groupKey
+      groupLabel
+    }
+  }
+}

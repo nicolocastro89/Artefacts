@@ -555,6 +555,75 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/queries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The stored queries: system queries first, then user queries by name. */
+        get: operations["listQueries"];
+        put?: never;
+        /** Saves a user query. The document must hold one query operation that is valid against the GraphQL schema. */
+        post: operations["createQuery"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/queries/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getQuery"];
+        /** Renames a user query and/or replaces its document. System queries cannot be changed. */
+        put: operations["updateQuery"];
+        post?: never;
+        delete: operations["deleteQuery"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/queries/{id}/description": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The type of every value the query returns, by path, and of its variables, so bindings can be checked. */
+        get: operations["describeQuery"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/queries/{id}/duplicate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Copies any stored query, system queries included, into a new user query. */
+        post: operations["duplicateQuery"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -620,7 +689,11 @@ export interface components {
             placeOfProduction: null | components["schemas"]["PlaceOfProductionDto"];
             dynasty: null | components["schemas"]["NamedRefDto"];
             exhibitions: string[];
-            catalogueEntryEn: null | string;
+            catalogueEntry: null | string;
+            catalogueEntryLanguage: null | string;
+            catalogueEntries: {
+                [key: string]: string;
+            };
             holder: null | components["schemas"]["PartyRefDto"];
             storageLocation: null | components["schemas"]["NamedRefDto"];
             valuation: null | components["schemas"]["MoneyDto"];
@@ -696,12 +769,18 @@ export interface components {
             /** Format: uuid */
             dynastyId?: null | string;
             exhibitions?: null | string[];
-            catalogueEntryEn?: null | string;
+            catalogueEntries?: null | {
+                [key: string]: string;
+            };
             /** Format: uuid */
             holderId?: null | string;
             /** Format: uuid */
             storageLocationId?: null | string;
             valuation?: null | components["schemas"]["MoneyDto"];
+        };
+        ChangeStoredQueryRequest: {
+            name?: null | string;
+            document?: null | string;
         };
         ColumnRule: {
             /** Format: int32 */
@@ -710,6 +789,7 @@ export interface components {
             target?: null | components["schemas"]["ImportField"];
             lines?: null | components["schemas"]["LineRule"][];
             rest?: null | components["schemas"]["ImportField"];
+            language?: null | string;
         };
         ColumnSummary: {
             /** Format: int32 */
@@ -722,12 +802,19 @@ export interface components {
                 [key: string]: number;
             };
         };
+        CreateStoredQueryRequest: {
+            name: null | string;
+            document: null | string;
+        };
         DateResolution: {
             text: string;
             /** Format: int32 */
             earliestYear: number;
             /** Format: int32 */
             latestYear: number;
+        };
+        DuplicateStoredQueryRequest: {
+            name: null | string;
         };
         EntityDto: {
             id: string;
@@ -815,7 +902,7 @@ export interface components {
             lists: components["schemas"]["ListDecision"][];
         };
         /** @enum {unknown} */
-        ImportField: "title" | "itemNumber" | "groupNumber" | "catalogueNumber" | "inventoryNumber" | "dimensions" | "medium" | "maker" | "description" | "placeOfProduction" | "creationDate" | "dynasty" | "acquisitionSource" | "acquisitionDate" | "acquisitionLot" | "acquisitionPrice" | "acquisitionNote" | "exhibitions" | "catalogueEntryEn" | "holder" | "storageLocation" | "valuation" | "collectionGroup" | null;
+        ImportField: "title" | "itemNumber" | "groupNumber" | "catalogueNumber" | "inventoryNumber" | "dimensions" | "medium" | "maker" | "description" | "placeOfProduction" | "creationDate" | "dynasty" | "acquisitionSource" | "acquisitionDate" | "acquisitionLot" | "acquisitionPrice" | "acquisitionNote" | "exhibitions" | "catalogueEntry" | "holder" | "storageLocation" | "valuation" | "collectionGroup" | null;
         ImportJobDto: {
             /** Format: uuid */
             id: string;
@@ -1073,6 +1160,18 @@ export interface components {
             period: null | components["schemas"]["HistoricalDateInput"];
             note: null | string;
         };
+        QueryDescriptionDto: {
+            fields: {
+                [key: string]: string;
+            };
+            variables: {
+                [key: string]: components["schemas"]["QueryVariableDto"];
+            };
+        };
+        QueryVariableDto: {
+            type: string;
+            required: boolean;
+        };
         ReferenceEntryDto: {
             /** Format: uuid */
             id: string;
@@ -1166,6 +1265,23 @@ export interface components {
         };
         /** @enum {unknown} */
         SortDirection: "asc" | "desc";
+        StoredQueryDto: {
+            id: string;
+            name: string;
+            kind: components["schemas"]["StoredQueryKind"];
+            document: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        /** @enum {unknown} */
+        StoredQueryKind: "system" | "user";
+        StoredQuerySummary: {
+            id: string;
+            name: string;
+            kind: components["schemas"]["StoredQueryKind"];
+            /** Format: date-time */
+            updatedAt: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -3232,6 +3348,256 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    listQueries: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoredQuerySummary"][];
+                };
+            };
+        };
+    };
+    createQuery: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateStoredQueryRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoredQueryDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+        };
+    };
+    getQuery: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoredQueryDto"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    updateQuery: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangeStoredQueryRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoredQueryDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    deleteQuery: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    describeQuery: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueryDescriptionDto"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    duplicateQuery: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DuplicateStoredQueryRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoredQueryDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
             };
             /** @description Not Found */
             404: {

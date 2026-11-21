@@ -71,7 +71,9 @@ public sealed record ArtefactDetail(
     PlaceOfProductionDto? PlaceOfProduction,
     NamedRefDto? Dynasty,
     IReadOnlyList<string> Exhibitions,
-    string? CatalogueEntryEn,
+    string? CatalogueEntry,
+    string? CatalogueEntryLanguage,
+    IReadOnlyDictionary<string, string> CatalogueEntries,
     PartyRefDto? Holder,
     NamedRefDto? StorageLocation,
     MoneyDto? Valuation);
@@ -156,7 +158,7 @@ public sealed record ArtefactWriteRequest(
     PlaceOfProductionInput? PlaceOfProduction = null,
     Guid? DynastyId = null,
     IReadOnlyList<string>? Exhibitions = null,
-    string? CatalogueEntryEn = null,
+    IReadOnlyDictionary<string, string?>? CatalogueEntries = null,
     Guid? HolderId = null,
     Guid? StorageLocationId = null,
     MoneyDto? Valuation = null);

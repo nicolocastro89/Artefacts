@@ -40,3 +40,9 @@ CREATE OR REPLACE VIEW v_artefact_description AS
 SELECT t.artefact_id, t.language, t.description
 FROM artefact_translations t
 WHERE t.description IS NOT NULL;
+
+-- Catalogue entries per language (only languages with an entry).
+CREATE OR REPLACE VIEW v_artefact_catalogue_entry AS
+SELECT t.artefact_id, t.language, t.catalogue_entry
+FROM artefact_translations t
+WHERE t.catalogue_entry IS NOT NULL;

@@ -59,4 +59,38 @@ public class LanguageTests
             a.ReplaceDescriptions(new Dictionary<string, string?> { ["it"] = new string('x', Artefact.MaxDescriptionLength + 1) }));
         Assert.Contains("descriptions.it", ex.Errors.Keys);
     }
+
+    [Fact]
+    public void Catalogue_entries_are_kept_per_language_beside_the_descriptions()
+    {
+        var a = Artefact.Create("INV-1", "Dish");
+        a.ReplaceDescriptions(new Dictionary<string, string?> { ["en"] = "Dish" });
+        a.ReplaceCatalogueEntries(new Dictionary<string, string?> { ["EN"] = " A DISH\nJIN ", ["it"] = "Piatto", ["fr"] = " " });
+
+        Assert.Equal([("en", "Dish", "A DISH\nJIN"), ("it", null, "Piatto")],
+            a.Translations.Select(t => (t.Language, t.Description, t.CatalogueEntry)));
+        Assert.Equal(new ResolvedText("Piatto", "it"), a.CatalogueEntryIn(["it", "en"]));
+        Assert.Equal(new ResolvedText("A DISH\nJIN", "en"), a.CatalogueEntryIn(["fr", "en"]));
+    }
+
+    [Fact]
+    public void Replacing_one_kind_of_text_keeps_the_other()
+    {
+        var a = Artefact.Create("INV-1", "Dish");
+        a.ReplaceCatalogueEntries(new Dictionary<string, string?> { ["it"] = "Piatto" });
+        a.ReplaceDescriptions(new Dictionary<string, string?> { ["en"] = "Dish" });
+        a.ReplaceCatalogueEntries(new Dictionary<string, string?>());
+
+        Assert.Equal([("en", "Dish", (string?)null)], a.Translations.Select(t => (t.Language, t.Description, t.CatalogueEntry)));
+        Assert.Null(a.CatalogueEntryIn(["it", "en"]));
+    }
+
+    [Fact]
+    public void Overlong_catalogue_entry_is_keyed_by_language()
+    {
+        var a = Artefact.Create("INV-1", "Dish");
+        var ex = Assert.Throws<DomainValidationException>(() =>
+            a.ReplaceCatalogueEntries(new Dictionary<string, string?> { ["it"] = new string('x', Artefact.MaxCatalogueEntryLength + 1) }));
+        Assert.Contains("catalogueEntries.it", ex.Errors.Keys);
+    }
 }

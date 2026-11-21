@@ -3,6 +3,8 @@ import userEvent from '@testing-library/user-event'
 import { useEffect } from 'react'
 import { Route, Routes, useLocation } from 'react-router'
 import { languagesRoute, mockFetch, problem } from '../test/fetchMock'
+import { artefactListRoutes, sentVariables } from '../test/queryFixtures'
+import { artefactDetailRoutes } from '../test/queryFixtures'
 import { renderWithProviders } from '../test/render'
 import { artefactDetailPage } from './definitions/artefactDetail'
 import { artefactNewPage } from './definitions/artefactEdit'
@@ -19,7 +21,7 @@ const row = (id: string, title: string, groupKey: string | null, groupLabel: str
   medium: null,
   primaryImage: null,
   imageCount: 0,
-  objectType: groupLabel,
+  objectType: groupLabel === null ? null : { id: groupKey, name: groupLabel },
   collectionGroup: null,
   placeOfProduction: null,
   dynasty: null,
@@ -56,27 +58,27 @@ describe('grouped artefact list', () => {
   ]
 
   it('shows a heading with label and total count before each group, and the no-value group last', async () => {
-    const { calls } = mockFetch({
-      'GET /api/artefacts': () => ({
-        items: [row('1', 'Bowl', 't1', 'Ceramics'), row('2', 'Dish', 't1', 'Ceramics'), row('3', 'Rug', 't2', 'Carpets'), row('4', 'Mask', null, null)],
-        total: 33,
-        page: 1,
-        pageSize: 25,
-        groups,
-      }),
-    })
+    const { calls } = mockFetch(
+      artefactListRoutes(() => ({
+        artefacts: {
+          items: [row('1', 'Bowl', 't1', 'Ceramics'), row('2', 'Dish', 't1', 'Ceramics'), row('3', 'Rug', 't2', 'Carpets'), row('4', 'Mask', null, null)],
+          total: 33,
+          page: 1,
+          pageSize: 25,
+          groups,
+        },
+      })),
+    )
     renderList('/artefacts?group=objectType')
 
     const table = await screen.findByRole('table', { name: 'Artefacts' })
     const headings = within(table).getAllByRole('columnheader').filter((h) => h.getAttribute('scope') === 'colgroup')
     expect(headings.map((h) => h.textContent)).toEqual(['Ceramics30', 'Carpets2', 'No object type1'])
-    expect(calls.find((c) => c.url.pathname === '/api/artefacts')!.url.searchParams.get('group')).toBe('objectType')
+    expect(sentVariables(calls).at(-1)?.group).toBe('OBJECT_TYPE')
   })
 
   it('repeats the heading of a group that continues from the previous page', async () => {
-    mockFetch({
-      'GET /api/artefacts': () => ({ items: [row('26', 'Vase', 't1', 'Ceramics')], total: 33, page: 2, pageSize: 25, groups }),
-    })
+    mockFetch(artefactListRoutes(() => ({ artefacts: { items: [row('26', 'Vase', 't1', 'Ceramics')], total: 33, page: 2, pageSize: 25, groups } })))
     renderList('/artefacts?group=objectType&page=2')
 
     const table = await screen.findByRole('table', { name: 'Artefacts' })
@@ -85,7 +87,7 @@ describe('grouped artefact list', () => {
 
   it('records the grouping in the URL and starts again from page 1', async () => {
     const user = userEvent.setup()
-    mockFetch({ 'GET /api/artefacts': () => ({ items: [row('1', 'Bowl', null, null)], total: 1, page: 1, pageSize: 25, groups: [] }) })
+    mockFetch(artefactListRoutes(() => ({ artefacts: { items: [row('1', 'Bowl', null, null)], total: 1, page: 1, pageSize: 25, groups: [] } })))
     renderList('/artefacts?page=2')
 
     await user.selectOptions(await screen.findByRole('combobox', { name: 'Group by' }), 'Century')
@@ -94,9 +96,7 @@ describe('grouped artefact list', () => {
   })
 
   it('shows group headings in the grid too', async () => {
-    mockFetch({
-      'GET /api/artefacts': () => ({ items: [row('1', 'Bowl', 't1', 'Ceramics'), row('3', 'Rug', 't2', 'Carpets')], total: 2, page: 1, pageSize: 25, groups }),
-    })
+    mockFetch(artefactListRoutes(() => ({ artefacts: { items: [row('1', 'Bowl', 't1', 'Ceramics'), row('3', 'Rug', 't2', 'Carpets')], total: 2, page: 1, pageSize: 25, groups } })))
     renderList('/artefacts?group=objectType&view=grid')
 
     const grid = await screen.findByRole('list', { name: 'Records' })
@@ -108,7 +108,8 @@ describe('grouped artefact list', () => {
 describe('artefact detail with catalogue fields', () => {
   it('shows classification, origin, holding, exhibitions in order and the catalogue entry with its line breaks', async () => {
     mockFetch({
-      'GET /api/artefacts/a1': () => ({
+      ...artefactDetailRoutes(
+        {
         id: 'a1',
         inventoryNumber: 'CER-01-02',
         title: 'Piatto Celadon',
@@ -117,7 +118,7 @@ describe('artefact detail with catalogue fields', () => {
         medium: null,
         dimensions: null,
         description: null,
-        acquisition: { method: 'purchase', date: '1990-06-12', source: { id: 'p1', name: "Sotheby's London", kind: 'organisation' }, price: { amount: 7865, currency: 'GBP' }, lot: '170', note: 'acquistato fuori asta' },
+        acquisition: { method: 'PURCHASE', date: '1990-06-12', source: { id: 'p1', name: "Sotheby's London", kind: 'ORGANISATION' }, price: { amount: 7865, currency: 'GBP' }, lot: '170', note: 'acquistato fuori asta' },
         provenance: [],
         primaryImage: null,
         images: [],
@@ -126,11 +127,15 @@ describe('artefact detail with catalogue fields', () => {
         placeOfProduction: { text: 'Cina', region: { id: 'r1', name: 'China' } },
         dynasty: { id: 'd1', name: 'Sung' },
         exhibitions: ['Arte Ottomana, Genova, 1999', 'Persian Art, New York, 1940'],
-        catalogueEntryEn: 'A JUNYAO DISH\nJIN DYNASTY (1115-1234)',
+        catalogueEntry: 'A JUNYAO DISH\nJIN DYNASTY (1115-1234)',
+        catalogueEntryLanguage: 'en',
+        catalogueEntries: { en: 'A JUNYAO DISH\nJIN DYNASTY (1115-1234)' },
         holder: null,
         storageLocation: { id: 'l1', name: 'MI F3' },
         valuation: null,
-      }),
+        },
+        'en',
+      ),
     })
     renderWithProviders(
       <Routes>

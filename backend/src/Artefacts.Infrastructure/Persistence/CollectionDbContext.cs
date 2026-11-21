@@ -6,6 +6,7 @@ using Artefacts.Domain.Languages;
 using Artefacts.Domain.Lists;
 using Artefacts.Domain.Media;
 using Artefacts.Domain.Parties;
+using Artefacts.Domain.Queries;
 using Artefacts.Domain.Regions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
@@ -23,6 +24,7 @@ public sealed class CollectionDbContext(DbContextOptions<CollectionDbContext> op
     public const string ReferenceEntryNameIndex = "ux_reference_entry_names_kind_language_normalized_name";
     public const string ReferenceEntrySingleNameIndex = "ux_reference_entries_kind_normalized_name";
     public const string PartyNameIndex = "ux_parties_normalized_name";
+    public const string StoredQueryNameIndex = "ux_stored_queries_normalized_name";
 
     public DbSet<Artefact> Artefacts => Set<Artefact>();
     public DbSet<Region> Regions => Set<Region>();
@@ -34,6 +36,7 @@ public sealed class CollectionDbContext(DbContextOptions<CollectionDbContext> op
     public DbSet<ImportJob> ImportJobs => Set<ImportJob>();
     public DbSet<ImportRow> ImportRows => Set<ImportRow>();
     public DbSet<ImportTemplate> ImportTemplates => Set<ImportTemplate>();
+    public DbSet<StoredQuery> StoredQueries => Set<StoredQuery>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder builder)
     {
@@ -150,7 +153,6 @@ public sealed class CollectionDbContext(DbContextOptions<CollectionDbContext> op
             b.HasOne<ReferenceEntry>().WithMany().HasForeignKey(a => a.DynastyId).OnDelete(DeleteBehavior.Restrict);
             b.HasOne<ReferenceEntry>().WithMany().HasForeignKey(a => a.StorageLocationId).OnDelete(DeleteBehavior.Restrict);
             b.HasOne<Party>().WithMany().HasForeignKey(a => a.HolderId).OnDelete(DeleteBehavior.Restrict);
-            b.Property(a => a.CatalogueEntryEn).HasColumnName("catalogue_entry_en").HasMaxLength(Artefact.MaxCatalogueEntryLength);
 
             b.OwnsOne(a => a.PlaceOfProduction, p =>
             {
@@ -184,6 +186,7 @@ public sealed class CollectionDbContext(DbContextOptions<CollectionDbContext> op
                 t.HasKey("ArtefactId", nameof(ArtefactTranslation.Language));
                 t.Property(x => x.Language).HasMaxLength(10);
                 t.Property(x => x.Description).HasMaxLength(Artefact.MaxDescriptionLength);
+                t.Property(x => x.CatalogueEntry).HasMaxLength(Artefact.MaxCatalogueEntryLength);
                 t.HasOne<Language>().WithMany().HasForeignKey(x => x.Language)
                     .HasConstraintName($"{LanguageForeignKeyPrefix}artefact_translations").OnDelete(DeleteBehavior.Restrict);
             });
@@ -282,6 +285,17 @@ public sealed class CollectionDbContext(DbContextOptions<CollectionDbContext> op
             b.HasIndex(r => new { r.JobId, r.Status });
             b.HasIndex(r => new { r.JobId, r.SheetRow }).IsUnique();
             b.HasOne<ImportJob>().WithMany().HasForeignKey(r => r.JobId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        model.Entity<StoredQuery>(b =>
+        {
+            b.ToTable("stored_queries");
+            b.HasKey(q => q.Id);
+            b.Property(q => q.Id).HasMaxLength(64).ValueGeneratedNever();
+            b.Property(q => q.Name).HasMaxLength(StoredQuery.MaxNameLength).IsRequired();
+            b.Property(q => q.NormalizedName).HasMaxLength(StoredQuery.MaxNameLength).IsRequired();
+            b.HasIndex(q => q.NormalizedName).IsUnique().HasDatabaseName(StoredQueryNameIndex);
+            b.Property(q => q.Document).IsRequired();
         });
 
         model.Entity<ImportTemplate>(b =>

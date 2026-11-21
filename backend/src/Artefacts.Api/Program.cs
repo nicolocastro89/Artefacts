@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using Artefacts.Api;
 using Artefacts.Application;
 using Artefacts.Infrastructure;
+using Artefacts.Infrastructure.Graph;
 using Artefacts.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
@@ -21,11 +22,13 @@ if (System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name == "GetDocumen
         ["Imgproxy:PublicBaseUrl"] = "http://openapi-generation",
         ["Imgproxy:Key"] = "00",
         ["Imgproxy:Salt"] = "00",
+        ["GraphQL:SyncSystemQueries"] = "false",
     });
 }
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<RequestLanguages>();
 builder.Services.AddScoped<Artefacts.Application.Abstractions.ILanguagePreferences>(sp => sp.GetRequiredService<RequestLanguages>());
 
@@ -46,6 +49,8 @@ app.UseStatusCodePages();
 app.UseWhen(context => context.Request.Path.StartsWithSegments("/api") || context.Request.Path.StartsWithSegments("/graphql"),
     api => api.UseRequestLanguages());
 
+app.UseStoredQueries("/graphql");
+
 app.MapOpenApi();
 if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
@@ -57,8 +62,17 @@ app.MapListEndpoints();
 app.MapPartyEndpoints();
 app.MapLanguageEndpoints();
 app.MapImportEndpoints();
+app.MapQueryEndpoints();
 app.MapSupportEndpoints();
 app.MapGraphQL("/graphql");
+
+// Build step (see Artefacts.Api.csproj): write the GraphQL schema as SDL, next to the OpenAPI document, and exit.
+if (args is ["--export-graphql-schema", var schemaPath])
+{
+    var executor = await app.Services.GetRequiredService<HotChocolate.Execution.IRequestExecutorProvider>().GetExecutorAsync();
+    await File.WriteAllTextAsync(schemaPath, executor.Schema.ToString() + "\n");
+    return;
+}
 
 if (app.Configuration.GetValue("Database:MigrateOnStartup", false))
 {

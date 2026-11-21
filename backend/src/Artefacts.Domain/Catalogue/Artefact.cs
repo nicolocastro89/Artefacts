@@ -44,7 +44,6 @@ public sealed class Artefact
     public ReferenceEntryId? DynastyId { get; private set; }
 
     /// <summary>The English catalogue entry (long text, line breaks preserved).</summary>
-    public string? CatalogueEntryEn { get; private set; }
 
     /// <summary>The party holding the artefact (e.g. a company); none means the collection itself holds it.</summary>
     public PartyId? HolderId { get; private set; }
@@ -105,25 +104,50 @@ public sealed class Artefact
 
     /// <summary>
     /// Replaces the description in every language from a language → text map. Text is kept as entered apart from
-    /// trimming; blank entries mean no description in that language.
+    /// trimming; blank entries mean no description in that language. Catalogue entries are left as they are.
     /// </summary>
-    public void ReplaceDescriptions(IReadOnlyDictionary<string, string?>? descriptions)
-    {
-        var rows = new List<ArtefactTranslation>();
-        foreach (var (code, text) in descriptions ?? new Dictionary<string, string?>())
-        {
-            var language = code.Trim().ToLowerInvariant();
-            var clean = Guard.Optional(text, $"descriptions.{language}", MaxDescriptionLength);
-            if (clean is null || rows.Any(r => r.Language == language)) continue;
-            rows.Add(ArtefactTranslation.Create(language, clean));
-        }
-        _translations.Clear();
-        _translations.AddRange(rows);
-    }
+    public void ReplaceDescriptions(IReadOnlyDictionary<string, string?>? descriptions) =>
+        ReplaceTexts(descriptions, "descriptions", MaxDescriptionLength, replaceDescriptions: true);
 
     /// <summary>The description in the first preferred language that has one.</summary>
     public ResolvedText? DescriptionIn(IReadOnlyList<string> preferences) =>
         Localized.Resolve(_translations.Where(t => t.Description is not null).Select(t => (t.Language, t.Description!)), preferences);
+
+    /// <summary>
+    /// Replaces the catalogue entry in every language from a language → text map, as <see cref="ReplaceDescriptions"/>
+    /// does for descriptions. Descriptions are left as they are.
+    /// </summary>
+    public void ReplaceCatalogueEntries(IReadOnlyDictionary<string, string?>? entries) =>
+        ReplaceTexts(entries, "catalogueEntries", MaxCatalogueEntryLength, replaceDescriptions: false);
+
+    /// <summary>The catalogue entry in the first preferred language that has one.</summary>
+    public ResolvedText? CatalogueEntryIn(IReadOnlyList<string> preferences) =>
+        Localized.Resolve(_translations.Where(t => t.CatalogueEntry is not null).Select(t => (t.Language, t.CatalogueEntry!)), preferences);
+
+    /// <summary>Replaces one kind of translated text, keeping the other kind of every language.</summary>
+    private void ReplaceTexts(IReadOnlyDictionary<string, string?>? texts, string field, int maxLength, bool replaceDescriptions)
+    {
+        var clean = new Dictionary<string, string>();
+        foreach (var (code, text) in texts ?? new Dictionary<string, string?>())
+        {
+            var language = code.Trim().ToLowerInvariant();
+            var value = Guard.Optional(text, $"{field}.{language}", maxLength);
+            if (value is not null) clean.TryAdd(language, value);
+        }
+
+        var rows = clean.Keys.Union(_translations.Select(t => t.Language))
+            .Select(language =>
+            {
+                var current = _translations.SingleOrDefault(t => t.Language == language);
+                return replaceDescriptions
+                    ? ArtefactTranslation.Create(language, clean.GetValueOrDefault(language), current?.CatalogueEntry)
+                    : ArtefactTranslation.Create(language, current?.Description, clean.GetValueOrDefault(language));
+            })
+            .Where(t => t.Description is not null || t.CatalogueEntry is not null)
+            .ToList();
+        _translations.Clear();
+        _translations.AddRange(rows);
+    }
 
     public void SetAcquisition(Acquisition? acquisition) => Acquisition = acquisition;
 
@@ -140,9 +164,6 @@ public sealed class Artefact
         PlaceOfProduction = placeOfProduction;
         DynastyId = dynastyId;
     }
-
-    public void SetCatalogueEntry(string? catalogueEntryEn) =>
-        CatalogueEntryEn = Guard.Optional(catalogueEntryEn, "catalogueEntryEn", MaxCatalogueEntryLength);
 
     /// <summary>Sets who holds the artefact, where it is kept, and its current valuation.</summary>
     public void SetHolding(PartyId? holderId, ReferenceEntryId? storageLocationId, Money? valuation)

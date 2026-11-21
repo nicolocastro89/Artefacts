@@ -3,9 +3,7 @@
 ## Purpose
 
 Provides read-only views of collection data that are shaped for display and querying, together with a machine-readable catalog of the fields those views expose. This is the stable contract that future custom views and the semantic layer are built on.
-
 ## Requirements
-
 ### Requirement: Artefact read view
 The system SHALL provide a read-only, flattened artefact view. Each row contains the artefact's identifier, inventory number, title, maker, creation date (display text, earliest year, latest year), medium, dimensions, object type identifier, collection group identifier, place of production (text and region identifier), dynasty identifier, holder identifier, storage location identifier, acquisition method, date, source identifier, lot and note, acquisition price amount and currency, valuation amount and currency, the number of exhibitions, the primary image reference, and the number of images. Names of linked records (object types, regions, collection groups, dynasties, storage locations and parties) are not columns of the view: queries over the view resolve them, in the request's language where they are translated. The view SHALL reflect the current state of the catalogue.
 
@@ -54,3 +52,15 @@ The system SHALL publish a machine-readable description of its HTTP API, includi
 #### Scenario: Response schema discoverable
 - **WHEN** a client requests the API description
 - **THEN** it contains the artefact detail endpoint with a response schema that includes the title and the image URL fields
+
+### Requirement: Read views of an artefact's lists
+The system SHALL provide read-only views of an artefact's provenance entries (artefact, position, region identifier, period display text, earliest and latest year, precision, note), images (artefact, media asset, storage reference, original file name, format, size, upload time, caption, whether primary, attachment time), exhibitions (artefact, position, text) descriptions (artefact, language, text) and catalogue entries (artefact, language, text). Like the artefact read view, they reflect the current state of the catalogue, and names of linked records are resolved by queries rather than stored as columns. The field catalog SHALL describe each of them as an entity.
+
+#### Scenario: Provenance view keeps the order
+- **WHEN** a user reorders an artefact's provenance entries and then reads the provenance view
+- **THEN** the view returns the entries with positions in the new order
+
+#### Scenario: Catalog lists the new entities
+- **WHEN** a client requests the field catalog
+- **THEN** it contains the entities for provenance entries, images, exhibitions, descriptions and catalogue entries, each with its fields and types
+

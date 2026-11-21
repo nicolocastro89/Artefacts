@@ -3,9 +3,7 @@
 ## Purpose
 
 Lets staff bring existing collection records into the catalogue from Excel workbooks, including the photographs embedded in them, with control over how cells map to fields and a clear account of every row that could not be imported.
-
 ## Requirements
-
 ### Requirement: Upload a workbook for import
 The system SHALL accept an `.xlsx` workbook of up to 2 GB together with the object type its rows belong to, and start an import job that reads the workbook in the background. The job SHALL report its state (reading, awaiting mapping, ready for review, importing, finished, failed or discarded) and its progress. The system MUST reject files that are not `.xlsx` workbooks with a validation error, and SHALL report a workbook that cannot be read as a failed job with the reason.
 
@@ -158,3 +156,23 @@ When an import that was started from a template is committed, the system SHALL u
 #### Scenario: Decisions carried to the next workbook
 - **WHEN** a user links "Sfavide" to "Safavide" in an import started from template "Collection workbook 2024" and commits it
 - **THEN** a later import with that template pre-fills "Sfavide" as linked to "Safavide"
+
+### Requirement: Catalogue entry language in the mapping
+When a user maps a column to the catalogue entry, the system SHALL also record the language of that text, and SHALL import it as the artefact's catalogue entry in that language. The suggested mapping SHALL propose a language for a column from its heading (a heading in English suggests English, one in Italian suggests Italian) and English when the heading does not say; the user SHALL be able to change it. The language is saved with a template. Columns in several languages are mapped as one column per language.
+
+#### Scenario: English column
+- **WHEN** a column headed "English catalogue entry" is mapped to the catalogue entry
+- **THEN** the suggested language is English and each imported artefact gets that text as its English catalogue entry
+
+#### Scenario: Italian column chosen by the user
+- **WHEN** a user maps a column to the catalogue entry and chooses Italian
+- **THEN** each imported artefact gets that text as its Italian catalogue entry and no English one
+
+#### Scenario: Two languages from two columns
+- **WHEN** one column is mapped to the catalogue entry in English and another in Italian
+- **THEN** each imported artefact has both catalogue entries
+
+#### Scenario: Template keeps the language
+- **WHEN** a user saves a mapping with a catalogue entry column in Italian as a template and reuses it for another workbook
+- **THEN** the mapping starts with that column mapped to the Italian catalogue entry
+

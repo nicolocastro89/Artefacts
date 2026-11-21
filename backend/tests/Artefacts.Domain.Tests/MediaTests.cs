@@ -38,6 +38,14 @@ public class MediaTests
         Assert.Equal(at, asset.UploadedAt);
     }
 
+    [Theory]
+    [InlineData(@"C:\photos\recto.tif", "recto.tif")]
+    [InlineData("/home/curator/scans/recto.tif", "recto.tif")]
+    [InlineData(@"..\..\recto.tif", "recto.tif")]
+    [InlineData("recto.tif", "recto.tif")]
+    public void File_name_is_the_last_path_segment_whichever_separator_the_client_used(string sent, string expected) =>
+        Assert.Equal(expected, MediaAsset.CreateImage(sent, ImageFormat.Tiff, 1, DateTimeOffset.UtcNow).OriginalFileName);
+
     [Fact]
     public void Rejects_empty_file()
     {

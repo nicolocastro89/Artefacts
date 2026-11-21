@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Artefacts.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(CollectionDbContext))]
-    [Migration("20261121100532_Initial")]
+    [Migration("20261121153115_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -30,11 +30,6 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
                         .HasColumnName("id");
-
-                    b.Property<string>("CatalogueEntryEn")
-                        .HasMaxLength(20000)
-                        .HasColumnType("character varying(20000)")
-                        .HasColumnName("catalogue_entry_en");
 
                     b.Property<Guid?>("CollectionGroupId")
                         .HasColumnType("uuid")
@@ -517,6 +512,52 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                     b.ToTable("parties", (string)null);
                 });
 
+            modelBuilder.Entity("Artefacts.Domain.Queries.StoredQuery", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Document")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("document");
+
+                    b.Property<bool>("IsSystem")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_system");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("NormalizedName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("normalized_name");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_stored_queries");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasDatabaseName("ux_stored_queries_normalized_name");
+
+                    b.ToTable("stored_queries", (string)null);
+                });
+
             modelBuilder.Entity("Artefacts.Domain.Regions.Region", b =>
                 {
                     b.Property<Guid>("Id")
@@ -717,6 +758,11 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                                 .HasMaxLength(10)
                                 .HasColumnType("character varying(10)")
                                 .HasColumnName("language");
+
+                            b1.Property<string>("CatalogueEntry")
+                                .HasMaxLength(20000)
+                                .HasColumnType("character varying(20000)")
+                                .HasColumnName("catalogue_entry");
 
                             b1.Property<string>("Description")
                                 .HasMaxLength(10000)

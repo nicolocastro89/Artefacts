@@ -2,7 +2,16 @@ import { useQuery } from '@tanstack/react-query'
 import { createContext, useContext, type ReactNode } from 'react'
 import { ApiError } from '../../api/problem'
 import { usePrintMode } from '../../print/PrintContext'
-import { fetchOperation, fieldTypesFor, resolveParams, type ParamContext } from './dataSources'
+import {
+  coerceVariables,
+  fetchOperation,
+  fetchQueryDescription,
+  fieldTypesFor,
+  QueryError,
+  resolveParams,
+  runStoredQuery,
+  type ParamContext,
+} from './dataSources'
 import type { ContainerNode, LayoutNode, PageDefinition, PageNode, RepeatNode, WidgetNode } from './page'
 import { qualify, resolvePath, typeAt } from './paths'
 import { getWidget } from './registry'
@@ -63,9 +72,7 @@ function RenderContainer({ node }: { node: ContainerNode }) {
       </ScopeContext.Provider>
     )
   }
-  if (source.kind === 'query') {
-    return <div className="data-state data-state--unavailable">Custom queries are not available yet.</div>
-  }
+  if (source.kind === 'query') return <QueryContainer node={node} source={source} />
   return <EndpointContainer node={node} source={source} />
 }
 
@@ -92,6 +99,50 @@ function EndpointContainer({ node, source }: { node: ContainerNode; source: Extr
     <ScopeContext.Provider value={{ data: query.data, fieldTypes: fieldTypesFor(source.operationId), prefix: '' }}>
       <RenderChildren nodes={node.children} />
     </ScopeContext.Provider>
+  )
+}
+
+function QueryContainer({ node, source }: { node: ContainerNode; source: Extract<ContainerNode['dataSource'], { kind: 'query' }> }) {
+  const ctx = useContext(ParamsContext)
+  const description = useQuery({
+    queryKey: ['query-description', source.queryId],
+    queryFn: ({ signal }) => fetchQueryDescription(source.queryId, signal),
+    staleTime: 10 * 60 * 1000,
+  })
+  const variables = resolveParams(source.variables, ctx)
+  const data = useQuery({
+    queryKey: ['query-run', source.queryId, variables],
+    queryFn: ({ signal }) => runStoredQuery(source.queryId, coerceVariables(variables, description.data!.variables), signal),
+    enabled: description.isSuccess,
+    placeholderData: (previous) => previous,
+  })
+
+  if (description.isError || data.isError) return <DataError error={description.error ?? data.error} />
+  if (description.isPending || data.isPending) return <div className="data-state data-state--loading" aria-busy="true">Loading…</div>
+  if (source.require && resolvePath(data.data, source.require) == null) return <NotFound />
+  return (
+    <ScopeContext.Provider value={{ data: data.data, fieldTypes: description.data.fields, prefix: '' }}>
+      <RenderChildren nodes={node.children} />
+    </ScopeContext.Provider>
+  )
+}
+
+function NotFound() {
+  return (
+    <div className="data-state data-state--error" role="alert">
+      This record does not exist (it may have been deleted).
+    </div>
+  )
+}
+
+function DataError({ error }: { error: Error | null }) {
+  const notFound = error instanceof ApiError && error.status === 404
+  if (notFound) return <NotFound />
+  const detail = error instanceof QueryError ? error.messages.join(' ') : (error?.message ?? '')
+  return (
+    <div className="data-state data-state--error" role="alert">
+      Could not load data: {detail}
+    </div>
   )
 }
 

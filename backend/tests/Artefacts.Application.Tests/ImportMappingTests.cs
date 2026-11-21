@@ -28,7 +28,8 @@ public class ImportMappingTests
         Assert.Equal(ImportField.Dynasty, mapping.Columns.Single(c => c.Column == 4).Rest);
         Assert.Equal(ImportField.AcquisitionNote, mapping.Columns.Single(c => c.Column == 5).Rest);
         Assert.Equal(ImportField.Exhibitions, mapping.Columns.Single(c => c.Column == 7).Target);
-        Assert.Equal(ImportField.CatalogueEntryEn, mapping.Columns.Single(c => c.Column == 8).Target);
+        Assert.Equal(ImportField.CatalogueEntry, mapping.Columns.Single(c => c.Column == 8).Target);
+        Assert.Equal("en", mapping.Columns.Single(c => c.Column == 8).Language);
         Assert.True(mapping.Columns.Single(c => c.Column == 6).Ignored);
         Assert.Equal("{sheet}-{group:2}-{item:2}", mapping.InventoryNumber.Pattern);
         Assert.Equal(ImportField.CatalogueNumber, mapping.InventoryNumber.Prefer);
@@ -173,14 +174,14 @@ public class ImportMappingTests
     {
         // Saved from a workbook with "Valore" in column 8; in this one column 8 is "William".
         var mapping = new ImportMapping(
-            [new ColumnRule(9, "William", ImportField.CatalogueEntryEn), new ColumnRule(8, "Valore", ImportField.Valuation),
+            [new ColumnRule(9, "William", ImportField.CatalogueEntry), new ColumnRule(8, "Valore", ImportField.Valuation),
                 new ColumnRule(2, "Nome File", ImportField.Title)],
             new InventoryNumberPattern("X-{row}"));
         var headings = new Dictionary<int, string> { [2] = "Nome", [8] = "William" };
 
         var resolved = MappingEngine.Resolve(mapping, headings);
 
-        Assert.Equal([(8, ImportField.CatalogueEntryEn), (2, ImportField.Title)], resolved.Select(r => (r.Column, r.Rule.Target!.Value)));
+        Assert.Equal([(8, ImportField.CatalogueEntry), (2, ImportField.Title)], resolved.Select(r => (r.Column, r.Rule.Target!.Value)));
     }
 
     [Fact]

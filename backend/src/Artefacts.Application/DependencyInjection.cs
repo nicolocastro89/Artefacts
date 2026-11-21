@@ -5,6 +5,7 @@ using Artefacts.Application.Languages;
 using Artefacts.Application.Lists;
 using Artefacts.Application.ObjectTypes;
 using Artefacts.Application.Parties;
+using Artefacts.Application.Queries;
 using Artefacts.Application.Regions;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -26,6 +27,7 @@ public static class DependencyInjection
         services.AddScoped<ImageHandler>();
         services.AddScoped<ImportHandler>();
         services.AddScoped<ImportTemplateHandler>();
+        services.AddScoped<StoredQueryHandler>();
         services.AddSingleton<ImportProcessor>();
         return services;
     }

@@ -10,11 +10,11 @@ export const acquisitionFields: WidgetNode = {
   id: 'acquisition-fields',
   widgetId: 'field-list',
   bindings: {
-    method: 'acquisition.method',
-    date: 'acquisition.date',
-    source: 'acquisition.source.name',
-    lot: 'acquisition.lot',
-    price: 'acquisition.price',
+    method: 'artefact.acquisition.method',
+    date: 'artefact.acquisition.date',
+    source: 'artefact.acquisition.source.name',
+    lot: 'artefact.acquisition.lot',
+    price: 'artefact.acquisition.price',
   },
   config: { labels: { method: 'Method', date: 'Date', source: 'Source', lot: 'Lot', price: 'Price' } },
 }
@@ -23,7 +23,7 @@ export const acquisitionNote: WidgetNode = {
   type: 'widget',
   id: 'acquisition-note',
   widgetId: 'text-block',
-  bindings: { text: 'acquisition.note' },
+  bindings: { text: 'artefact.acquisition.note' },
 }
 
 export const classificationSection: LayoutNode = {
@@ -37,11 +37,11 @@ export const classificationSection: LayoutNode = {
       id: 'classification-fields',
       widgetId: 'field-list',
       bindings: {
-        objectType: 'objectType.name',
-        collectionGroup: 'collectionGroup.name',
-        place: 'placeOfProduction.text',
-        region: 'placeOfProduction.region.name',
-        dynasty: 'dynasty.name',
+        objectType: 'artefact.objectType.name',
+        collectionGroup: 'artefact.collectionGroup.name',
+        place: 'artefact.placeOfProduction.text',
+        region: 'artefact.placeOfProduction.region.name',
+        dynasty: 'artefact.dynasty.name',
       },
       config: {
         labels: {
@@ -66,7 +66,7 @@ export const holdingSection: LayoutNode = {
       type: 'widget',
       id: 'holding-fields',
       widgetId: 'field-list',
-      bindings: { holder: 'holder.name', storageLocation: 'storageLocation.name', valuation: 'valuation' },
+      bindings: { holder: 'artefact.holder.name', storageLocation: 'artefact.storageLocation.name', valuation: 'artefact.valuation' },
       config: { labels: { holder: 'Holder', storageLocation: 'Storage location', valuation: 'Valuation' } },
     },
   ],
@@ -77,13 +77,15 @@ export const exhibitionsSection: LayoutNode = {
   id: 'exhibitions',
   layout: 'section',
   title: 'Exhibitions',
-  children: [{ type: 'widget', id: 'exhibition-list', widgetId: 'text-list', bindings: { items: 'exhibitions[]' } }],
+  children: [{ type: 'widget', id: 'exhibition-list', widgetId: 'text-list', bindings: { items: 'artefact.exhibitions[]' } }],
 }
 
 export const catalogueEntrySection: LayoutNode = {
   type: 'layout',
   id: 'catalogue-entry',
   layout: 'section',
-  title: 'Catalogue entry (English)',
-  children: [{ type: 'widget', id: 'catalogue-entry-text', widgetId: 'text-block', bindings: { text: 'catalogueEntryEn' } }],
+  title: 'Catalogue entry',
+  children: [
+    { type: 'widget', id: 'catalogue-entry-text', widgetId: 'translated-text', bindings: { text: 'artefact.catalogueEntry', language: 'artefact.catalogueEntryLanguage', requested: 'language' } },
+  ],
 }

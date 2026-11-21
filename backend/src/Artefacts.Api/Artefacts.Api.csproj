@@ -26,4 +26,9 @@
     <OpenApiDocumentsDirectory>$(MSBuildProjectDirectory)/../../openapi</OpenApiDocumentsDirectory>
   </PropertyGroup>
 
+  <!-- Export the GraphQL schema (SDL) beside the OpenAPI document, so clients and reviewers can read it. -->
+  <Target Name="ExportGraphQLSchema" AfterTargets="Build" Condition="'$(ExportGraphQLSchema)' != 'false'">
+    <Exec Command="dotnet &quot;$(TargetPath)&quot; --export-graphql-schema &quot;$(OpenApiDocumentsDirectory)/schema.graphql&quot;" WorkingDirectory="$(MSBuildProjectDirectory)" />
+  </Target>
+
 </Project>

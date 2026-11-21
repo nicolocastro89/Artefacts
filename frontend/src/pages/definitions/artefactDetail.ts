@@ -8,8 +8,8 @@ export const artefactRecordBody: PageNode[] = [
     id: 'head',
     layout: 'row',
     children: [
-      { type: 'widget', id: 'title', widgetId: 'heading', bindings: { text: 'title', subtitle: 'maker' } },
-      { type: 'widget', id: 'tag', widgetId: 'inventory-tag', bindings: { text: 'inventoryNumber' } },
+      { type: 'widget', id: 'title', widgetId: 'heading', bindings: { text: 'artefact.title', subtitle: 'artefact.maker' } },
+      { type: 'widget', id: 'tag', widgetId: 'inventory-tag', bindings: { text: 'artefact.inventoryNumber' } },
     ],
   },
   {
@@ -17,7 +17,7 @@ export const artefactRecordBody: PageNode[] = [
     id: 'body',
     layout: 'split',
     children: [
-      { type: 'widget', id: 'gallery', widgetId: 'image-gallery', bindings: { images: 'images[]' }, config: { emptyText: 'No images yet. Add them from Edit.' } },
+      { type: 'widget', id: 'gallery', widgetId: 'image-gallery', bindings: { images: 'artefact.images[]' }, config: { emptyText: 'No images yet. Add them from Edit.' } },
       {
         type: 'layout',
         id: 'facts',
@@ -34,17 +34,17 @@ export const artefactRecordBody: PageNode[] = [
                 id: 'catalogue-fields',
                 widgetId: 'field-list',
                 bindings: {
-                  inventoryNumber: 'inventoryNumber',
-                  maker: 'maker',
-                  creationDate: 'creationDate',
-                  medium: 'medium',
-                  dimensions: 'dimensions',
+                  inventoryNumber: 'artefact.inventoryNumber',
+                  maker: 'artefact.maker',
+                  creationDate: 'artefact.creationDate',
+                  medium: 'artefact.medium',
+                  dimensions: 'artefact.dimensions',
                 },
                 config: {
                   labels: { inventoryNumber: 'Inventory no.', maker: 'Maker', creationDate: 'Date', medium: 'Medium', dimensions: 'Dimensions' },
                 },
               },
-              { type: 'widget', id: 'description', widgetId: 'translated-text', bindings: { text: 'description', language: 'descriptionLanguage', requested: 'language' } },
+              { type: 'widget', id: 'description', widgetId: 'translated-text', bindings: { text: 'artefact.description', language: 'artefact.descriptionLanguage', requested: 'language' } },
             ],
           },
           classificationSection,
@@ -68,11 +68,11 @@ export const artefactRecordBody: PageNode[] = [
               {
                 type: 'repeat',
                 id: 'provenance-steps',
-                itemsPath: 'provenance[]',
+                itemsPath: 'artefact.provenance[]',
                 layout: 'steps',
                 emptyText: 'No provenance recorded.',
                 children: [
-                  { type: 'widget', id: 'step', widgetId: 'list-row', bindings: { primary: 'regionName', secondary: 'period', note: 'note' } },
+                  { type: 'widget', id: 'step', widgetId: 'list-row', bindings: { primary: 'region.name', secondary: 'period', note: 'note' } },
                 ],
               },
             ],
@@ -91,7 +91,7 @@ export const artefactDetailPage: PageDefinition = {
   root: {
     type: 'container',
     id: 'artefact',
-    dataSource: { kind: 'endpoint', operationId: 'getArtefact', params: { id: { from: 'route', name: 'id' } } },
+    dataSource: { kind: 'query', queryId: 'artefact-detail', variables: { id: { from: 'route', name: 'id' } }, require: 'artefact' },
     children: [
       {
         type: 'layout',
@@ -102,7 +102,7 @@ export const artefactDetailPage: PageDefinition = {
             type: 'widget',
             id: 'actions',
             widgetId: 'record-actions',
-            bindings: { id: 'id' },
+            bindings: { id: 'artefact.id' },
             config: {
               actions: [
                 { label: 'All artefacts', href: '/artefacts', icon: 'back' },

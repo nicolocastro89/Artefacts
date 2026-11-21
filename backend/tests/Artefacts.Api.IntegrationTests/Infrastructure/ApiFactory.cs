@@ -4,6 +4,8 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Testcontainers.PostgreSql;
 
 namespace Artefacts.Api.IntegrationTests.Infrastructure;
@@ -27,9 +29,13 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 
     public string ConnectionString => _db.GetConnectionString();
 
+    /// <summary>The SQL commands the API executes, for tests that count them.</summary>
+    public SqlLog Sql { get; } = new();
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
+        builder.ConfigureLogging(l => l.AddProvider(Sql));
         builder.ConfigureAppConfiguration(c => c.AddInMemoryCollection(new Dictionary<string, string?>
         {
             ["ConnectionStrings:Collection"] = _db.GetConnectionString(),
@@ -55,6 +61,46 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         await base.DisposeAsync();
         await _db.DisposeAsync();
         try { Directory.Delete(MediaRoot, recursive: true); } catch (DirectoryNotFoundException) { }
+    }
+}
+
+/// <summary>Records the text of every command Entity Framework executes (tests of one collection run one at a time).</summary>
+public sealed class SqlLog : ILoggerProvider
+{
+    private const string CommandCategory = "Microsoft.EntityFrameworkCore.Database.Command";
+    private readonly List<string> _commands = [];
+
+    public ILogger CreateLogger(string categoryName) =>
+        categoryName == CommandCategory ? new CommandLogger(this) : Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance;
+
+    public void Dispose()
+    {
+    }
+
+    /// <summary>Runs <paramref name="action"/> and returns the commands executed meanwhile.</summary>
+    public async Task<IReadOnlyList<string>> CaptureAsync(Func<Task> action)
+    {
+        int start;
+        lock (_commands) start = _commands.Count;
+        await action();
+        lock (_commands) return _commands.Skip(start).ToList();
+    }
+
+    private void Add(string command)
+    {
+        lock (_commands) _commands.Add(command);
+    }
+
+    private sealed class CommandLogger(SqlLog log) : ILogger
+    {
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+
+        public bool IsEnabled(LogLevel logLevel) => logLevel >= LogLevel.Information;
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+        {
+            if (eventId.Id == 20101) log.Add(formatter(state, exception)); // CommandExecuted
+        }
     }
 }
 

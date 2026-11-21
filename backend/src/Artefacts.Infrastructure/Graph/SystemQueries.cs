@@ -31,10 +31,3 @@ public static class SystemQueries
         return list;
     }
 }
-
-/// <summary>Stored query documents held in memory (the system queries); replaced by the database store.</summary>
-internal sealed class InMemoryStoredQueryDocuments : IStoredQueryDocuments
-{
-    public ValueTask<string?> FindAsync(string id, CancellationToken ct) =>
-        ValueTask.FromResult(SystemQueries.All.FirstOrDefault(q => q.Id == id)?.Document);
-}
