@@ -10,17 +10,21 @@ using Artefacts.Domain.Common;
 using Artefacts.Domain.Dating;
 using Artefacts.Domain.Imports;
 using Artefacts.Domain.Languages;
+using Artefacts.Domain.Lists;
+using Artefacts.Domain.Parties;
 using Artefacts.Domain.Regions;
 using Microsoft.Extensions.Logging;
 
 namespace Artefacts.Application.Imports;
 
-/// <summary>The steps of an import a user drives: upload, mapping, places, dates, review, commit and discard.</summary>
+/// <summary>The steps of an import a user drives: upload, mapping, places, lists, dates, review, commit and discard.</summary>
 public sealed class ImportHandler(
     IImportRepository imports,
     IImportTemplateRepository templates,
     IObjectTypeRepository objectTypes,
     IRegionRepository regions,
+    IReferenceEntryRepository listEntries,
+    IPartyRepository parties,
     IArtefactRepository artefacts,
     IMediaStorage storage,
     IUnitOfWork unitOfWork,
@@ -130,7 +134,7 @@ public sealed class ImportHandler(
         await ValidateMappingAsync(request.Mapping, Headings(job), ct);
         var evaluation = await EvaluateAsync(job, request.Mapping, ct);
         var count = Math.Clamp(request.Rows ?? DefaultPreviewRows, 1, 50);
-        return Review(evaluation, await RegionNamesAsync(ct), null, 1, count);
+        return Review(evaluation, await NamesAsync(ct), null, 1, count);
     }
 
     public async Task<IReadOnlyList<string>> ValidateMappingAsync(ImportMapping? mapping, IReadOnlyDictionary<int, string> headings, CancellationToken ct)
@@ -187,18 +191,18 @@ public sealed class ImportHandler(
     {
         var job = await LoadAsync(id, ct);
         var evaluation = await EvaluateAsync(job, null, ct);
-        var names = await RegionNamesAsync(ct);
+        var names = await NamesAsync(ct);
         return evaluation.Rows
             .Where(r => r.PlaceText is not null)
-            .GroupBy(r => PlaceMatcher.Normalize(r.PlaceText!))
+            .GroupBy(r => NameMatcher.Normalize(r.PlaceText!))
             .Where(g => g.Key.Length > 0)
             .Select(g =>
             {
                 var text = g.First().PlaceText!;
                 var saved = evaluation.Places.Saved.GetValueOrDefault(g.Key);
                 var decision = saved ?? evaluation.Places.Default(text);
-                var suggestions = PlaceMatcher.Suggest(text, evaluation.Places.Candidates)
-                    .Select(s => new PlaceSuggestionDto(s.RegionId, names.GetValueOrDefault(s.RegionId) ?? s.MatchedName, s.MatchedName, s.Score, s.Exact, s.Alias))
+                var suggestions = NameMatcher.Suggest(text, evaluation.Places.Candidates)
+                    .Select(s => new PlaceSuggestionDto(s.Id, names.GetValueOrDefault(s.Id) ?? s.MatchedName, s.MatchedName, s.Score, s.Exact, s.Alias))
                     .ToList();
                 return new ImportPlaceDto(text, g.Count(), decision, saved is not null, suggestions);
             })
@@ -245,12 +249,113 @@ public sealed class ImportHandler(
 
         v.ThrowIfAny();
         // Decisions for texts not in this request are kept (they may come from a template).
-        var byKey = decisions.Places.ToDictionary(d => PlaceMatcher.Normalize(d.Text));
-        foreach (var d in cleaned) byKey[PlaceMatcher.Normalize(d.Text)] = d;
+        var byKey = decisions.Places.ToDictionary(d => NameMatcher.Normalize(d.Text));
+        foreach (var d in cleaned) byKey[NameMatcher.Normalize(d.Text)] = d;
         job.SetDecisions(ImportJson.Write(decisions with { Places = byKey.Values.ToList() }), clock.GetUtcNow());
         await unitOfWork.SaveChangesAsync(ct);
         return await PlacesAsync(id, ct);
     }
+
+    // ---------- list values and parties ----------
+
+    private static readonly ImportList[] AllLists = [ImportList.CollectionGroup, ImportList.Dynasty, ImportList.StorageLocation, ImportList.Party];
+
+    /// <summary>
+    /// For each list, the distinct texts of the workbook with their row counts, the decision in force (saved, or else
+    /// an exact match linked by default) and up to three similar entries, most used first.
+    /// </summary>
+    public async Task<IReadOnlyList<ImportListGroupDto>> ListsAsync(Guid id, CancellationToken ct)
+    {
+        var job = await LoadAsync(id, ct);
+        var evaluation = await EvaluateAsync(job, null, ct);
+        var names = await NamesAsync(ct);
+        return AllLists.Select(list =>
+        {
+            var values = evaluation.Rows
+                .SelectMany(r => r.ListTexts.Where(t => t.List == list).Select(t => (Row: r.Row.SheetRow, t.Field, t.Text)))
+                .GroupBy(t => NameMatcher.Normalize(t.Text))
+                .Where(g => g.Key.Length > 0)
+                .Select(g =>
+                {
+                    var text = g.First().Text;
+                    var saved = evaluation.Lists.Saved.GetValueOrDefault((list, g.Key));
+                    var decision = saved ?? evaluation.Lists.Default(list, text);
+                    var suggestions = NameMatcher.Suggest(text, evaluation.Lists.Candidates(list))
+                        .Select(s => new ListSuggestionDto(s.Id, names.GetValueOrDefault(s.Id) ?? s.MatchedName, s.MatchedName, s.Score, s.Exact, s.Alias))
+                        .ToList();
+                    return new ImportListValueDto(text, g.Select(t => t.Row).Distinct().Count(),
+                        g.Select(t => t.Field).Distinct().Order().ToList(), decision, saved is not null, suggestions);
+                })
+                .OrderByDescending(v => v.Rows)
+                .ThenBy(v => v.Text, StringComparer.CurrentCultureIgnoreCase)
+                .ToList();
+            return new ImportListGroupDto(list, values, values.Count(v => v.Decision is null));
+        }).ToList();
+    }
+
+    /// <summary>Merges list and party decisions into the job's; decisions for other texts are kept.</summary>
+    public async Task<IReadOnlyList<ImportListGroupDto>> SetListsAsync(Guid id, SetListDecisionsRequest request, CancellationToken ct)
+    {
+        var job = await LoadAsync(id, ct);
+        var v = new ValidationCollector();
+        var input = request.Lists ?? [];
+        var languages = await contentLanguages.ListAsync(ct);
+        var cleaned = new List<ListDecision>();
+        for (var i = 0; i < input.Count; i++)
+        {
+            var d = input[i];
+            var key = $"lists[{i}]";
+            if (string.IsNullOrWhiteSpace(d.Text)) { v.Add($"{key}.text", "The text is required."); continue; }
+            if (!Enum.IsDefined(d.List)) { v.Add($"{key}.list", "Is not a list."); continue; }
+            var text = d.Text.Trim();
+            if (d.Action == ListAction.Link)
+            {
+                if (d.EntryId is not { } entryId) v.Add($"{key}.entryId", "Choose the entry to link.");
+                else if (!await ExistsAsync(d.List, entryId, ct)) v.Add($"{key}.entryId", "The entry does not exist.");
+                cleaned.Add(d with { Text = text, Names = null, Name = null, PartyKind = null });
+            }
+            else if (d.Action != ListAction.Create)
+            {
+                v.Add($"{key}.action", "Choose link or create.");
+            }
+            else if (d.List == ImportList.Party)
+            {
+                if (d.PartyKind is not { } kind || !Enum.IsDefined(kind)) v.Add($"{key}.partyKind", "Choose person or organisation.");
+                else v.Try(key, () => Party.Create(d.Name, kind));
+                cleaned.Add(d with { Text = text, EntryId = null, Names = null });
+            }
+            else if (!ListKindOf(d.List).IsTranslated())
+            {
+                v.Try(key, () => ReferenceEntry.Create(ListKindOf(d.List), d.Name));
+                cleaned.Add(d with { Text = text, EntryId = null, Names = null, PartyKind = null });
+            }
+            else
+            {
+                var names = TranslationInput.Check(d.Names, languages, $"{key}.names", v);
+                v.Try(key, () => LocalizedName.FromMap(names, ReferenceEntry.MaxNameLength));
+                cleaned.Add(d with { Text = text, EntryId = null, Names = names, Name = null, PartyKind = null });
+            }
+        }
+
+        v.ThrowIfAny();
+        var decisions = Decisions(job);
+        job.SetDecisions(ImportJson.Write(decisions.MergedWith(ImportDecisions.Empty with { Lists = cleaned })), clock.GetUtcNow());
+        await unitOfWork.SaveChangesAsync(ct);
+        return await ListsAsync(id, ct);
+    }
+
+    public static ListKind ListKindOf(ImportList list) => list switch
+    {
+        ImportList.CollectionGroup => ListKind.CollectionGroup,
+        ImportList.Dynasty => ListKind.Dynasty,
+        ImportList.StorageLocation => ListKind.StorageLocation,
+        _ => throw new ArgumentOutOfRangeException(nameof(list), list, "Parties are not a reference list."),
+    };
+
+    private async Task<bool> ExistsAsync(ImportList list, Guid id, CancellationToken ct) =>
+        list == ImportList.Party
+            ? await parties.GetAsync(new PartyId(id), ct) is not null
+            : await listEntries.GetAsync(ListKindOf(list), new ReferenceEntryId(id), ct) is not null;
 
     // ---------- dates ----------
 
@@ -301,7 +406,7 @@ public sealed class ImportHandler(
         var job = await LoadAsync(id, ct);
         if (job.IsTerminal || job.State == ImportJobState.Importing)
             return ProcessedReview(job, await imports.GetRowsAsync(id, ct), status, page, pageSize);
-        return Review(await EvaluateAsync(job, null, ct), await RegionNamesAsync(ct), status, page, pageSize);
+        return Review(await EvaluateAsync(job, null, ct), await NamesAsync(ct), status, page, pageSize);
     }
 
     public async Task<ImportJobDto> CommitAsync(Guid id, CancellationToken ct)
@@ -310,6 +415,7 @@ public sealed class ImportHandler(
         if (job.Mapping is null) throw new ConflictException("import_state", "Map the columns before importing.");
         await ValidateMappingAsync(MappingOf(job), Headings(job), ct);
         job.Commit(clock.GetUtcNow());
+        await LearnTemplateAsync(job, ct);
         await unitOfWork.SaveChangesAsync(ct);
         signal.Notify();
         return await ToDtoAsync(job, ct);
@@ -335,6 +441,18 @@ public sealed class ImportHandler(
             .ToList());
     }
 
+    /// <summary>
+    /// Lays the job's place, date and list decisions over those of the template it started from (the job's decision
+    /// wins per text; the template's others are kept). The mapping is changed only when the user saves the template.
+    /// Not saved here: the caller saves it with its own changes.
+    /// </summary>
+    public async Task LearnTemplateAsync(ImportJob job, CancellationToken ct)
+    {
+        if (job.TemplateId is not { } templateId || await templates.GetAsync(templateId, ct) is not { } template) return;
+        var merged = ReadDecisions(template.Decisions).MergedWith(Decisions(job));
+        template.Update(template.Name, template.Mapping, ImportJson.Write(merged), clock.GetUtcNow());
+    }
+
     private async Task TryCleanUpAsync(ImportJob job)
     {
         try { await storage.DeletePrefixAsync(job.StagingPrefix, CancellationToken.None); }
@@ -344,7 +462,7 @@ public sealed class ImportHandler(
     // ---------- evaluation ----------
 
     /// <summary>The evaluated rows of a job with its current (or the given) mapping, decisions and catalogue.</summary>
-    public sealed record Evaluation(ImportJob Job, IReadOnlyList<EvaluatedRow> Rows, PlaceResolver Places);
+    public sealed record Evaluation(ImportJob Job, IReadOnlyList<EvaluatedRow> Rows, PlaceResolver Places, ListResolver Lists);
 
     public async Task<Evaluation> EvaluateAsync(ImportJob job, ImportMapping? mapping, CancellationToken ct, bool validate = true)
     {
@@ -352,8 +470,10 @@ public sealed class ImportHandler(
         var rows = await StagedRowsAsync(job, ct);
         var decisions = Decisions(job);
         var places = await PlaceResolverAsync(decisions, ct);
+        var lists = await ListResolverAsync(decisions, ct);
         var dates = decisions.Dates.GroupBy(d => RowEvaluator.DateKey(d.Text)).ToDictionary(g => g.Key, g => g.Last());
-        var context = new EvaluationContext(mapping, Headings(job), job.ObjectTypeId.Value, new HashSet<string>(), places.Resolve, dates, job.SheetName);
+        var context = new EvaluationContext(mapping, Headings(job), job.ObjectTypeId.Value, new HashSet<string>(), places.Resolve, dates,
+            job.SheetName, lists.Resolve);
 
         var evaluated = RowEvaluator.Evaluate(rows, context);
         var numbers = evaluated.Where(r => r.InventoryNumber is not null).Select(r => r.InventoryNumber!).ToList();
@@ -361,7 +481,7 @@ public sealed class ImportHandler(
         if (existing.Count > 0) evaluated = RowEvaluator.Evaluate(rows, context with { ExistingInventoryNumbers = existing });
 
         if (validate) evaluated = await ValidateRowsAsync(evaluated, ct);
-        return new Evaluation(job, evaluated, places);
+        return new Evaluation(job, evaluated, places, lists);
     }
 
     /// <summary>Adds the catalogue's own validation (lengths, currencies, references) to rows that are otherwise ready.</summary>
@@ -400,34 +520,92 @@ public sealed class ImportHandler(
             "title" => r?.Title,
             "inventoryNumber" => r?.InventoryNumber,
             "dimensions" => r?.Dimensions,
-            "dynasty" => r?.Dynasty,
-            "holder" => r?.Holder,
-            "storageLocation" => r?.StorageLocation,
+            "collectionGroupId" => ListTextOf(row, ImportField.CollectionGroup),
+            "dynastyId" => ListTextOf(row, ImportField.Dynasty),
+            "holderId" => ListTextOf(row, ImportField.Holder),
+            "storageLocationId" => ListTextOf(row, ImportField.StorageLocation),
+            "acquisition.sourceId" => ListTextOf(row, ImportField.AcquisitionSource),
             "creationDate" => r?.CreationDate?.Text,
             "catalogueEntryEn" => r?.CatalogueEntryEn,
             _ when key.StartsWith("placeOfProduction") => r?.PlaceOfProduction?.Text,
-            _ when key.StartsWith("acquisition") => r?.Acquisition?.Source,
             _ when key.StartsWith("exhibitions") => string.Join(" · ", r?.Exhibitions ?? []),
             _ when key.StartsWith("descriptions") => r?.Descriptions?.Values.FirstOrDefault(),
             _ => null,
         };
     }
 
+    private static string? ListTextOf(EvaluatedRow row, ImportField field) => row.ListTexts.FirstOrDefault(t => t.Field == field)?.Text;
+
+    /// <summary>
+    /// Resolves list texts with the saved decisions, else an exact match on an entry's names (any language) or on a
+    /// text linked to it in a template. A "create" decision counts as decided; its entry exists once committed.
+    /// </summary>
+    public sealed class ListResolver(
+        IReadOnlyDictionary<(ImportList, string), ListDecision> saved,
+        IReadOnlyDictionary<ImportList, List<NameCandidate>> candidates)
+    {
+        public IReadOnlyDictionary<(ImportList, string), ListDecision> Saved { get; } = saved;
+
+        public IReadOnlyList<NameCandidate> Candidates(ImportList list) => candidates.TryGetValue(list, out var c) ? c : [];
+
+        public ListDecision? Default(ImportList list, string text)
+        {
+            var exact = NameMatcher.Suggest(text, Candidates(list)).FirstOrDefault(s => s.Exact);
+            return exact is null ? null : new ListDecision(list, text, ListAction.Link, exact.Id);
+        }
+
+        public ListDecision? InForce(ImportList list, string text) =>
+            Saved.GetValueOrDefault((list, NameMatcher.Normalize(text))) ?? Default(list, text);
+
+        public ResolvedEntry Resolve(ImportList list, string text) => InForce(list, text) switch
+        {
+            { EntryId: { } id } => new ResolvedEntry(id, false),
+            { Action: ListAction.Create } => new ResolvedEntry(null, true),
+            _ => ResolvedEntry.Undecided,
+        };
+    }
+
+    public async Task<ListResolver> ListResolverAsync(ImportDecisions decisions, CancellationToken ct)
+    {
+        var candidates = new Dictionary<ImportList, List<NameCandidate>>();
+        foreach (var list in AllLists.Where(l => l != ImportList.Party))
+        {
+            var entries = await listEntries.SearchAsync(ListKindOf(list), null, ct);
+            candidates[list] = entries.SelectMany(e => e.Kind.IsTranslated()
+                ? e.Names.Select(n => new NameCandidate(e.Id.Value, n.Name))
+                : [new NameCandidate(e.Id.Value, e.Name!)]).ToList();
+        }
+        candidates[ImportList.Party] = (await parties.SearchAsync(null, null, ct)).Select(p => new NameCandidate(p.Id.Value, p.Name)).ToList();
+
+        // Texts linked to an entry in any template count as names of that entry (while the entry exists).
+        var known = candidates.ToDictionary(c => c.Key, c => c.Value.Select(x => x.Id).ToHashSet());
+        foreach (var template in await templates.ListAsync(ct))
+        {
+            foreach (var d in ReadDecisions(template.Decisions).Lists)
+                if (d.EntryId is { } entryId && known.TryGetValue(d.List, out var ids) && ids.Contains(entryId))
+                    candidates[d.List].Add(new NameCandidate(entryId, d.Text, Alias: true));
+        }
+
+        var saved = new Dictionary<(ImportList, string), ListDecision>();
+        foreach (var d in decisions.Lists) saved[(d.List, NameMatcher.Normalize(d.Text))] = d;
+        return new ListResolver(saved, candidates);
+    }
+
     /// <summary>Resolves place texts with the saved decisions, else an exact match on a region's names or aliases.</summary>
-    public sealed class PlaceResolver(IReadOnlyDictionary<string, PlaceDecision> saved, IReadOnlyList<PlaceCandidate> candidates)
+    public sealed class PlaceResolver(IReadOnlyDictionary<string, PlaceDecision> saved, IReadOnlyList<NameCandidate> candidates)
     {
         public IReadOnlyDictionary<string, PlaceDecision> Saved { get; } = saved;
-        public IReadOnlyList<PlaceCandidate> Candidates { get; } = candidates;
+        public IReadOnlyList<NameCandidate> Candidates { get; } = candidates;
 
         public PlaceDecision? Default(string text)
         {
-            var exact = PlaceMatcher.Suggest(text, Candidates).FirstOrDefault(s => s.Exact);
-            return exact is null ? null : new PlaceDecision(text, PlaceAction.Link, exact.RegionId);
+            var exact = NameMatcher.Suggest(text, Candidates).FirstOrDefault(s => s.Exact);
+            return exact is null ? null : new PlaceDecision(text, PlaceAction.Link, exact.Id);
         }
 
         public ResolvedPlace Resolve(string text)
         {
-            var decision = Saved.GetValueOrDefault(PlaceMatcher.Normalize(text)) ?? Default(text);
+            var decision = Saved.GetValueOrDefault(NameMatcher.Normalize(text)) ?? Default(text);
             return decision switch
             {
                 { Action: PlaceAction.Link, RegionId: { } id } => new ResolvedPlace(id, false, PlaceAction.Link),
@@ -441,29 +619,38 @@ public sealed class ImportHandler(
 
     public async Task<PlaceResolver> PlaceResolverAsync(ImportDecisions decisions, CancellationToken ct)
     {
-        var candidates = new List<PlaceCandidate>();
+        var candidates = new List<NameCandidate>();
         foreach (var region in await regions.SearchAsync(null, ct))
-            candidates.AddRange(region.Names.Select(n => new PlaceCandidate(region.Id.Value, n.Name)));
+            candidates.AddRange(region.Names.Select(n => new NameCandidate(region.Id.Value, n.Name)));
 
         // Texts linked to a region in any template count as names of that region (while the region exists).
-        var known = candidates.Select(c => c.RegionId).ToHashSet();
+        var known = candidates.Select(c => c.Id).ToHashSet();
         foreach (var template in await templates.ListAsync(ct))
         {
             foreach (var d in ReadDecisions(template.Decisions).Places)
                 if (d.RegionId is { } regionId && d.Action is PlaceAction.Link or PlaceAction.Create && known.Contains(regionId))
-                    candidates.Add(new PlaceCandidate(regionId, d.Text, Alias: true));
+                    candidates.Add(new NameCandidate(regionId, d.Text, Alias: true));
         }
 
-        var saved = decisions.Places.GroupBy(d => PlaceMatcher.Normalize(d.Text)).ToDictionary(g => g.Key, g => g.Last());
+        var saved = decisions.Places.GroupBy(d => NameMatcher.Normalize(d.Text)).ToDictionary(g => g.Key, g => g.Last());
         return new PlaceResolver(saved, candidates);
     }
 
-    private async Task<IReadOnlyDictionary<Guid, string>> RegionNamesAsync(CancellationToken ct) =>
-        (await regions.SearchAsync(null, ct)).ToDictionary(r => r.Id.Value, r => r.NameIn(preferences.Current)?.Text ?? "");
+    /// <summary>The names of every region, list entry and party, in the reader's language (identifiers are unique across them).</summary>
+    private async Task<IReadOnlyDictionary<Guid, string>> NamesAsync(CancellationToken ct)
+    {
+        var languages = preferences.Current;
+        var names = (await regions.SearchAsync(null, ct)).ToDictionary(r => r.Id.Value, r => r.NameIn(languages)?.Text ?? "");
+        foreach (var list in AllLists.Where(l => l != ImportList.Party))
+            foreach (var e in await listEntries.SearchAsync(ListKindOf(list), null, ct))
+                names[e.Id.Value] = e.NameIn(languages)?.Text ?? "";
+        foreach (var p in await parties.SearchAsync(null, null, ct)) names[p.Id.Value] = p.Name;
+        return names;
+    }
 
     // ---------- review rows ----------
 
-    private ImportReviewDto Review(Evaluation evaluation, IReadOnlyDictionary<Guid, string> regionNames, ImportRowStatus? status, int page, int pageSize)
+    private ImportReviewDto Review(Evaluation evaluation, IReadOnlyDictionary<Guid, string> names, ImportRowStatus? status, int page, int pageSize)
     {
         var rows = evaluation.Rows;
         var counts = new ImportCountsDto(rows.Count, rows.Count(r => r.Status == ImportRowStatus.Ready),
@@ -472,7 +659,7 @@ public sealed class ImportHandler(
         (page, pageSize) = (Math.Max(1, page), Math.Clamp(pageSize, 1, 200));
         var items = filtered.Skip((page - 1) * pageSize).Take(pageSize)
             .Select(r => new ReviewRowDto(r.Row.SheetRow, r.Status, r.InventoryNumber, r.Request?.Title, r.Row.GroupLabel,
-                Fields(r, evaluation.Places, regionNames), Pictures(r.Row.Pictures), r.Problems, r.Warnings, null))
+                Fields(r, evaluation, names), Pictures(r.Row.Pictures), r.Problems, r.Warnings, null))
             .ToList();
         return new ImportReviewDto(counts, items, filtered.Count, page, pageSize);
     }
@@ -495,7 +682,7 @@ public sealed class ImportHandler(
     private IReadOnlyList<ReviewPictureDto> Pictures(IReadOnlyList<StagedPicture> pictures) =>
         pictures.Select(p => new ReviewPictureDto(p.Index, p.Name, p.Supported, p.Supported ? imageUrls.Build(p.StorageKey).Thumb : null)).ToList();
 
-    private static IReadOnlyList<ReviewFieldDto> Fields(EvaluatedRow row, PlaceResolver places, IReadOnlyDictionary<Guid, string> regionNames)
+    private static IReadOnlyList<ReviewFieldDto> Fields(EvaluatedRow row, Evaluation evaluation, IReadOnlyDictionary<Guid, string> names)
     {
         var r = row.Request;
         var fields = new List<ReviewFieldDto>();
@@ -513,14 +700,30 @@ public sealed class ImportHandler(
         Add(ImportField.Medium, r.Medium);
         if (r.PlaceOfProduction is { } place)
         {
-            var resolved = places.Resolve(place.Text!);
+            var resolved = evaluation.Places.Resolve(place.Text!);
             Add(ImportField.PlaceOfProduction, place.Text + resolved switch
             {
                 { PendingCreate: true } => " → new region",
-                { RegionId: { } id } => regionNames.TryGetValue(id, out var name) && name.Length > 0 ? $" → {name}" : " → linked region",
+                { RegionId: { } id } => names.TryGetValue(id, out var name) && name.Length > 0 ? $" → {name}" : " → linked region",
                 _ => "",
             });
         }
+
+        // List values and parties: the text as written and the entry it links to.
+        void AddListValue(ImportField field)
+        {
+            if (row.ListTexts.FirstOrDefault(t => t.Field == field) is not { } listText) return;
+            var decision = evaluation.Lists.InForce(listText.List, listText.Text);
+            Add(field, listText.Text + decision switch
+            {
+                { EntryId: { } id } => names.TryGetValue(id, out var name) && name.Length > 0 ? $" → {name}" : " → linked entry",
+                { Action: ListAction.Create } =>
+                    $" → {decision.Name ?? decision.Names?.Values.FirstOrDefault(n => !string.IsNullOrWhiteSpace(n)) ?? listText.Text} (new)",
+                _ => " (not decided)",
+            });
+        }
+
+        AddListValue(ImportField.CollectionGroup);
 
         if (r.CreationDate is { } date)
         {
@@ -534,11 +737,11 @@ public sealed class ImportHandler(
             Add(ImportField.CreationDate, row.DateText);
         }
 
-        Add(ImportField.Dynasty, r.Dynasty);
+        AddListValue(ImportField.Dynasty);
         Add(ImportField.Description, r.Descriptions?.Values.FirstOrDefault());
         if (r.Acquisition is { } a)
         {
-            Add(ImportField.AcquisitionSource, a.Source);
+            AddListValue(ImportField.AcquisitionSource);
             Add(ImportField.AcquisitionDate, a.Date?.ToString("d MMMM yyyy", CultureInfo.InvariantCulture));
             Add(ImportField.AcquisitionLot, a.Lot);
             Add(ImportField.AcquisitionPrice, a.Price is { } price ? Amount(price) : null);
@@ -547,8 +750,8 @@ public sealed class ImportHandler(
 
         Add(ImportField.Exhibitions, string.Join("\n", r.Exhibitions ?? []));
         Add(ImportField.CatalogueEntryEn, r.CatalogueEntryEn);
-        Add(ImportField.Holder, r.Holder);
-        Add(ImportField.StorageLocation, r.StorageLocation);
+        AddListValue(ImportField.Holder);
+        AddListValue(ImportField.StorageLocation);
         Add(ImportField.Valuation, r.Valuation is { } v ? Amount(v) : null);
         return fields;
     }
@@ -578,7 +781,7 @@ public sealed class ImportHandler(
     public static ImportDecisions ReadDecisions(string json)
     {
         var d = ImportJson.Read<ImportDecisions>(json);
-        return new ImportDecisions(d.Places ?? [], d.Dates ?? []);
+        return new ImportDecisions(d.Places ?? [], d.Dates ?? [], d.Lists ?? []);
     }
 
     private static bool SameHeading(string a, string b) =>

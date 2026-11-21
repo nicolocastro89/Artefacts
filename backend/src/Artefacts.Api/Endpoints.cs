@@ -2,9 +2,13 @@ using Artefacts.Application.Abstractions;
 using Artefacts.Application.Artefacts;
 using Artefacts.Application.Contracts;
 using Artefacts.Application.Languages;
+using Artefacts.Application.Lists;
 using Artefacts.Application.Media;
 using Artefacts.Application.ObjectTypes;
+using Artefacts.Application.Parties;
 using Artefacts.Application.Regions;
+using Artefacts.Domain.Lists;
+using Artefacts.Domain.Parties;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
@@ -166,6 +170,103 @@ internal static class Endpoints
                 return TypedResults.NoContent();
             })
             .WithName("deleteObjectType")
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+    }
+
+    /// <summary>The URL segment of each managed list.</summary>
+    private static readonly Dictionary<string, ListKind> ListSlugs = new()
+    {
+        ["dynasties"] = ListKind.Dynasty,
+        ["collection-groups"] = ListKind.CollectionGroup,
+        ["storage-locations"] = ListKind.StorageLocation,
+    };
+
+    public static void MapListEndpoints(this IEndpointRouteBuilder app)
+    {
+        // Unknown lists do not match the route and get 404.
+        var g = app.MapGroup("/api/lists/{list:regex(^(dynasties|collection-groups|storage-locations)$)}").WithTags("Lists");
+
+        g.MapGet("/", async (string list, string? search, ListHandler h, CancellationToken ct) =>
+                TypedResults.Ok(await h.SearchAsync(ListSlugs[list], search, ct)))
+            .WithName("listListEntries")
+            .WithSummary("Entries of a list whose name in any language contains the search text, with usage counts.");
+
+        g.MapGet("/{id:guid}", async (string list, Guid id, ListHandler h, CancellationToken ct) =>
+                TypedResults.Ok(await h.GetAsync(ListSlugs[list], id, ct)))
+            .WithName("getListEntry")
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
+        g.MapPost("/", async Task<Results<Created<ReferenceEntryDto>, Ok<ReferenceEntryDto>>> (
+                string list, ReferenceEntryNamesRequest request, ListHandler h, CancellationToken ct) =>
+            {
+                var result = await h.AddAsync(ListSlugs[list], request, ct);
+                return result.Created
+                    ? TypedResults.Created($"/api/lists/{list}/{result.Entry.Id}", result.Entry)
+                    : TypedResults.Ok(result.Entry);
+            })
+            .WithName("addListEntry")
+            .WithSummary("Adds an entry, or returns the existing entry with the same name.")
+            .ProducesValidationProblem();
+
+        g.MapPut("/{id:guid}", async (string list, Guid id, ReferenceEntryNamesRequest request, ListHandler h, CancellationToken ct) =>
+                TypedResults.Ok(await h.SetNamesAsync(ListSlugs[list], id, request, ct)))
+            .WithName("setListEntryNames")
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
+        g.MapDelete("/{id:guid}", async (string list, Guid id, ListHandler h, CancellationToken ct) =>
+            {
+                await h.DeleteAsync(ListSlugs[list], id, ct);
+                return TypedResults.NoContent();
+            })
+            .WithName("deleteListEntry")
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+    }
+
+    public static void MapPartyEndpoints(this IEndpointRouteBuilder app)
+    {
+        var g = app.MapGroup("/api/parties").WithTags("Parties");
+
+        g.MapGet("/", async Task<Results<Ok<IReadOnlyList<PartyDto>>, ValidationProblem>> (
+                string? search, [QueryEnum(typeof(PartyKind))] string? kind, PartyHandler h, CancellationToken ct) =>
+            {
+                if (!QueryEnum.TryParse(kind, PartyKind.Person, out var parsed))
+                    return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+                    {
+                        ["kind"] = [$"Must be one of: {string.Join(", ", QueryEnum.AllowedValues<PartyKind>())}."],
+                    });
+                return TypedResults.Ok(await h.SearchAsync(search, string.IsNullOrWhiteSpace(kind) ? null : parsed, ct));
+            })
+            .WithName("listParties")
+            .WithSummary("Parties whose name contains the search text, optionally of one kind, with source and holder counts.");
+
+        g.MapGet("/{id:guid}", async (Guid id, PartyHandler h, CancellationToken ct) => TypedResults.Ok(await h.GetAsync(id, ct)))
+            .WithName("getParty")
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
+        g.MapPost("/", async Task<Results<Created<PartyDto>, Ok<PartyDto>>> (PartyRequest request, PartyHandler h, CancellationToken ct) =>
+            {
+                var result = await h.AddAsync(request, ct);
+                return result.Created ? TypedResults.Created($"/api/parties/{result.Party.Id}", result.Party) : TypedResults.Ok(result.Party);
+            })
+            .WithName("addParty")
+            .WithSummary("Adds a party, or returns the existing party with the same name.")
+            .ProducesValidationProblem();
+
+        g.MapPut("/{id:guid}", async (Guid id, PartyRequest request, PartyHandler h, CancellationToken ct) =>
+                TypedResults.Ok(await h.UpdateAsync(id, request, ct)))
+            .WithName("updateParty")
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
+        g.MapDelete("/{id:guid}", async (Guid id, PartyHandler h, CancellationToken ct) =>
+            {
+                await h.DeleteAsync(id, ct);
+                return TypedResults.NoContent();
+            })
+            .WithName("deleteParty")
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
     }

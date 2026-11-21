@@ -1,5 +1,5 @@
+﻿using System;
 using Artefacts.Infrastructure.Read;
-using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -70,6 +70,34 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("pk_object_types", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "parties",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    name = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
+                    normalized_name = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
+                    kind = table.Column<string>(type: "character varying(16)", maxLength: 16, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_parties", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "reference_entries",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    kind = table.Column<string>(type: "character varying(24)", maxLength: 24, nullable: false),
+                    name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    normalized_name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_reference_entries", x => x.id);
                 });
 
             migrationBuilder.CreateTable(
@@ -163,6 +191,33 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "reference_entry_names",
+                columns: table => new
+                {
+                    language = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
+                    reference_entry_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    kind = table.Column<string>(type: "character varying(24)", maxLength: 24, nullable: false),
+                    name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    normalized_name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_reference_entry_names", x => new { x.reference_entry_id, x.language });
+                    table.ForeignKey(
+                        name: "fk_language_reference_entry_names",
+                        column: x => x.language,
+                        principalTable: "languages",
+                        principalColumn: "code",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_reference_entry_names_reference_entries_reference_entry_id",
+                        column: x => x.reference_entry_id,
+                        principalTable: "reference_entries",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "artefacts",
                 columns: table => new
                 {
@@ -178,19 +233,19 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                     dimensions = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     acquisition_method = table.Column<string>(type: "character varying(16)", maxLength: 16, nullable: true),
                     acquisition_date = table.Column<DateOnly>(type: "date", nullable: true),
-                    acquisition_source = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: true),
+                    acquisition_source_id = table.Column<Guid>(type: "uuid", nullable: true),
                     acquisition_price_amount = table.Column<decimal>(type: "numeric(19,4)", precision: 19, scale: 4, nullable: true),
                     acquisition_price_currency = table.Column<string>(type: "character(3)", fixedLength: true, maxLength: 3, nullable: true),
                     acquisition_lot = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     acquisition_note = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
                     object_type_id = table.Column<Guid>(type: "uuid", nullable: true),
-                    collection_group = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    collection_group_id = table.Column<Guid>(type: "uuid", nullable: true),
                     place_text = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: true),
                     place_region_id = table.Column<Guid>(type: "uuid", nullable: true),
-                    dynasty = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    dynasty_id = table.Column<Guid>(type: "uuid", nullable: true),
                     catalogue_entry_en = table.Column<string>(type: "character varying(20000)", maxLength: 20000, nullable: true),
-                    holder = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
-                    storage_location = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    holder_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    storage_location_id = table.Column<Guid>(type: "uuid", nullable: true),
                     valuation_amount = table.Column<decimal>(type: "numeric(19,4)", precision: 19, scale: 4, nullable: true),
                     valuation_currency = table.Column<string>(type: "character(3)", fixedLength: true, maxLength: 3, nullable: true)
                 },
@@ -201,6 +256,36 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                         name: "fk_artefacts_object_types_object_type_id",
                         column: x => x.object_type_id,
                         principalTable: "object_types",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_artefacts_parties_acquisition_source_id",
+                        column: x => x.acquisition_source_id,
+                        principalTable: "parties",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_artefacts_parties_holder_id",
+                        column: x => x.holder_id,
+                        principalTable: "parties",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_artefacts_reference_entries_collection_group_id",
+                        column: x => x.collection_group_id,
+                        principalTable: "reference_entries",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_artefacts_reference_entries_dynasty_id",
+                        column: x => x.dynasty_id,
+                        principalTable: "reference_entries",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_artefacts_reference_entries_storage_location_id",
+                        column: x => x.storage_location_id,
+                        principalTable: "reference_entries",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
@@ -414,6 +499,26 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                 column: "language");
 
             migrationBuilder.CreateIndex(
+                name: "ix_artefacts_acquisition_source_id",
+                table: "artefacts",
+                column: "acquisition_source_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_artefacts_collection_group_id",
+                table: "artefacts",
+                column: "collection_group_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_artefacts_dynasty_id",
+                table: "artefacts",
+                column: "dynasty_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_artefacts_holder_id",
+                table: "artefacts",
+                column: "holder_id");
+
+            migrationBuilder.CreateIndex(
                 name: "ix_artefacts_object_type_id",
                 table: "artefacts",
                 column: "object_type_id");
@@ -422,6 +527,11 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                 name: "ix_artefacts_place_region_id",
                 table: "artefacts",
                 column: "place_region_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_artefacts_storage_location_id",
+                table: "artefacts",
+                column: "storage_location_id");
 
             migrationBuilder.CreateIndex(
                 name: "ux_artefacts_inventory_number",
@@ -479,6 +589,40 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "ux_parties_normalized_name",
+                table: "parties",
+                column: "normalized_name",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "ix_reference_entries_kind",
+                table: "reference_entries",
+                column: "kind");
+
+            migrationBuilder.CreateIndex(
+                name: "ux_reference_entries_kind_normalized_name",
+                table: "reference_entries",
+                columns: new[] { "kind", "normalized_name" },
+                unique: true,
+                filter: "normalized_name IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_reference_entry_names_language",
+                table: "reference_entry_names",
+                column: "language");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_reference_entry_names_normalized_name",
+                table: "reference_entry_names",
+                column: "normalized_name");
+
+            migrationBuilder.CreateIndex(
+                name: "ux_reference_entry_names_kind_language_normalized_name",
+                table: "reference_entry_names",
+                columns: new[] { "kind", "language", "normalized_name" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "ix_region_names_normalized_name",
                 table: "region_names",
                 column: "normalized_name");
@@ -494,11 +638,7 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                 table: "regions",
                 column: "parent_id");
 
-            // Grouping keys for free-text groupings, the name-resolving functions, and the read view.
-            migrationBuilder.Sql(
-                @"CREATE INDEX ix_artefacts_collection_group_key ON artefacts (lower(regexp_replace(btrim(collection_group), '\s+', ' ', 'g')));");
-            migrationBuilder.Sql(
-                @"CREATE INDEX ix_artefacts_dynasty_key ON artefacts (lower(regexp_replace(btrim(dynasty), '\s+', ' ', 'g')));");
+            // The name-resolving functions and the read view.
             migrationBuilder.Sql(ViewSql.Load("localized_names"));
             migrationBuilder.Sql(ViewSql.Load("v_artefact"));
         }
@@ -507,7 +647,9 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.Sql("DROP VIEW IF EXISTS v_artefact;");
-            migrationBuilder.Sql("DROP FUNCTION IF EXISTS region_name(uuid, text[]); DROP FUNCTION IF EXISTS object_type_name(uuid, text[]);");
+            migrationBuilder.Sql("DROP FUNCTION IF EXISTS region_name(uuid, text[]); DROP FUNCTION IF EXISTS object_type_name(uuid, text[]); " +
+                                 "DROP FUNCTION IF EXISTS reference_entry_name(uuid, text[]); DROP FUNCTION IF EXISTS reference_entry_matches(uuid, text); " +
+                                 "DROP FUNCTION IF EXISTS party_name(uuid);");
             migrationBuilder.DropTable(
                 name: "artefact_exhibitions");
 
@@ -527,6 +669,9 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                 name: "object_type_names");
 
             migrationBuilder.DropTable(
+                name: "reference_entry_names");
+
+            migrationBuilder.DropTable(
                 name: "region_names");
 
             migrationBuilder.DropTable(
@@ -540,6 +685,12 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "languages");
+
+            migrationBuilder.DropTable(
+                name: "parties");
+
+            migrationBuilder.DropTable(
+                name: "reference_entries");
 
             migrationBuilder.DropTable(
                 name: "regions");

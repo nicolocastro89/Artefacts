@@ -35,6 +35,15 @@
 
 .reference-tabs {
   justify-self: start;
+  /* Seven lists: on narrow screens the tabs scroll sideways inside their own strip instead of widening the page. */
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.reference-tabs .seg__btn {
+  flex: none;
+  white-space: nowrap;
 }
 
 .regions__add-feedback {

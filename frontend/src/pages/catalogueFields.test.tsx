@@ -117,18 +117,18 @@ describe('artefact detail with catalogue fields', () => {
         medium: null,
         dimensions: null,
         description: null,
-        acquisition: { method: 'purchase', date: '1990-06-12', source: "Sotheby's London", price: { amount: 7865, currency: 'GBP' }, lot: '170', note: 'acquistato fuori asta' },
+        acquisition: { method: 'purchase', date: '1990-06-12', source: { id: 'p1', name: "Sotheby's London", kind: 'organisation' }, price: { amount: 7865, currency: 'GBP' }, lot: '170', note: 'acquistato fuori asta' },
         provenance: [],
         primaryImage: null,
         images: [],
         objectType: { id: 't1', name: 'Ceramics' },
-        collectionGroup: 'CINA',
+        collectionGroup: { id: 'g1', name: 'CINA' },
         placeOfProduction: { text: 'Cina', region: { id: 'r1', name: 'China' } },
-        dynasty: 'Sung',
+        dynasty: { id: 'd1', name: 'Sung' },
         exhibitions: ['Arte Ottomana, Genova, 1999', 'Persian Art, New York, 1940'],
         catalogueEntryEn: 'A JUNYAO DISH\nJIN DYNASTY (1115-1234)',
         holder: null,
-        storageLocation: 'MI F3',
+        storageLocation: { id: 'l1', name: 'MI F3' },
         valuation: null,
       }),
     })
@@ -151,6 +151,7 @@ describe('artefact detail with catalogue fields', () => {
     expect(within(holding).queryByText('Holder')).toBeNull()
     expect(within(holding).queryByText('Valuation')).toBeNull()
 
+    expect(screen.getByText("Sotheby's London")).toBeInTheDocument()
     expect(screen.getByText('170')).toBeInTheDocument()
     expect(screen.getByText('acquistato fuori asta')).toBeInTheDocument()
 
@@ -181,6 +182,7 @@ describe('artefact form with catalogue fields', () => {
       ...languagesRoute,
       'GET /api/object-types': () => [],
       'POST /api/object-types': () => ({ id: 't9', name: 'Metalwork', nameLanguage: 'en', names: { en: 'Metalwork' }, artefactCount: 0 }),
+      'GET /api/lists/storage-locations': () => [{ id: 'l1', kind: 'storageLocation', name: 'cella 16', nameLanguage: null, names: null, artefactCount: 3 }],
       'POST /api/artefacts': () => ({ id: 'new1' }),
     })
 
@@ -193,14 +195,41 @@ describe('artefact form with catalogue fields', () => {
     await user.click(screen.getByRole('button', { name: 'Add exhibition' }))
     await user.type(screen.getByRole('textbox', { name: 'Exhibition 2' }), 'Arte Ottomana')
     await user.click(screen.getByRole('button', { name: 'Move exhibition 2 up' }))
-    await user.type(screen.getByRole('textbox', { name: 'Storage location' }), 'cella 16')
+    await user.type(screen.getByRole('combobox', { name: 'Storage location' }), 'cella')
+    await user.click(await screen.findByRole('option', { name: 'cella 16' }))
     await user.click(screen.getByRole('button', { name: 'Create artefact' }))
 
     expect(await screen.findByText('Saved record')).toBeInTheDocument()
     const body = calls.find((c) => c.method === 'POST' && c.url.pathname === '/api/artefacts')!.body as Record<string, unknown>
     expect(body.objectTypeId).toBe('t9')
     expect(body.exhibitions).toEqual(['Arte Ottomana', 'Genova nel Medioevo'])
-    expect(body.storageLocation).toBe('cella 16')
+    expect(body.storageLocationId).toBe('l1')
+  })
+
+  it('picks the source from the parties and creates a holder inline as a person', async () => {
+    const user = userEvent.setup()
+    const { calls } = renderNew({
+      ...languagesRoute,
+      'GET /api/parties': () => [{ id: 'p1', name: "Sotheby's", kind: 'organisation', sourceCount: 4, holderCount: 0 }],
+      'POST /api/parties': () => ({ id: 'p2', name: 'Anna Rossi', kind: 'person', sourceCount: 0, holderCount: 0 }),
+      'POST /api/artefacts': () => ({ id: 'new1' }),
+    })
+
+    await user.type(await screen.findByRole('textbox', { name: 'Inventory number' }), 'X-1')
+    await user.type(screen.getByRole('textbox', { name: 'Title' }), 'Coppa')
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Method' }), 'purchase')
+    await user.type(screen.getByRole('combobox', { name: 'Source' }), 'Sothe')
+    await user.click(await screen.findByRole('option', { name: /Sotheby's/ }))
+    await user.type(screen.getByRole('combobox', { name: 'Holder' }), 'Anna Rossi')
+    await user.click(await screen.findByRole('option', { name: 'Add “Anna Rossi” as a person' }))
+    await user.click(screen.getByRole('button', { name: 'Create artefact' }))
+
+    expect(await screen.findByText('Saved record')).toBeInTheDocument()
+    const added = calls.find((c) => c.method === 'POST' && c.url.pathname === '/api/parties')!.body as Record<string, unknown>
+    expect(added).toEqual({ name: 'Anna Rossi', kind: 'person' })
+    const body = calls.find((c) => c.method === 'POST' && c.url.pathname === '/api/artefacts')!.body as Record<string, unknown>
+    expect((body.acquisition as Record<string, unknown>).sourceId).toBe('p1')
+    expect(body.holderId).toBe('p2')
   })
 
   it('shows server errors on the new fields', async () => {

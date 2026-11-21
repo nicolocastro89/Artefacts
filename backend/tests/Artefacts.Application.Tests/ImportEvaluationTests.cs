@@ -51,11 +51,11 @@ public class InventoryNumberTests
         Assert.Equal(errors, InventoryNumbers.Validate(new InventoryNumberPattern(pattern)).Count);
 }
 
-public class PlaceMatcherTests
+public class NameMatcherTests
 {
     private static readonly Guid China = Guid.NewGuid(), Turkey = Guid.NewGuid(), Egypt = Guid.NewGuid(), Anatolia = Guid.NewGuid();
 
-    private static readonly PlaceCandidate[] Regions =
+    private static readonly NameCandidate[] Regions =
     [
         new(China, "China"), new(Turkey, "Turkey"), new(Turkey, "Turchia"), new(Egypt, "Egypt"), new(Egypt, "Egitto"),
         new(Anatolia, "Anatolia"),
@@ -64,20 +64,20 @@ public class PlaceMatcherTests
     [Fact]
     public void Italian_name_matches_exactly()
     {
-        var first = PlaceMatcher.Suggest("Turchia", Regions)[0];
-        Assert.Equal(Turkey, first.RegionId);
+        var first = NameMatcher.Suggest("Turchia", Regions)[0];
+        Assert.Equal(Turkey, first.Id);
         Assert.True(first.Exact);
     }
 
     [Fact]
     public void Exact_match_ignores_case_accents_and_question_marks() =>
-        Assert.True(PlaceMatcher.Suggest(" turchìa ? ", Regions)[0].Exact);
+        Assert.True(NameMatcher.Suggest(" turchìa ? ", Regions)[0].Exact);
 
     [Fact]
     public void Similar_region_suggested()
     {
-        var suggestions = PlaceMatcher.Suggest("Cina", Regions);
-        var china = Assert.Single(suggestions, s => s.RegionId == China);
+        var suggestions = NameMatcher.Suggest("Cina", Regions);
+        var china = Assert.Single(suggestions, s => s.Id == China);
         Assert.False(china.Exact);
         Assert.True(china.Score >= 0.85, $"Score was {china.Score}");
     }
@@ -85,18 +85,18 @@ public class PlaceMatcherTests
     [Fact]
     public void A_part_of_the_text_can_match()
     {
-        var suggestions = PlaceMatcher.Suggest("Cairo, Egitto", Regions);
-        Assert.Equal(Egypt, suggestions[0].RegionId);
+        var suggestions = NameMatcher.Suggest("Cairo, Egitto", Regions);
+        Assert.Equal(Egypt, suggestions[0].Id);
     }
 
     [Fact]
     public void Alias_from_a_template_ranks_first()
     {
-        var withAlias = Regions.Append(new PlaceCandidate(Anatolia, "Anatolia occidentale", Alias: true)).ToList();
+        var withAlias = Regions.Append(new NameCandidate(Anatolia, "Anatolia occidentale", Alias: true)).ToList();
 
-        var first = PlaceMatcher.Suggest("Anatolia occidentale", withAlias)[0];
+        var first = NameMatcher.Suggest("Anatolia occidentale", withAlias)[0];
 
-        Assert.Equal(Anatolia, first.RegionId);
+        Assert.Equal(Anatolia, first.Id);
         Assert.True(first.Exact && first.Alias);
     }
 
@@ -105,13 +105,13 @@ public class PlaceMatcherTests
     [InlineData("Iran")]
     [InlineData("Persia")]
     public void Unrelated_text_has_no_suggestions(string text) =>
-        Assert.Empty(PlaceMatcher.Suggest(text, [.. Regions, new PlaceCandidate(Guid.NewGuid(), "France"), new PlaceCandidate(Guid.NewGuid(), "Istanbul")]));
+        Assert.Empty(NameMatcher.Suggest(text, [.. Regions, new NameCandidate(Guid.NewGuid(), "France"), new NameCandidate(Guid.NewGuid(), "Istanbul")]));
 
     [Fact]
     public void At_most_three_suggestions()
     {
-        var many = Enumerable.Range(1, 6).Select(i => new PlaceCandidate(Guid.NewGuid(), $"Persia {i}")).ToList();
-        Assert.Equal(3, PlaceMatcher.Suggest("Persia", many).Count);
+        var many = Enumerable.Range(1, 6).Select(i => new NameCandidate(Guid.NewGuid(), $"Persia {i}")).ToList();
+        Assert.Equal(3, NameMatcher.Suggest("Persia", many).Count);
     }
 }
 
@@ -139,9 +139,13 @@ public class RowEvaluatorTests
         return new StagedRow(sheetRow, "01", "CINA", cells, pictures, []);
     }
 
+    /// <summary>An identifier per list and text, so every list text counts as linked.</summary>
+    private static Guid EntryFor(ImportList list, string text) =>
+        new(System.Security.Cryptography.MD5.HashData(System.Text.Encoding.UTF8.GetBytes($"{list}:{NameMatcher.Normalize(text)}")));
+
     private static EvaluationContext Context(IEnumerable<string>? existing = null, Dictionary<string, DateResolution>? dates = null) =>
         new(Mapping, Headings, Guid.NewGuid(), new HashSet<string>(existing ?? []), _ => new ResolvedPlace(null, false, null),
-            dates ?? new Dictionary<string, DateResolution>());
+            dates ?? new Dictionary<string, DateResolution>(), ListValue: (list, text) => new ResolvedEntry(EntryFor(list, text), false));
 
     [Fact]
     public void Ready_row_becomes_a_complete_request()
@@ -155,11 +159,12 @@ public class RowEvaluatorTests
         Assert.Equal("CER-01-02", r.InventoryNumber);
         Assert.Equal("Piatto Celadon", r.Title);
         Assert.Equal("diam 30", r.Dimensions);
-        Assert.Equal("CINA", r.CollectionGroup);
+        Assert.Equal(EntryFor(ImportList.CollectionGroup, "CINA"), r.CollectionGroupId);
         Assert.Equal("Cina", r.PlaceOfProduction!.Text);
         Assert.Equal("fine XII inizio XIII", r.CreationDate!.Text);
-        Assert.Equal("Sung", r.Dynasty);
-        Assert.Equal("Sotheby's London", r.Acquisition!.Source);
+        Assert.Equal(EntryFor(ImportList.Dynasty, "Sung"), r.DynastyId);
+        Assert.Equal(EntryFor(ImportList.Party, "Sotheby's London"), r.Acquisition!.SourceId);
+        Assert.Contains(new ListText(ImportList.Party, ImportField.AcquisitionSource, "Sotheby's London"), result.ListTexts);
         Assert.Equal(new DateOnly(1990, 6, 12), r.Acquisition.Date);
         Assert.Equal("170", r.Acquisition.Lot);
         Assert.Equal(7865m, r.Acquisition.Price!.Amount);
@@ -233,5 +238,130 @@ public class RowEvaluatorTests
         var result = RowEvaluator.Evaluate([Row(3, "01. Coppa", "Cina\nXV")], context)[0];
 
         Assert.Equal(region, result.Request!.PlaceOfProduction!.RegionId);
+    }
+}
+
+public class ListCurationTests
+{
+    private static readonly Guid Safavide = Guid.NewGuid(), Ottomana = Guid.NewGuid(), Christies = Guid.NewGuid();
+
+    private static ImportHandler.ListResolver Resolver(params ListDecision[] saved) => new(
+        saved.ToDictionary(d => (d.List, NameMatcher.Normalize(d.Text))),
+        new Dictionary<ImportList, List<NameCandidate>>
+        {
+            [ImportList.Dynasty] = [new(Safavide, "Safavide"), new(Safavide, "Safavid"), new(Ottomana, "Ottomana")],
+            [ImportList.Party] = [new(Christies, "Christie's")],
+        });
+
+    private static readonly Dictionary<int, string> Headings = new() { [1] = "Titolo", [2] = "Dinastia", [3] = "Venditore", [4] = "Detentore" };
+
+    private static readonly ImportMapping Mapping = new(
+        [
+            new ColumnRule(1, "Titolo", ImportField.Title),
+            new ColumnRule(2, "Dinastia", ImportField.Dynasty),
+            new ColumnRule(3, "Venditore", ImportField.AcquisitionSource),
+            new ColumnRule(4, "Detentore", ImportField.Holder),
+        ],
+        new InventoryNumberPattern("X-{row}"));
+
+    private static EvaluatedRow Evaluate(ImportHandler.ListResolver lists, string? dynasty = null, string? source = null, string? holder = null,
+        string? group = null)
+    {
+        var cells = new Dictionary<int, string> { [1] = "Coppa" };
+        if (dynasty is not null) cells[2] = dynasty;
+        if (source is not null) cells[3] = source;
+        if (holder is not null) cells[4] = holder;
+        var context = new EvaluationContext(Mapping, Headings, null, new HashSet<string>(), _ => new ResolvedPlace(null, false, null),
+            new Dictionary<string, DateResolution>(), ListValue: lists.Resolve);
+        return RowEvaluator.Evaluate(new StagedRow(3, null, group, cells, [], []), context);
+    }
+
+    [Fact]
+    public void Exact_name_is_linked_without_a_decision()
+    {
+        var row = Evaluate(Resolver(), dynasty: " safavide ");
+
+        Assert.Equal(ImportRowStatus.Ready, row.Status);
+        Assert.Equal(Safavide, row.Request!.DynastyId);
+    }
+
+    [Fact]
+    public void Exact_match_ignores_accents_and_punctuation() =>
+        Assert.Equal(Safavide, Evaluate(Resolver(), dynasty: "Safàvide?").Request!.DynastyId);
+
+    [Fact]
+    public void Variant_linked_by_a_decision()
+    {
+        var row = Evaluate(Resolver(new ListDecision(ImportList.Dynasty, "Sfavide", ListAction.Link, Safavide)), dynasty: "Sfavide");
+
+        Assert.Equal(ImportRowStatus.Ready, row.Status);
+        Assert.Equal(Safavide, row.Request!.DynastyId);
+    }
+
+    [Fact]
+    public void Created_value_counts_as_decided_and_links_at_commit()
+    {
+        var create = new ListDecision(ImportList.Dynasty, "Ilkhanide", ListAction.Create, Names: new Dictionary<string, string?> { ["it"] = "Ilkhanide" });
+
+        var pending = Evaluate(Resolver(create), dynasty: "Ilkhanide");
+        Assert.Equal(ImportRowStatus.Ready, pending.Status);
+        Assert.Null(pending.Request!.DynastyId);
+
+        var created = Guid.NewGuid();
+        Assert.Equal(created, Evaluate(Resolver(create with { EntryId = created }), dynasty: "Ilkhanide").Request!.DynastyId);
+    }
+
+    [Fact]
+    public void Undecided_value_is_a_problem_naming_the_field_and_text()
+    {
+        var row = Evaluate(Resolver(), dynasty: "Sfavide");
+
+        Assert.Equal(ImportRowStatus.Problem, row.Status);
+        var problem = Assert.Single(row.Problems);
+        Assert.Equal("dynasty", problem.Field);
+        Assert.Equal("Sfavide", problem.Text);
+    }
+
+    [Fact]
+    public void Group_heading_is_curated_as_the_collection_group()
+    {
+        var row = Evaluate(Resolver(), group: "CINA");
+
+        Assert.Equal("collectionGroup", Assert.Single(row.Problems).Field);
+        Assert.Equal(new ListText(ImportList.CollectionGroup, ImportField.CollectionGroup, "CINA"), Assert.Single(row.ListTexts));
+    }
+
+    [Fact]
+    public void Source_and_holder_share_one_party_decision()
+    {
+        var rossi = Guid.NewGuid();
+        var lists = Resolver(new ListDecision(ImportList.Party, "Rossi Antiquariato srl", ListAction.Link, rossi));
+
+        var row = Evaluate(lists, source: "Rossi Antiquariato srl", holder: "rossi antiquariato SRL", dynasty: "Ottomana");
+
+        Assert.Equal(ImportRowStatus.Ready, row.Status);
+        Assert.Equal(rossi, row.Request!.Acquisition!.SourceId);
+        Assert.Equal(rossi, row.Request.HolderId);
+        Assert.Equal(Ottomana, row.Request.DynastyId);
+    }
+
+    [Fact]
+    public void Party_exact_match_works_for_holders_too() =>
+        Assert.Equal(Christies, Evaluate(Resolver(), holder: "Christie’s").Request!.HolderId);
+
+    [Fact]
+    public void Merged_decisions_let_the_newer_win_and_keep_the_rest()
+    {
+        var older = new ImportDecisions([], [], [
+            new ListDecision(ImportList.Dynasty, "Sfavide", ListAction.Create, Names: new Dictionary<string, string?> { ["it"] = "Sfavide" }),
+            new ListDecision(ImportList.Party, "Christies", ListAction.Link, Christies),
+        ]);
+        var newer = new ImportDecisions([], [], [new ListDecision(ImportList.Dynasty, "sfavide", ListAction.Link, Safavide)]);
+
+        var merged = older.MergedWith(newer);
+
+        Assert.Equal(2, merged.Lists.Count);
+        Assert.Contains(merged.Lists, d => d is { List: ImportList.Dynasty, Action: ListAction.Link } && d.EntryId == Safavide);
+        Assert.Contains(merged.Lists, d => d.List == ImportList.Party && d.EntryId == Christies);
     }
 }

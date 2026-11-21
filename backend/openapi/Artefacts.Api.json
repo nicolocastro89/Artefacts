@@ -1021,6 +1021,518 @@
         }
       }
     },
+    "/api/lists/{list}": {
+      "get": {
+        "tags": [
+          "Lists"
+        ],
+        "summary": "Entries of a list whose name in any language contains the search text, with usage counts.",
+        "operationId": "listListEntries",
+        "parameters": [
+          {
+            "name": "list",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^(dynasties|collection-groups|storage-locations)$",
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReferenceEntryDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Lists"
+        ],
+        "summary": "Adds an entry, or returns the existing entry with the same name.",
+        "operationId": "addListEntry",
+        "parameters": [
+          {
+            "name": "list",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^(dynasties|collection-groups|storage-locations)$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReferenceEntryNamesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferenceEntryDto"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferenceEntryDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/lists/{list}/{id}": {
+      "get": {
+        "tags": [
+          "Lists"
+        ],
+        "operationId": "getListEntry",
+        "parameters": [
+          {
+            "name": "list",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^(dynasties|collection-groups|storage-locations)$",
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferenceEntryDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Lists"
+        ],
+        "operationId": "setListEntryNames",
+        "parameters": [
+          {
+            "name": "list",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^(dynasties|collection-groups|storage-locations)$",
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReferenceEntryNamesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferenceEntryDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Lists"
+        ],
+        "operationId": "deleteListEntry",
+        "parameters": [
+          {
+            "name": "list",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^(dynasties|collection-groups|storage-locations)$",
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/parties": {
+      "get": {
+        "tags": [
+          "Parties"
+        ],
+        "summary": "Parties whose name contains the search text, optionally of one kind, with source and holder counts.",
+        "operationId": "listParties",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/PartyKind"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PartyDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Parties"
+        ],
+        "summary": "Adds a party, or returns the existing party with the same name.",
+        "operationId": "addParty",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PartyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartyDto"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartyDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/parties/{id}": {
+      "get": {
+        "tags": [
+          "Parties"
+        ],
+        "operationId": "getParty",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartyDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Parties"
+        ],
+        "operationId": "updateParty",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PartyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartyDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Parties"
+        ],
+        "operationId": "deleteParty",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/languages": {
       "get": {
         "tags": [
@@ -1559,6 +2071,123 @@
                   "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/ImportPlaceDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/imports/{id}/lists": {
+      "get": {
+        "tags": [
+          "Imports"
+        ],
+        "summary": "The workbook's collection group, dynasty, storage location and party texts with their decisions.",
+        "operationId": "getImportLists",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ImportListGroupDto"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Imports"
+        ],
+        "operationId": "setImportLists",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetListDecisionsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ImportListGroupDto"
                   }
                 }
               }
@@ -2190,9 +2819,13 @@
             "format": "date"
           },
           "source": {
-            "type": [
-              "null",
-              "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PartyRefDto"
+              }
             ]
           },
           "price": {
@@ -2223,7 +2856,7 @@
         "required": [
           "method",
           "date",
-          "source",
+          "sourceId",
           "price"
         ],
         "type": "object",
@@ -2238,11 +2871,12 @@
             ],
             "format": "date"
           },
-          "source": {
+          "sourceId": {
             "type": [
               "null",
               "string"
-            ]
+            ],
+            "format": "uuid"
           },
           "price": {
             "oneOf": [
@@ -2470,9 +3104,13 @@
             ]
           },
           "collectionGroup": {
-            "type": [
-              "null",
-              "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/NamedRefDto"
+              }
             ]
           },
           "placeOfProduction": {
@@ -2486,9 +3124,13 @@
             ]
           },
           "dynasty": {
-            "type": [
-              "null",
-              "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/NamedRefDto"
+              }
             ]
           },
           "exhibitions": {
@@ -2504,15 +3146,23 @@
             ]
           },
           "holder": {
-            "type": [
-              "null",
-              "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PartyRefDto"
+              }
             ]
           },
           "storageLocation": {
-            "type": [
-              "null",
-              "string"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/NamedRefDto"
+              }
             ]
           },
           "valuation": {
@@ -2836,11 +3486,12 @@
             ],
             "format": "uuid"
           },
-          "collectionGroup": {
+          "collectionGroupId": {
             "type": [
               "null",
               "string"
-            ]
+            ],
+            "format": "uuid"
           },
           "placeOfProduction": {
             "oneOf": [
@@ -2852,11 +3503,12 @@
               }
             ]
           },
-          "dynasty": {
+          "dynastyId": {
             "type": [
               "null",
               "string"
-            ]
+            ],
+            "format": "uuid"
           },
           "exhibitions": {
             "type": [
@@ -2873,17 +3525,19 @@
               "string"
             ]
           },
-          "holder": {
+          "holderId": {
             "type": [
               "null",
               "string"
-            ]
+            ],
+            "format": "uuid"
           },
-          "storageLocation": {
+          "storageLocationId": {
             "type": [
               "null",
               "string"
-            ]
+            ],
+            "format": "uuid"
           },
           "valuation": {
             "oneOf": [
@@ -3337,7 +3991,8 @@
       "ImportDecisions": {
         "required": [
           "places",
-          "dates"
+          "dates",
+          "lists"
         ],
         "type": "object",
         "properties": {
@@ -3351,6 +4006,12 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/DateResolution"
+            }
+          },
+          "lists": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ListDecision"
             }
           }
         }
@@ -3379,6 +4040,7 @@
           "holder",
           "storageLocation",
           "valuation",
+          "collectionGroup",
           null
         ]
       },
@@ -3531,6 +4193,82 @@
           "failed",
           "discarded"
         ]
+      },
+      "ImportList": {
+        "enum": [
+          "collectionGroup",
+          "dynasty",
+          "storageLocation",
+          "party"
+        ]
+      },
+      "ImportListGroupDto": {
+        "required": [
+          "list",
+          "values",
+          "undecided"
+        ],
+        "type": "object",
+        "properties": {
+          "list": {
+            "$ref": "#/components/schemas/ImportList"
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportListValueDto"
+            }
+          },
+          "undecided": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ImportListValueDto": {
+        "required": [
+          "text",
+          "rows",
+          "fields",
+          "decision",
+          "decided",
+          "suggestions"
+        ],
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "rows": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportField"
+            }
+          },
+          "decision": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ListDecision"
+              }
+            ]
+          },
+          "decided": {
+            "type": "boolean"
+          },
+          "suggestions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ListSuggestionDto"
+            }
+          }
+        }
       },
       "ImportMapping": {
         "required": [
@@ -3843,6 +4581,103 @@
           }
         }
       },
+      "ListAction": {
+        "enum": [
+          "link",
+          "create"
+        ]
+      },
+      "ListDecision": {
+        "required": [
+          "list",
+          "text",
+          "action"
+        ],
+        "type": "object",
+        "properties": {
+          "list": {
+            "$ref": "#/components/schemas/ImportList"
+          },
+          "text": {
+            "type": "string"
+          },
+          "action": {
+            "$ref": "#/components/schemas/ListAction"
+          },
+          "entryId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "names": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "partyKind": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PartyKind"
+              }
+            ]
+          }
+        }
+      },
+      "ListKind": {
+        "enum": [
+          "dynasty",
+          "collectionGroup",
+          "storageLocation"
+        ]
+      },
+      "ListSuggestionDto": {
+        "required": [
+          "entryId",
+          "name",
+          "matchedName",
+          "score",
+          "exact",
+          "alias"
+        ],
+        "type": "object",
+        "properties": {
+          "entryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "matchedName": {
+            "type": "string"
+          },
+          "score": {
+            "type": "number",
+            "format": "double"
+          },
+          "exact": {
+            "type": "boolean"
+          },
+          "alias": {
+            "type": "boolean"
+          }
+        }
+      },
       "MoneyDto": {
         "required": [
           "amount",
@@ -3904,6 +4739,86 @@
           "artefactCount": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "PartyDto": {
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "sourceCount",
+          "holderCount"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/PartyKind"
+          },
+          "sourceCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "holderCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PartyKind": {
+        "enum": [
+          "person",
+          "organisation"
+        ]
+      },
+      "PartyRefDto": {
+        "required": [
+          "id",
+          "name",
+          "kind"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/PartyKind"
+          }
+        }
+      },
+      "PartyRequest": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "kind": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PartyKind"
+              }
+            ]
           }
         }
       },
@@ -4142,6 +5057,68 @@
             ]
           },
           "note": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "ReferenceEntryDto": {
+        "required": [
+          "id",
+          "kind",
+          "name",
+          "nameLanguage",
+          "names",
+          "artefactCount"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/ListKind"
+          },
+          "name": {
+            "type": "string"
+          },
+          "nameLanguage": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "names": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "artefactCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ReferenceEntryNamesRequest": {
+        "type": "object",
+        "properties": {
+          "names": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "name": {
             "type": [
               "null",
               "string"
@@ -4417,6 +5394,23 @@
           }
         }
       },
+      "SetListDecisionsRequest": {
+        "required": [
+          "lists"
+        ],
+        "type": "object",
+        "properties": {
+          "lists": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ListDecision"
+            }
+          }
+        }
+      },
       "SetNamesRequest": {
         "required": [
           "names"
@@ -4492,6 +5486,12 @@
     },
     {
       "name": "Object types"
+    },
+    {
+      "name": "Lists"
+    },
+    {
+      "name": "Parties"
     },
     {
       "name": "Languages"

@@ -15,6 +15,9 @@ public sealed class ReadDbContext(DbContextOptions<ReadDbContext> options) : DbC
     {
         model.HasDbFunction(typeof(LocalizedSql).GetMethod(nameof(LocalizedSql.RegionName))!).HasName("region_name");
         model.HasDbFunction(typeof(LocalizedSql).GetMethod(nameof(LocalizedSql.ObjectTypeName))!).HasName("object_type_name");
+        model.HasDbFunction(typeof(LocalizedSql).GetMethod(nameof(LocalizedSql.ReferenceEntryName))!).HasName("reference_entry_name");
+        model.HasDbFunction(typeof(LocalizedSql).GetMethod(nameof(LocalizedSql.ReferenceEntryMatches))!).HasName("reference_entry_matches");
+        model.HasDbFunction(typeof(LocalizedSql).GetMethod(nameof(LocalizedSql.PartyName))!).HasName("party_name");
 
         model.Entity<ArtefactRow>(b =>
         {

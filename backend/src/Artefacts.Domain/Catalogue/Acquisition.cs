@@ -15,13 +15,13 @@ public enum AcquisitionMethod
 /// <summary>How and when the institution acquired an artefact. <see cref="Price"/> is financially sensitive.</summary>
 public sealed class Acquisition
 {
-    public const int MaxSourceLength = 300;
     public const int MaxLotLength = 100;
     public const int MaxNoteLength = 2000;
 
     public AcquisitionMethod Method { get; private set; }
     public DateOnly? Date { get; private set; }
-    public string? Source { get; private set; }
+    /// <summary>The party the artefact was acquired from.</summary>
+    public PartyId? SourceId { get; private set; }
     public Money? Price { get; private set; }
 
     /// <summary>Auction lot or similar reference, as written (e.g. "170").</summary>
@@ -36,7 +36,7 @@ public sealed class Acquisition
     }
 
     public static Acquisition Create(
-        AcquisitionMethod method, DateOnly? date, string? source, Money? price, string? lot = null, string? note = null)
+        AcquisitionMethod method, DateOnly? date, PartyId? sourceId, Money? price, string? lot = null, string? note = null)
     {
         if (!Enum.IsDefined(method))
             throw new DomainValidationException("method", "Is not a valid acquisition method.");
@@ -44,7 +44,7 @@ public sealed class Acquisition
         {
             Method = method,
             Date = date,
-            Source = Guard.Optional(source, "source", MaxSourceLength),
+            SourceId = sourceId,
             Price = price,
             Lot = Guard.Optional(lot, "lot", MaxLotLength),
             Note = Guard.Optional(note, "note", MaxNoteLength),

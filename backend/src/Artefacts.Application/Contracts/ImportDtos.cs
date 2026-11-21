@@ -55,6 +55,27 @@ public sealed record ImportPlaceDto(
 
 public sealed record SetPlaceDecisionsRequest(IReadOnlyList<PlaceDecision>? Places);
 
+/// <summary>An entry (or party) suggested for a list text: its name in the reader's language and the name that matched.</summary>
+public sealed record ListSuggestionDto(Guid EntryId, string Name, string MatchedName, double Score, bool Exact, bool Alias);
+
+/// <summary>
+/// A distinct text the workbook gives for a list: how many rows use it, the fields it appears in (a party text can be
+/// both source and holder), the decision in force (saved, or else an exact match linked by default; none means
+/// undecided), and up to three similar entries.
+/// </summary>
+public sealed record ImportListValueDto(
+    string Text,
+    int Rows,
+    IReadOnlyList<ImportField> Fields,
+    ListDecision? Decision,
+    bool Decided,
+    IReadOnlyList<ListSuggestionDto> Suggestions);
+
+/// <summary>The texts of one list, most used first, with the number still undecided.</summary>
+public sealed record ImportListGroupDto(ImportList List, IReadOnlyList<ImportListValueDto> Values, int Undecided);
+
+public sealed record SetListDecisionsRequest(IReadOnlyList<ListDecision>? Lists);
+
 /// <summary>A distinct date text the historical date rules cannot interpret, with the rows using it.</summary>
 public sealed record ImportDateDto(string Text, IReadOnlyList<int> SheetRows, DateResolution? Resolution);
 

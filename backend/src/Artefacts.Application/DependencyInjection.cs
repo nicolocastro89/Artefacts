@@ -2,7 +2,9 @@ using Artefacts.Application.Artefacts;
 using Artefacts.Application.Imports;
 using Artefacts.Application.Media;
 using Artefacts.Application.Languages;
+using Artefacts.Application.Lists;
 using Artefacts.Application.ObjectTypes;
+using Artefacts.Application.Parties;
 using Artefacts.Application.Regions;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -18,6 +20,8 @@ public static class DependencyInjection
         services.AddSingleton<HistoricalDateParseHandler>();
         services.AddScoped<RegionHandler>();
         services.AddScoped<ObjectTypeHandler>();
+        services.AddScoped<ListHandler>();
+        services.AddScoped<PartyHandler>();
         services.AddScoped<LanguageHandler>();
         services.AddScoped<ImageHandler>();
         services.AddScoped<ImportHandler>();

@@ -196,6 +196,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/lists/{list}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Entries of a list whose name in any language contains the search text, with usage counts. */
+        get: operations["listListEntries"];
+        put?: never;
+        /** Adds an entry, or returns the existing entry with the same name. */
+        post: operations["addListEntry"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/lists/{list}/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getListEntry"];
+        put: operations["setListEntryNames"];
+        post?: never;
+        delete: operations["deleteListEntry"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/parties": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Parties whose name contains the search text, optionally of one kind, with source and holder counts. */
+        get: operations["listParties"];
+        put?: never;
+        /** Adds a party, or returns the existing party with the same name. */
+        post: operations["addParty"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/parties/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getParty"];
+        put: operations["updateParty"];
+        post?: never;
+        delete: operations["deleteParty"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/languages": {
         parameters: {
             query?: never;
@@ -342,6 +410,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/imports/{id}/lists": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The workbook's collection group, dynasty, storage location and party texts with their decisions. */
+        get: operations["getImportLists"];
+        put: operations["setImportLists"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/imports/{id}/dates": {
         parameters: {
             query?: never;
@@ -478,7 +563,7 @@ export interface components {
             method: components["schemas"]["AcquisitionMethod"];
             /** Format: date */
             date: null | string;
-            source: null | string;
+            source: null | components["schemas"]["PartyRefDto"];
             price: null | components["schemas"]["MoneyDto"];
             lot?: null | string;
             note?: null | string;
@@ -487,7 +572,8 @@ export interface components {
             method: components["schemas"]["AcquisitionMethod"];
             /** Format: date */
             date: null | string;
-            source: null | string;
+            /** Format: uuid */
+            sourceId: null | string;
             price: null | components["schemas"]["MoneyDto"];
             lot?: null | string;
             note?: null | string;
@@ -530,13 +616,13 @@ export interface components {
             primaryImage: null | components["schemas"]["ArtefactImageDto"];
             images: components["schemas"]["ArtefactImageDto"][];
             objectType: null | components["schemas"]["NamedRefDto"];
-            collectionGroup: null | string;
+            collectionGroup: null | components["schemas"]["NamedRefDto"];
             placeOfProduction: null | components["schemas"]["PlaceOfProductionDto"];
-            dynasty: null | string;
+            dynasty: null | components["schemas"]["NamedRefDto"];
             exhibitions: string[];
             catalogueEntryEn: null | string;
-            holder: null | string;
-            storageLocation: null | string;
+            holder: null | components["schemas"]["PartyRefDto"];
+            storageLocation: null | components["schemas"]["NamedRefDto"];
             valuation: null | components["schemas"]["MoneyDto"];
         };
         ArtefactGroupDto: {
@@ -604,13 +690,17 @@ export interface components {
             provenance?: null | components["schemas"]["ProvenanceEntryInput"][];
             /** Format: uuid */
             objectTypeId?: null | string;
-            collectionGroup?: null | string;
+            /** Format: uuid */
+            collectionGroupId?: null | string;
             placeOfProduction?: null | components["schemas"]["PlaceOfProductionInput"];
-            dynasty?: null | string;
+            /** Format: uuid */
+            dynastyId?: null | string;
             exhibitions?: null | string[];
             catalogueEntryEn?: null | string;
-            holder?: null | string;
-            storageLocation?: null | string;
+            /** Format: uuid */
+            holderId?: null | string;
+            /** Format: uuid */
+            storageLocationId?: null | string;
             valuation?: null | components["schemas"]["MoneyDto"];
         };
         ColumnRule: {
@@ -722,9 +812,10 @@ export interface components {
         ImportDecisions: {
             places: components["schemas"]["PlaceDecision"][];
             dates: components["schemas"]["DateResolution"][];
+            lists: components["schemas"]["ListDecision"][];
         };
         /** @enum {unknown} */
-        ImportField: "title" | "itemNumber" | "groupNumber" | "catalogueNumber" | "inventoryNumber" | "dimensions" | "medium" | "maker" | "description" | "placeOfProduction" | "creationDate" | "dynasty" | "acquisitionSource" | "acquisitionDate" | "acquisitionLot" | "acquisitionPrice" | "acquisitionNote" | "exhibitions" | "catalogueEntryEn" | "holder" | "storageLocation" | "valuation" | null;
+        ImportField: "title" | "itemNumber" | "groupNumber" | "catalogueNumber" | "inventoryNumber" | "dimensions" | "medium" | "maker" | "description" | "placeOfProduction" | "creationDate" | "dynasty" | "acquisitionSource" | "acquisitionDate" | "acquisitionLot" | "acquisitionPrice" | "acquisitionNote" | "exhibitions" | "catalogueEntryEn" | "holder" | "storageLocation" | "valuation" | "collectionGroup" | null;
         ImportJobDto: {
             /** Format: uuid */
             id: string;
@@ -763,6 +854,23 @@ export interface components {
         };
         /** @enum {unknown} */
         ImportJobState: "reading" | "awaitingMapping" | "readyForReview" | "importing" | "finished" | "failed" | "discarded";
+        /** @enum {unknown} */
+        ImportList: "collectionGroup" | "dynasty" | "storageLocation" | "party";
+        ImportListGroupDto: {
+            list: components["schemas"]["ImportList"];
+            values: components["schemas"]["ImportListValueDto"][];
+            /** Format: int32 */
+            undecided: number;
+        };
+        ImportListValueDto: {
+            text: string;
+            /** Format: int32 */
+            rows: number;
+            fields: components["schemas"]["ImportField"][];
+            decision: null | components["schemas"]["ListDecision"];
+            decided: boolean;
+            suggestions: components["schemas"]["ListSuggestionDto"][];
+        };
         ImportMapping: {
             columns: components["schemas"]["ColumnRule"][];
             inventoryNumber: components["schemas"]["InventoryNumberPattern"];
@@ -838,6 +946,32 @@ export interface components {
             /** @default false */
             continues: boolean;
         };
+        /** @enum {unknown} */
+        ListAction: "link" | "create";
+        ListDecision: {
+            list: components["schemas"]["ImportList"];
+            text: string;
+            action: components["schemas"]["ListAction"];
+            /** Format: uuid */
+            entryId?: null | string;
+            names?: null | {
+                [key: string]: string;
+            };
+            name?: null | string;
+            partyKind?: null | components["schemas"]["PartyKind"];
+        };
+        /** @enum {unknown} */
+        ListKind: "dynasty" | "collectionGroup" | "storageLocation";
+        ListSuggestionDto: {
+            /** Format: uuid */
+            entryId: string;
+            name: string;
+            matchedName: string;
+            /** Format: double */
+            score: number;
+            exact: boolean;
+            alias: boolean;
+        };
         MoneyDto: {
             /** Format: double */
             amount: number;
@@ -858,6 +992,28 @@ export interface components {
             };
             /** Format: int32 */
             artefactCount: number;
+        };
+        PartyDto: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            kind: components["schemas"]["PartyKind"];
+            /** Format: int32 */
+            sourceCount: number;
+            /** Format: int32 */
+            holderCount: number;
+        };
+        /** @enum {unknown} */
+        PartyKind: "person" | "organisation";
+        PartyRefDto: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            kind: components["schemas"]["PartyKind"];
+        };
+        PartyRequest: {
+            name: null | string;
+            kind?: null | components["schemas"]["PartyKind"];
         };
         /** @enum {unknown} */
         PlaceAction: "link" | "create" | "keep";
@@ -917,6 +1073,24 @@ export interface components {
             period: null | components["schemas"]["HistoricalDateInput"];
             note: null | string;
         };
+        ReferenceEntryDto: {
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["ListKind"];
+            name: string;
+            nameLanguage: null | string;
+            names: null | {
+                [key: string]: string;
+            };
+            /** Format: int32 */
+            artefactCount: number;
+        };
+        ReferenceEntryNamesRequest: {
+            names?: null | {
+                [key: string]: string;
+            };
+            name?: null | string;
+        };
         RegionDto: {
             /** Format: uuid */
             id: string;
@@ -974,6 +1148,9 @@ export interface components {
         };
         SetLanguageOrderRequest: {
             codes: null | string[];
+        };
+        SetListDecisionsRequest: {
+            lists: null | components["schemas"]["ListDecision"][];
         };
         SetNamesRequest: {
             names: null | {
@@ -1748,6 +1925,377 @@ export interface operations {
             };
         };
     };
+    listListEntries: {
+        parameters: {
+            query?: {
+                search?: string;
+            };
+            header?: never;
+            path: {
+                list: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReferenceEntryDto"][];
+                };
+            };
+        };
+    };
+    addListEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                list: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReferenceEntryNamesRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReferenceEntryDto"];
+                };
+            };
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReferenceEntryDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+        };
+    };
+    getListEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                list: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReferenceEntryDto"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    setListEntryNames: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                list: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReferenceEntryNamesRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReferenceEntryDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    deleteListEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                list: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    listParties: {
+        parameters: {
+            query?: {
+                search?: string;
+                kind?: components["schemas"]["PartyKind"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartyDto"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+        };
+    };
+    addParty: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PartyRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartyDto"];
+                };
+            };
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartyDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+        };
+    };
+    getParty: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartyDto"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    updateParty: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PartyRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartyDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    deleteParty: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     listLanguages: {
         parameters: {
             query?: never;
@@ -2147,6 +2695,90 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ImportPlaceDto"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    getImportLists: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportListGroupDto"][];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    setImportLists: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetListDecisionsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportListGroupDto"][];
                 };
             };
             /** @description Bad Request */

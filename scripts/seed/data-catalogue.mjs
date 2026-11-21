@@ -5,7 +5,8 @@
 // - COL-2022-033 has no entry here: the "No object type" / "No collection group" groups are never empty.
 // - COL-2006-015 has an uncertain place of production kept as written and not linked to a region.
 // - COL-2008-090 was bought in Italian lire (ITL), a withdrawn currency; COL-1964-201 is valued in ITL.
-// - Several records share a collection group written in different case ("OLANDA" / "Olanda"), which must group together.
+// - Several records give a collection group in different case ("OLANDA" / "Olanda"): adding returns the existing entry,
+//   so they all link to one group.
 // - Exhibitions in a given order on a few records; long English catalogue entries with line breaks on two.
 
 /** Object types with their English and Italian names; records refer to them by the English name. */
@@ -21,6 +22,16 @@ export const objectTypes = [
   { en: 'Miniatures', it: 'Miniature' },
   { en: 'Sculpture', it: 'Scultura' },
 ]
+
+/** English names of the collection groups and dynasties, keyed by the Italian name the records use. */
+export const groupNamesEn = {
+  ANATOLIA: 'Anatolia', CINA: 'China', FIANDRE: 'Flanders', FRANCIA: 'France', GERMANIA: 'Germany', GIAPPONE: 'Japan',
+  INGHILTERRA: 'England', ITALIA: 'Italy', LAMPASSI: 'Lampas', OLANDA: 'Holland', PERSIA: 'Persia', SVIZZERA: 'Switzerland',
+}
+export const dynastyNamesEn = {
+  Edo: 'Edo', Giorgiana: 'Georgian', Medici: 'Medici', Ottomana: 'Ottoman', 'Qing (Kangxi)': 'Qing (Kangxi)', Safavide: 'Safavid',
+  Selgiuchide: 'Seljuk', Stuart: 'Stuart',
+}
 
 /** Italian names of the regions in data.mjs (keyed by their English name). A few are left English-only on purpose. */
 export const regionNamesIt = {

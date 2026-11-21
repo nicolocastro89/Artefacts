@@ -46,7 +46,7 @@ function job(overrides: Partial<ImportJob> = {}): ImportJob {
     error: null,
     warnings: [],
     mapping,
-    decisions: { places: [], dates: [] },
+    decisions: { places: [], dates: [], lists: [] },
     createdAt: '2026-11-20T10:00:00Z',
     updatedAt: '2026-11-20T10:00:00Z',
     committedAt: null,
@@ -144,7 +144,7 @@ describe('imports list and upload', () => {
     mockFetch({
       'GET /api/imports': () => [],
       'GET /api/object-types': () => [{ id: 't1', name: 'Ceramics', nameLanguage: 'en', names: { en: 'Ceramics' }, artefactCount: 0 }],
-      'GET /api/import-templates': () => [{ id: 'tpl1', name: 'Collection workbook 2024', mapping, decisions: { places: [], dates: [] }, updatedAt: '' }],
+      'GET /api/import-templates': () => [{ id: 'tpl1', name: 'Collection workbook 2024', mapping, decisions: { places: [], dates: [], lists: [] }, updatedAt: '' }],
     })
     const sent: FormData[] = []
     class FakeXhr {
@@ -275,7 +275,7 @@ describe('places and dates steps', () => {
     await user.type(screen.getByRole('textbox', { name: 'New region for “Anatolia occidentale” (English)' }), 'Western Anatolia')
     await user.selectOptions(screen.getByRole('combobox', { name: 'Inside region' }), 'Anatolia')
     await user.selectOptions(screen.getByRole('combobox', { name: 'Region for “Anatolia o Asia Centrale?”' }), 'Keep as text, without a region')
-    await user.click(screen.getByRole('button', { name: /Save and continue to dates/ }))
+    await user.click(screen.getByRole('button', { name: /Save and continue to lists/ }))
 
     await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true))
     expect(calls.find((c) => c.method === 'PUT')!.body).toEqual({
@@ -381,5 +381,147 @@ describe('review, import and report', () => {
 
     await screen.findByText('All imports')
     expect(calls.some((c) => c.method === 'POST' && c.url.pathname === '/api/imports/j1/discard')).toBe(true)
+  })
+})
+
+describe('lists step', () => {
+  afterEach(() => vi.unstubAllGlobals())
+
+  const group = (list: string, values: Record<string, unknown>[]) => ({ list, values, undecided: values.filter((v) => !v.decision).length })
+
+  const entryRoutes = {
+    'GET /api/lists/dynasties': () => [{ id: 'd-saf', kind: 'dynasty', name: 'Safavide', nameLanguage: 'it', names: { it: 'Safavide' }, artefactCount: 3 }],
+    'GET /api/lists/collection-groups': () => [{ id: 'g-cina', kind: 'collectionGroup', name: 'CINA', nameLanguage: 'it', names: { it: 'CINA' }, artefactCount: 9 }],
+    'GET /api/lists/storage-locations': () => [],
+    'GET /api/parties': () => [{ id: 'p-drouot', name: 'Drouot', kind: 'organisation', sourceCount: 2, holderCount: 0 }],
+  }
+
+  it('links a variant, picks a source with no similar name, creates a party, and keeps an exact match', async () => {
+    const user = userEvent.setup()
+    const { calls } = mockFetch({
+      ...languagesRoute,
+      ...entryRoutes,
+      'GET /api/imports/j1': () => job({ state: 'readyForReview' }),
+      'GET /api/imports/j1/lists': () => [
+        group('collectionGroup', [
+          {
+            text: 'CINA',
+            rows: 12,
+            fields: ['collectionGroup'],
+            decision: { list: 'collectionGroup', text: 'CINA', action: 'link', entryId: 'g-cina' },
+            decided: false,
+            suggestions: [{ entryId: 'g-cina', name: 'CINA', matchedName: 'CINA', score: 1, exact: true, alias: false }],
+          },
+        ]),
+        group('dynasty', [
+          {
+            text: 'Sfavide',
+            rows: 4,
+            fields: ['dynasty'],
+            decision: null,
+            decided: false,
+            suggestions: [{ entryId: 'd-saf', name: 'Safavide', matchedName: 'Safavide', score: 0.86, exact: false, alias: false }],
+          },
+        ]),
+        group('storageLocation', []),
+        group('party', [
+          { text: 'Paris, Drouot-Richelieu Jean Dupont, Paris', rows: 1, fields: ['acquisitionSource'], decision: null, decided: false, suggestions: [] },
+          { text: 'Rossi Antiquariato srl', rows: 2, fields: ['acquisitionSource', 'holder'], decision: null, decided: false, suggestions: [] },
+        ]),
+      ],
+      'PUT /api/imports/j1/lists': () => [],
+    })
+    renderWizard('/imports/j1?step=lists')
+
+    expect(await screen.findByRole('combobox', { name: 'Collection group for “CINA”' })).toHaveDisplayValue('CINA — same name')
+    expect(screen.getByText('3 undecided: their rows will not be imported')).toBeInTheDocument()
+    expect(screen.getByText(/as source and holder/)).toBeInTheDocument()
+
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Dynasty for “Sfavide”' }), 'Safavide — 86% similar')
+
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Party for “Paris, Drouot-Richelieu Jean Dupont, Paris”' }), 'Pick from the list…')
+    await user.type(screen.getByRole('combobox', { name: 'Any party' }), 'Drou')
+    await user.click(await screen.findByRole('option', { name: /Drouot/ }))
+
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Party for “Rossi Antiquariato srl”' }), 'Create a new party…')
+    const name = screen.getByRole('textbox', { name: 'New party' })
+    expect(name).toHaveValue('Rossi Antiquariato srl')
+    await user.clear(name)
+    await user.type(name, 'Rossi Antiquariato')
+    expect(screen.getByRole('combobox', { name: 'Kind' })).toHaveDisplayValue('Organisation')
+
+    expect(screen.getByText('Every value has a decision.')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /Save and continue to dates/ }))
+
+    await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true))
+    expect(calls.find((c) => c.method === 'PUT')!.body).toEqual({
+      lists: [
+        { list: 'collectionGroup', text: 'CINA', action: 'link', entryId: 'g-cina' },
+        { list: 'dynasty', text: 'Sfavide', action: 'link', entryId: 'd-saf' },
+        { list: 'party', text: 'Paris, Drouot-Richelieu Jean Dupont, Paris', action: 'link', entryId: 'p-drouot' },
+        { list: 'party', text: 'Rossi Antiquariato srl', action: 'create', name: 'Rossi Antiquariato', partyKind: 'organisation' },
+      ],
+    })
+  })
+
+  it('creates a dynasty with names prefilled in the workbook language and filters the undecided', async () => {
+    const user = userEvent.setup()
+    const { calls } = mockFetch({
+      ...languagesRoute,
+      ...entryRoutes,
+      'GET /api/imports/j1': () => job({ state: 'readyForReview' }),
+      'GET /api/imports/j1/lists': () => [
+        group('collectionGroup', []),
+        group('dynasty', [
+          { text: 'Ilkhanide?', rows: 2, fields: ['dynasty'], decision: null, decided: false, suggestions: [] },
+          {
+            text: 'Ottomana',
+            rows: 9,
+            fields: ['dynasty'],
+            decision: { list: 'dynasty', text: 'Ottomana', action: 'link', entryId: 'd-ott' },
+            decided: true,
+            suggestions: [{ entryId: 'd-ott', name: 'Ottomana', matchedName: 'Ottomana', score: 1, exact: true, alias: false }],
+          },
+        ]),
+        group('storageLocation', []),
+        group('party', []),
+      ],
+      'PUT /api/imports/j1/lists': () => [],
+    })
+    renderWizard('/imports/j1?step=lists')
+
+    await user.click(await screen.findByRole('checkbox', { name: 'Show only undecided' }))
+    expect(screen.queryByRole('combobox', { name: 'Dynasty for “Ottomana”' })).toBeNull()
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Dynasty for “Ilkhanide?”' }), 'Create a new dynasty…')
+    expect(screen.getByRole('textbox', { name: 'New dynasty (Italian)' })).toHaveValue('Ilkhanide')
+    await user.type(screen.getByRole('textbox', { name: 'New dynasty (English)' }), 'Ilkhanid')
+    await user.click(screen.getByRole('button', { name: /Save and continue to dates/ }))
+
+    await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true))
+    expect(calls.find((c) => c.method === 'PUT')!.body).toEqual({
+      lists: [
+        { list: 'dynasty', text: 'Ilkhanide?', action: 'create', names: { it: 'Ilkhanide', en: 'Ilkhanid' } },
+        { list: 'dynasty', text: 'Ottomana', action: 'link', entryId: 'd-ott' },
+      ],
+    })
+  })
+
+  it('saves the mapping and decisions as a template from the review step', async () => {
+    const user = userEvent.setup()
+    const { calls } = mockFetch({
+      'GET /api/imports/j1': () => job({ state: 'readyForReview' }),
+      'GET /api/imports/j1/review': () => review,
+      'POST /api/import-templates': () => ({ id: 'tpl9', name: 'Collection workbook 2024', mapping, decisions: { places: [], dates: [], lists: [] }, updatedAt: '' }),
+    })
+    renderWizard('/imports/j1?step=review')
+
+    await user.type(await screen.findByRole('textbox', { name: 'Template name' }), 'Collection workbook 2024')
+    await user.click(screen.getByRole('button', { name: 'Save as template' }))
+
+    expect(await screen.findByText('Saved as template “Collection workbook 2024”.')).toBeInTheDocument()
+    expect(calls.find((c) => c.method === 'POST' && c.url.pathname === '/api/import-templates')!.body).toEqual({
+      name: 'Collection workbook 2024',
+      fromJobId: 'j1',
+    })
   })
 })

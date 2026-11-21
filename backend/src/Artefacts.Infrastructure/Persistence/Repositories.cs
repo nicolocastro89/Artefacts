@@ -3,7 +3,9 @@ using Artefacts.Domain.Catalogue;
 using Artefacts.Domain.Classification;
 using Artefacts.Domain.Common;
 using Artefacts.Domain.Languages;
+using Artefacts.Domain.Lists;
 using Artefacts.Domain.Media;
+using Artefacts.Domain.Parties;
 using Artefacts.Domain.Regions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -69,6 +71,98 @@ internal sealed class ObjectTypeRepository(CollectionDbContext db) : IObjectType
     public void Remove(ObjectType objectType) => db.ObjectTypes.Remove(objectType);
 }
 
+internal sealed class ReferenceEntryRepository(CollectionDbContext db) : IReferenceEntryRepository
+{
+    public Task<ReferenceEntry?> GetAsync(ListKind kind, ReferenceEntryId id, CancellationToken ct) =>
+        db.ReferenceEntries.SingleOrDefaultAsync(e => e.Id == id && e.Kind == kind, ct);
+
+    public async Task<IReadOnlyDictionary<ReferenceEntryId, ReferenceEntry>> GetManyAsync(IEnumerable<ReferenceEntryId> ids, CancellationToken ct)
+    {
+        var list = ids.Distinct().ToList();
+        if (list.Count == 0) return new Dictionary<ReferenceEntryId, ReferenceEntry>();
+        return await db.ReferenceEntries.Where(e => list.Contains(e.Id)).ToDictionaryAsync(e => e.Id, ct);
+    }
+
+    public Task<ReferenceEntry?> FindByNameAsync(ListKind kind, string? language, string normalizedName, CancellationToken ct) =>
+        kind.IsTranslated()
+            ? db.ReferenceEntries.FirstOrDefaultAsync(e => e.Kind == kind &&
+                e.Names.Any(n => (language == null || n.Language == language) && n.NormalizedName == normalizedName), ct)
+            : db.ReferenceEntries.FirstOrDefaultAsync(e => e.Kind == kind && e.NormalizedName == normalizedName, ct);
+
+    public async Task<IReadOnlyList<ReferenceEntry>> SearchAsync(ListKind kind, string? text, CancellationToken ct)
+    {
+        var query = db.ReferenceEntries.Where(e => e.Kind == kind);
+        if (!string.IsNullOrWhiteSpace(text))
+        {
+            var pattern = $"%{Like.Escape(LocalizedName.Normalize(text))}%";
+            query = query.Where(e =>
+                EF.Functions.Like(e.NormalizedName!, pattern, Like.EscapeChar) ||
+                e.Names.Any(n => EF.Functions.Like(n.NormalizedName, pattern, Like.EscapeChar)));
+        }
+
+        return await query.ToListAsync(ct);
+    }
+
+    public async Task<IReadOnlyDictionary<ReferenceEntryId, int>> CountUsesAsync(ListKind kind, CancellationToken ct)
+    {
+        var artefacts = db.Artefacts.AsQueryable();
+        var ids = kind switch
+        {
+            ListKind.Dynasty => artefacts.Where(a => a.DynastyId != null).Select(a => a.DynastyId!.Value),
+            ListKind.CollectionGroup => artefacts.Where(a => a.CollectionGroupId != null).Select(a => a.CollectionGroupId!.Value),
+            _ => artefacts.Where(a => a.StorageLocationId != null).Select(a => a.StorageLocationId!.Value),
+        };
+        return await ids.GroupBy(id => id).Select(g => new { g.Key, Count = g.Count() }).ToDictionaryAsync(x => x.Key, x => x.Count, ct);
+    }
+
+    public void Add(ReferenceEntry entry) => db.ReferenceEntries.Add(entry);
+    public void Remove(ReferenceEntry entry) => db.ReferenceEntries.Remove(entry);
+}
+
+internal sealed class PartyRepository(CollectionDbContext db) : IPartyRepository
+{
+    public Task<Party?> GetAsync(PartyId id, CancellationToken ct) => db.Parties.SingleOrDefaultAsync(p => p.Id == id, ct);
+
+    public async Task<IReadOnlyDictionary<PartyId, Party>> GetManyAsync(IEnumerable<PartyId> ids, CancellationToken ct)
+    {
+        var list = ids.Distinct().ToList();
+        if (list.Count == 0) return new Dictionary<PartyId, Party>();
+        return await db.Parties.Where(p => list.Contains(p.Id)).ToDictionaryAsync(p => p.Id, ct);
+    }
+
+    public Task<Party?> FindByNameAsync(string normalizedName, CancellationToken ct) =>
+        db.Parties.FirstOrDefaultAsync(p => p.NormalizedName == normalizedName, ct);
+
+    public async Task<IReadOnlyList<Party>> SearchAsync(string? text, PartyKind? kind, CancellationToken ct)
+    {
+        var query = db.Parties.AsQueryable();
+        if (kind is { } k) query = query.Where(p => p.Kind == k);
+        if (!string.IsNullOrWhiteSpace(text))
+        {
+            var pattern = $"%{Like.Escape(LocalizedName.Normalize(text))}%";
+            query = query.Where(p => EF.Functions.Like(p.NormalizedName, pattern, Like.EscapeChar));
+        }
+
+        return await query.OrderBy(p => p.NormalizedName).ToListAsync(ct);
+    }
+
+    public async Task<IReadOnlyDictionary<PartyId, PartyUses>> CountUsesAsync(CancellationToken ct)
+    {
+        var sources = await db.Artefacts.Where(a => a.Acquisition != null && a.Acquisition.SourceId != null)
+            .GroupBy(a => a.Acquisition!.SourceId!.Value).Select(g => new { g.Key, Count = g.Count() }).ToListAsync(ct);
+        var holders = await db.Artefacts.Where(a => a.HolderId != null)
+            .GroupBy(a => a.HolderId!.Value).Select(g => new { g.Key, Count = g.Count() }).ToListAsync(ct);
+        var result = new Dictionary<PartyId, PartyUses>();
+        foreach (var s in sources) result[s.Key] = new PartyUses(s.Count, 0);
+        foreach (var h in holders)
+            result[h.Key] = result.TryGetValue(h.Key, out var u) ? u with { Holder = h.Count } : new PartyUses(0, h.Count);
+        return result;
+    }
+
+    public void Add(Party party) => db.Parties.Add(party);
+    public void Remove(Party party) => db.Parties.Remove(party);
+}
+
 internal sealed class RegionRepository(CollectionDbContext db) : IRegionRepository
 {
     public Task<Region?> GetAsync(RegionId id, CancellationToken ct) =>
@@ -117,6 +211,7 @@ internal sealed class LanguageRepository(CollectionDbContext db) : ILanguageRepo
     public async Task<bool> InUseAsync(string code, CancellationToken ct) =>
         await db.Regions.AnyAsync(r => r.Names.Any(n => n.Language == code), ct) ||
         await db.ObjectTypes.AnyAsync(t => t.Names.Any(n => n.Language == code), ct) ||
+        await db.ReferenceEntries.AnyAsync(e => e.Names.Any(n => n.Language == code), ct) ||
         await db.Artefacts.AnyAsync(a => a.Translations.Any(t => t.Language == code), ct);
 
     public void Add(Language language) => db.Languages.Add(language);
@@ -179,6 +274,12 @@ internal sealed class UnitOfWork(CollectionDbContext db) : IUnitOfWork
                     new DomainValidationException("name", "Another import template already has this name."),
                 { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: CollectionDbContext.ObjectTypeNameIndex } =>
                     new DomainValidationException("names", "Another object type already has this name in the same language."),
+                { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: CollectionDbContext.ReferenceEntryNameIndex } =>
+                    new DomainValidationException("names", "Another entry of this list already has this name in the same language."),
+                { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: CollectionDbContext.ReferenceEntrySingleNameIndex } =>
+                    new DomainValidationException("name", "Another entry of this list already has this name."),
+                { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: CollectionDbContext.PartyNameIndex } =>
+                    new DomainValidationException("name", "Another party already has this name."),
                 { SqlState: PostgresErrorCodes.ForeignKeyViolation } when pg.ConstraintName?.StartsWith(CollectionDbContext.LanguageForeignKeyPrefix) == true =>
                     new ConflictException("language_in_use", "The language is used by names or descriptions."),
                 { SqlState: PostgresErrorCodes.ForeignKeyViolation } when pg.TableName == "object_types" ||
@@ -187,6 +288,12 @@ internal sealed class UnitOfWork(CollectionDbContext db) : IUnitOfWork
                 { SqlState: PostgresErrorCodes.ForeignKeyViolation } when pg.TableName == "regions" ||
                                                                           pg.ConstraintName?.Contains("regions") == true =>
                     new ConflictException("region_in_use", "The region is in use and cannot be deleted."),
+                { SqlState: PostgresErrorCodes.ForeignKeyViolation } when pg.TableName == "reference_entries" ||
+                                                                          pg.ConstraintName?.Contains("_reference_entries_") == true =>
+                    new ConflictException("entry_in_use", "The list entry is in use and cannot be deleted."),
+                { SqlState: PostgresErrorCodes.ForeignKeyViolation } when pg.TableName == "parties" ||
+                                                                          pg.ConstraintName?.Contains("_parties_") == true =>
+                    new ConflictException("party_in_use", "The party is in use and cannot be deleted."),
                 _ => e,
             };
         }

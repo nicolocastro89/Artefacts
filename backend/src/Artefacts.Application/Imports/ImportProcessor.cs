@@ -1,7 +1,9 @@
 using Artefacts.Application.Abstractions;
 using Artefacts.Application.Artefacts;
 using Artefacts.Application.Contracts;
+using Artefacts.Application.Lists;
 using Artefacts.Application.Media;
+using Artefacts.Application.Parties;
 using Artefacts.Application.Regions;
 using Artefacts.Domain.Common;
 using Artefacts.Domain.Imports;
@@ -170,6 +172,7 @@ public sealed class ImportProcessor(
     public async Task ImportAsync(Guid jobId, CancellationToken ct)
     {
         await CreatePlacesAsync(jobId, ct);
+        await CreateListEntriesAsync(jobId, ct);
 
         IReadOnlyList<(Guid RowId, EvaluatedRow Evaluated)> work;
         using (var scope = scopes.CreateScope())
@@ -241,6 +244,56 @@ public sealed class ImportProcessor(
             job.RecordDecisions(ImportJson.Write(decisions with { Places = [.. places, .. decisions.Places.Skip(places.Count)] }), clock.GetUtcNow());
             await services.GetRequiredService<IUnitOfWork>().SaveChangesAsync(ct);
         }
+    }
+
+    /// <summary>
+    /// Creates the list entries and parties marked for creation, once, before any row; each id is recorded on the job
+    /// as it is created, so a restart does not create duplicates. Adding returns an existing entry with the same name.
+    /// Afterwards the template the import started from learns the ids, so later imports link instead of creating.
+    /// </summary>
+    private async Task CreateListEntriesAsync(Guid jobId, CancellationToken ct)
+    {
+        using var scope = scopes.CreateScope();
+        var services = scope.ServiceProvider;
+        var imports = services.GetRequiredService<IImportRepository>();
+        var job = await imports.GetJobAsync(jobId, ct);
+        if (job is not { State: ImportJobState.Importing }) return;
+        var decisions = ImportHandler.Decisions(job);
+        if (!decisions.Lists.Any(d => d is { Action: ListAction.Create, EntryId: null })) return;
+
+        var lists = services.GetRequiredService<ListHandler>();
+        var parties = services.GetRequiredService<PartyHandler>();
+        var unitOfWork = services.GetRequiredService<IUnitOfWork>();
+        var done = new List<ListDecision>();
+        for (var i = 0; i < decisions.Lists.Count; i++)
+        {
+            var decision = decisions.Lists[i];
+            if (decision is not { Action: ListAction.Create, EntryId: null })
+            {
+                done.Add(decision);
+                continue;
+            }
+
+            try
+            {
+                var id = decision.List == ImportList.Party
+                    ? (await parties.AddAsync(new PartyRequest(decision.Name, decision.PartyKind), ct)).Party.Id
+                    : (await lists.AddAsync(ImportHandler.ListKindOf(decision.List),
+                        new ReferenceEntryNamesRequest(decision.Names, decision.Name), ct)).Entry.Id;
+                done.Add(decision with { EntryId = id });
+            }
+            catch (DomainException e)
+            {
+                // Without its entry the text is undecided again, so its rows are reported as problems.
+                logger.LogWarning(e, "Import {JobId}: the {List} entry for \"{Text}\" could not be created", jobId, decision.List, decision.Text);
+            }
+
+            job.RecordDecisions(ImportJson.Write(decisions with { Lists = [.. done, .. decisions.Lists.Skip(i + 1)] }), clock.GetUtcNow());
+            await unitOfWork.SaveChangesAsync(ct);
+        }
+
+        await services.GetRequiredService<ImportHandler>().LearnTemplateAsync(job, ct);
+        await unitOfWork.SaveChangesAsync(ct);
     }
 
     private async Task ImportRowAsync(Guid jobId, Guid rowId, EvaluatedRow evaluated, CancellationToken ct)

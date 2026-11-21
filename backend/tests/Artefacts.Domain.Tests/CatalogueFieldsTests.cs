@@ -11,7 +11,7 @@ public class CatalogueFieldsTests
     [Fact]
     public void Acquisition_keeps_lot_and_note_trimmed()
     {
-        var acquisition = Acquisition.Create(AcquisitionMethod.Purchase, new DateOnly(1990, 6, 12), "Sotheby's London",
+        var acquisition = Acquisition.Create(AcquisitionMethod.Purchase, new DateOnly(1990, 6, 12), PartyId.New(),
             Money.Create(350_000_000m, "ITL"), lot: " 170 ", note: " acquistato fuori asta ");
         Assert.Equal("170", acquisition.Lot);
         Assert.Equal("acquistato fuori asta", acquisition.Note);
@@ -50,20 +50,22 @@ public class CatalogueFieldsTests
     }
 
     [Fact]
-    public void Classification_origin_and_holding_are_trimmed()
+    public void Classification_origin_and_holding_link_their_records()
     {
         var a = NewArtefact();
         var type = ObjectTypeId.New();
-        a.Classify(type, " CINA ");
-        a.SetOrigin(PlaceOfProduction.Create("Cina", null), " Sung ");
-        a.SetHolding(" Rossetti Fine Arts srl ", " MI F3 ", Money.Create(200_000m, "GBP"));
+        ReferenceEntryId group = ReferenceEntryId.New(), dynasty = ReferenceEntryId.New(), location = ReferenceEntryId.New();
+        var holder = PartyId.New();
+        a.Classify(type, group);
+        a.SetOrigin(PlaceOfProduction.Create("Cina", null), dynasty);
+        a.SetHolding(holder, location, Money.Create(200_000m, "GBP"));
         a.SetCatalogueEntry("A JUNYAO DISH\nJIN DYNASTY (1115-1234)\n");
 
         Assert.Equal(type, a.ObjectTypeId);
-        Assert.Equal("CINA", a.CollectionGroup);
-        Assert.Equal("Sung", a.Dynasty);
-        Assert.Equal("Rossetti Fine Arts srl", a.Holder);
-        Assert.Equal("MI F3", a.StorageLocation);
+        Assert.Equal(group, a.CollectionGroupId);
+        Assert.Equal(dynasty, a.DynastyId);
+        Assert.Equal(holder, a.HolderId);
+        Assert.Equal(location, a.StorageLocationId);
         Assert.Equal(200_000m, a.Valuation!.Amount);
         Assert.Equal("A JUNYAO DISH\nJIN DYNASTY (1115-1234)", a.CatalogueEntryEn);
     }

@@ -68,6 +68,7 @@ public sealed class ImportRestartTests : IAsyncLifetime
             jobId = created.Id;
             var processor = first.Services.GetRequiredService<ImportProcessor>();
             await processor.ProcessAsync(jobId, CancellationToken.None);
+            await client.DecideAllListsAsync(jobId);
             await (await client.PostAsync($"/api/imports/{jobId}/commit", null)).ReadAsync<ImportJobDto>();
 
             // Run the import and stop it once the first rows are in, as a process shutting down would.

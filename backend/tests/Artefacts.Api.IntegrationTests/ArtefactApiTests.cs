@@ -84,15 +84,16 @@ public class ArtefactApiTests(ApiFactory factory)
     [Fact]
     public async Task Purchase_with_price_is_recorded()
     {
+        var galerie = await _client.AddPartyAsync(HttpExtensions.Unique("Galerie Example"));
         var created = await _client.CreateArtefactAsync(new ArtefactWriteRequest(
             HttpExtensions.Unique("INV"), "Purchased",
-            Acquisition: new AcquisitionInput(AcquisitionMethod.Purchase, new DateOnly(2019, 5, 2), "Galerie Example",
+            Acquisition: new AcquisitionInput(AcquisitionMethod.Purchase, new DateOnly(2019, 5, 2), galerie.Id,
                 new MoneyDto(12500.00m, "EUR"))));
 
         Assert.NotNull(created.Acquisition);
         Assert.Equal(AcquisitionMethod.Purchase, created.Acquisition.Method);
         Assert.Equal(new DateOnly(2019, 5, 2), created.Acquisition.Date);
-        Assert.Equal("Galerie Example", created.Acquisition.Source);
+        Assert.Equal(galerie.Name, created.Acquisition.Source!.Name);
         Assert.Equal(12500.00m, created.Acquisition.Price!.Amount);
         Assert.Equal("EUR", created.Acquisition.Price.Currency);
     }

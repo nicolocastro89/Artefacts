@@ -52,6 +52,8 @@ if (app.Environment.IsDevelopment())
 app.MapArtefactEndpoints();
 app.MapRegionEndpoints();
 app.MapObjectTypeEndpoints();
+app.MapListEndpoints();
+app.MapPartyEndpoints();
 app.MapLanguageEndpoints();
 app.MapImportEndpoints();
 app.MapSupportEndpoints();

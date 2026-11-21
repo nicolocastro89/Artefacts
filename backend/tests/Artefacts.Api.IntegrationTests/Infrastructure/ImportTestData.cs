@@ -47,16 +47,48 @@ public static class ImportTestData
     }
 
     /// <summary>
-    /// Saves the job's mapping with an inventory number prefix unique to the test, since tests share one catalogue.
+    /// Saves the job's mapping with an inventory number prefix unique to the test, since tests share one catalogue,
+    /// then decides every undecided list text (see <see cref="DecideAllListsAsync"/>) so that rows are not held back by
+    /// list curation.
     /// </summary>
     public static async Task<(ImportJobDto Job, string Prefix)> UseUniqueNumbersAsync(this HttpClient client, ImportJobDto job,
-        Func<ImportMapping, ImportMapping>? change = null)
+        Func<ImportMapping, ImportMapping>? change = null, bool decideLists = true)
     {
         var prefix = HttpExtensions.Unique("T").ToUpperInvariant();
         var mapping = job.Mapping! with { InventoryNumber = job.Mapping!.InventoryNumber with { Pattern = prefix + "-{group:2}-{item:2}" } };
         if (change is not null) mapping = change(mapping);
         var result = await (await client.PutJsonAsync($"/api/imports/{job.Id}/mapping", mapping)).ReadAsync<ImportMappingResult>();
-        return (result.Job, prefix);
+        if (!decideLists) return (result.Job, prefix);
+        await client.DecideAllListsAsync(job.Id);
+        return (await client.GetImportAsync(job.Id), prefix);
+    }
+
+    public static async Task<List<ImportListGroupDto>> ListsAsync(this HttpClient client, Guid id) =>
+        await (await client.GetAsync($"/api/imports/{id}/lists")).ReadAsync<List<ImportListGroupDto>>();
+
+    public static async Task<List<ImportListGroupDto>> SetListsAsync(this HttpClient client, Guid id, params ListDecision[] decisions)
+    {
+        var response = await client.PutJsonAsync($"/api/imports/{id}/lists", new SetListDecisionsRequest(decisions));
+        if (!response.IsSuccessStatusCode)
+            throw new InvalidOperationException($"Setting list decisions failed: {response.StatusCode} {await response.Content.ReadAsStringAsync()}");
+        return await response.ReadAsync<List<ImportListGroupDto>>();
+    }
+
+    /// <summary>A decision creating an entry named as the text: an Italian name, a single name, or an organisation.</summary>
+    public static ListDecision CreateDecision(ImportList list, string text) => list switch
+    {
+        ImportList.Party => new ListDecision(list, text, ListAction.Create, Name: text, PartyKind: Domain.Parties.PartyKind.Organisation),
+        ImportList.StorageLocation => new ListDecision(list, text, ListAction.Create, Name: text),
+        _ => new ListDecision(list, text, ListAction.Create, Names: new Dictionary<string, string?> { ["it"] = text }),
+    };
+
+    /// <summary>Marks every list text without a decision in force for creation, named as written.</summary>
+    public static async Task DecideAllListsAsync(this HttpClient client, Guid id)
+    {
+        var undecided = (await client.ListsAsync(id))
+            .SelectMany(g => g.Values.Where(v => v.Decision is null).Select(v => CreateDecision(g.List, v.Text)))
+            .ToArray();
+        if (undecided.Length > 0) await client.SetListsAsync(id, undecided);
     }
 
     public static async Task<ImportReviewDto> ReviewAsync(this HttpClient client, Guid id, string? status = null) =>

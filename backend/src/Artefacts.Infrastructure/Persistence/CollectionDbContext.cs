@@ -3,7 +3,9 @@ using Artefacts.Domain.Classification;
 using Artefacts.Domain.Common;
 using Artefacts.Domain.Imports;
 using Artefacts.Domain.Languages;
+using Artefacts.Domain.Lists;
 using Artefacts.Domain.Media;
+using Artefacts.Domain.Parties;
 using Artefacts.Domain.Regions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
@@ -18,12 +20,17 @@ public sealed class CollectionDbContext(DbContextOptions<CollectionDbContext> op
     public const string ObjectTypeNameIndex = "ux_object_type_names_language_normalized_name";
     public const string LanguageForeignKeyPrefix = "fk_language_";
     public const string ImportTemplateNameIndex = "ux_import_templates_normalized_name";
+    public const string ReferenceEntryNameIndex = "ux_reference_entry_names_kind_language_normalized_name";
+    public const string ReferenceEntrySingleNameIndex = "ux_reference_entries_kind_normalized_name";
+    public const string PartyNameIndex = "ux_parties_normalized_name";
 
     public DbSet<Artefact> Artefacts => Set<Artefact>();
     public DbSet<Region> Regions => Set<Region>();
     public DbSet<MediaAsset> MediaAssets => Set<MediaAsset>();
     public DbSet<ObjectType> ObjectTypes => Set<ObjectType>();
     public DbSet<Language> Languages => Set<Language>();
+    public DbSet<ReferenceEntry> ReferenceEntries => Set<ReferenceEntry>();
+    public DbSet<Party> Parties => Set<Party>();
     public DbSet<ImportJob> ImportJobs => Set<ImportJob>();
     public DbSet<ImportRow> ImportRows => Set<ImportRow>();
     public DbSet<ImportTemplate> ImportTemplates => Set<ImportTemplate>();
@@ -34,6 +41,8 @@ public sealed class CollectionDbContext(DbContextOptions<CollectionDbContext> op
         builder.Properties<RegionId>().HaveConversion<RegionIdConverter>();
         builder.Properties<MediaAssetId>().HaveConversion<MediaAssetIdConverter>();
         builder.Properties<ObjectTypeId>().HaveConversion<ObjectTypeIdConverter>();
+        builder.Properties<ReferenceEntryId>().HaveConversion<ReferenceEntryIdConverter>();
+        builder.Properties<PartyId>().HaveConversion<PartyIdConverter>();
     }
 
     protected override void OnModelCreating(ModelBuilder model)
@@ -70,6 +79,47 @@ public sealed class CollectionDbContext(DbContextOptions<CollectionDbContext> op
             b.Navigation(t => t.Names).HasField("_names").UsePropertyAccessMode(PropertyAccessMode.Field);
         });
 
+        model.Entity<ReferenceEntry>(b =>
+        {
+            b.ToTable("reference_entries");
+            b.HasKey(e => e.Id);
+            b.Property(e => e.Id).ValueGeneratedNever();
+            b.Property(e => e.Kind).HasConversion<string>().HasMaxLength(24);
+            b.HasIndex(e => e.Kind);
+            // Untranslated lists (storage locations) keep their single name here, unique per list.
+            b.Property(e => e.Name).HasMaxLength(ReferenceEntry.MaxNameLength);
+            b.Property(e => e.NormalizedName).HasMaxLength(ReferenceEntry.MaxNameLength);
+            b.HasIndex(e => new { e.Kind, e.NormalizedName }).IsUnique()
+                .HasFilter("normalized_name IS NOT NULL").HasDatabaseName(ReferenceEntrySingleNameIndex);
+            // Translated lists keep a name per language, unique per list and language.
+            b.OwnsMany(e => e.Names, n =>
+            {
+                n.ToTable("reference_entry_names");
+                n.WithOwner().HasForeignKey("ReferenceEntryId");
+                n.HasKey("ReferenceEntryId", nameof(ReferenceEntryName.Language));
+                n.Property(x => x.Kind).HasConversion<string>().HasMaxLength(24);
+                n.Property(x => x.Language).HasMaxLength(10);
+                n.Property(x => x.Name).HasMaxLength(ReferenceEntry.MaxNameLength).IsRequired();
+                n.Property(x => x.NormalizedName).HasMaxLength(ReferenceEntry.MaxNameLength).IsRequired();
+                n.HasIndex(x => new { x.Kind, x.Language, x.NormalizedName }).IsUnique().HasDatabaseName(ReferenceEntryNameIndex);
+                n.HasIndex(x => x.NormalizedName);
+                n.HasOne<Language>().WithMany().HasForeignKey(x => x.Language)
+                    .HasConstraintName($"{LanguageForeignKeyPrefix}reference_entry_names").OnDelete(DeleteBehavior.Restrict);
+            });
+            b.Navigation(e => e.Names).HasField("_names").UsePropertyAccessMode(PropertyAccessMode.Field);
+        });
+
+        model.Entity<Party>(b =>
+        {
+            b.ToTable("parties");
+            b.HasKey(p => p.Id);
+            b.Property(p => p.Id).ValueGeneratedNever();
+            b.Property(p => p.Name).HasMaxLength(Party.MaxNameLength).IsRequired();
+            b.Property(p => p.NormalizedName).HasMaxLength(Party.MaxNameLength).IsRequired();
+            b.HasIndex(p => p.NormalizedName).IsUnique().HasDatabaseName(PartyNameIndex);
+            b.Property(p => p.Kind).HasConversion<string>().HasMaxLength(16);
+        });
+
         model.Entity<MediaAsset>(b =>
         {
             b.ToTable("media_assets");
@@ -96,11 +146,11 @@ public sealed class CollectionDbContext(DbContextOptions<CollectionDbContext> op
 
             b.Property(a => a.ObjectTypeId).HasConversion(new ObjectTypeIdConverter());
             b.HasOne<ObjectType>().WithMany().HasForeignKey(a => a.ObjectTypeId).OnDelete(DeleteBehavior.Restrict);
-            b.Property(a => a.CollectionGroup).HasMaxLength(Artefact.MaxShortTextLength);
-            b.Property(a => a.Dynasty).HasMaxLength(Artefact.MaxShortTextLength);
+            b.HasOne<ReferenceEntry>().WithMany().HasForeignKey(a => a.CollectionGroupId).OnDelete(DeleteBehavior.Restrict);
+            b.HasOne<ReferenceEntry>().WithMany().HasForeignKey(a => a.DynastyId).OnDelete(DeleteBehavior.Restrict);
+            b.HasOne<ReferenceEntry>().WithMany().HasForeignKey(a => a.StorageLocationId).OnDelete(DeleteBehavior.Restrict);
+            b.HasOne<Party>().WithMany().HasForeignKey(a => a.HolderId).OnDelete(DeleteBehavior.Restrict);
             b.Property(a => a.CatalogueEntryEn).HasColumnName("catalogue_entry_en").HasMaxLength(Artefact.MaxCatalogueEntryLength);
-            b.Property(a => a.Holder).HasMaxLength(Artefact.MaxShortTextLength);
-            b.Property(a => a.StorageLocation).HasMaxLength(Artefact.MaxShortTextLength);
 
             b.OwnsOne(a => a.PlaceOfProduction, p =>
             {
@@ -152,7 +202,9 @@ public sealed class CollectionDbContext(DbContextOptions<CollectionDbContext> op
             {
                 q.Property(x => x.Method).HasColumnName("acquisition_method").HasConversion<string>().HasMaxLength(16);
                 q.Property(x => x.Date).HasColumnName("acquisition_date");
-                q.Property(x => x.Source).HasColumnName("acquisition_source").HasMaxLength(300);
+                q.Property(x => x.SourceId).HasColumnName("acquisition_source_id");
+                q.HasOne<Party>().WithMany().HasForeignKey(x => x.SourceId).OnDelete(DeleteBehavior.Restrict);
+                q.HasIndex(x => x.SourceId);
                 q.Property(x => x.Lot).HasColumnName("acquisition_lot").HasMaxLength(Acquisition.MaxLotLength);
                 q.Property(x => x.Note).HasColumnName("acquisition_note").HasMaxLength(Acquisition.MaxNoteLength);
                 q.OwnsOne(x => x.Price, m =>
@@ -264,5 +316,7 @@ public sealed class CollectionDbContext(DbContextOptions<CollectionDbContext> op
     private sealed class ArtefactIdConverter() : ValueConverter<ArtefactId, Guid>(id => id.Value, v => new ArtefactId(v));
     private sealed class RegionIdConverter() : ValueConverter<RegionId, Guid>(id => id.Value, v => new RegionId(v));
     private sealed class ObjectTypeIdConverter() : ValueConverter<ObjectTypeId, Guid>(id => id.Value, v => new ObjectTypeId(v));
+    private sealed class ReferenceEntryIdConverter() : ValueConverter<ReferenceEntryId, Guid>(id => id.Value, v => new ReferenceEntryId(v));
+    private sealed class PartyIdConverter() : ValueConverter<PartyId, Guid>(id => id.Value, v => new PartyId(v));
     private sealed class MediaAssetIdConverter() : ValueConverter<MediaAssetId, Guid>(id => id.Value, v => new MediaAssetId(v));
 }

@@ -9,7 +9,15 @@ import { useContentLanguages } from '../../../app/languages'
 import { isHistoricalDate, isMoney } from '../../format'
 import { HistoricalDateField } from './HistoricalDateField'
 import type { PickedRef } from './ReferencePicker'
-import { ObjectTypePicker, RegionPicker, type PickedRegion } from './RegionPicker'
+import {
+  CollectionGroupPicker,
+  DynastyPicker,
+  ObjectTypePicker,
+  PartyPicker,
+  RegionPicker,
+  StorageLocationPicker,
+  type PickedRegion,
+} from './RegionPicker'
 import './form.css'
 
 interface ProvenanceRow {
@@ -35,21 +43,22 @@ interface FormState {
   descriptions: Record<string, string>
   method: AcquisitionMethod | ''
   acquisitionDate: string
-  source: string
+  source: PickedRef | null
   priceAmount: string
   priceCurrency: string
   lot: string
   acquisitionNote: string
   provenance: ProvenanceRow[]
   objectType: PickedRef | null
-  collectionGroup: string
+  collectionGroup: PickedRef | null
   placeText: string
   placeRegion: PickedRef | null
-  dynasty: string
+  dynasty: PickedRef | null
   exhibitions: ExhibitionRow[]
   catalogueEntryEn: string
-  holder: string
-  storageLocation: string
+  /** None means the collection itself holds the artefact. */
+  holder: PickedRef | null
+  storageLocation: PickedRef | null
   valuationAmount: string
   valuationCurrency: string
 }
@@ -99,20 +108,20 @@ function initialState(values: Record<string, { value: unknown }>): FormState {
     descriptions: Object.fromEntries(Object.entries((values.descriptions?.value ?? {}) as Record<string, unknown>).map(([k, v]) => [k, str(v)])),
     method: (str(values.acquisitionMethod?.value) as AcquisitionMethod) || '',
     acquisitionDate: str(values.acquisitionDate?.value),
-    source: str(values.acquisitionSource?.value),
+    source: ref(values.acquisitionSourceId?.value, values.acquisitionSourceName?.value),
     priceAmount: isMoney(price) ? String(price.amount) : '',
     priceCurrency: isMoney(price) ? price.currency : 'EUR',
     lot: str(values.acquisitionLot?.value),
     acquisitionNote: str(values.acquisitionNote?.value),
     objectType: ref(values.objectTypeId?.value, values.objectTypeName?.value),
-    collectionGroup: str(values.collectionGroup?.value),
+    collectionGroup: ref(values.collectionGroupId?.value, values.collectionGroupName?.value),
     placeText: str(values.placeText?.value),
     placeRegion: ref(values.placeRegionId?.value, values.placeRegionName?.value),
-    dynasty: str(values.dynasty?.value),
+    dynasty: ref(values.dynastyId?.value, values.dynastyName?.value),
     exhibitions: exhibitions.map((text) => ({ key: newRowKey(), text: str(text) })),
     catalogueEntryEn: str(values.catalogueEntryEn?.value),
-    holder: str(values.holder?.value),
-    storageLocation: str(values.storageLocation?.value),
+    holder: ref(values.holderId?.value, values.holderName?.value),
+    storageLocation: ref(values.storageLocationId?.value, values.storageLocationName?.value),
     valuationAmount: isMoney(valuation) ? String(valuation.amount) : '',
     valuationCurrency: isMoney(valuation) ? valuation.currency : 'EUR',
     provenance: provenance.map((p) => ({
@@ -142,20 +151,20 @@ function toRequest(s: FormState): ArtefactWriteRequest {
       ? {
           method: s.method,
           date: opt(s.acquisitionDate),
-          source: opt(s.source),
+          sourceId: s.source?.id ?? null,
           price: amount === null ? null : { amount, currency: s.priceCurrency.trim().toUpperCase() },
           lot: opt(s.lot),
           note: opt(s.acquisitionNote),
         }
       : null,
     objectTypeId: s.objectType?.id ?? null,
-    collectionGroup: opt(s.collectionGroup),
+    collectionGroupId: s.collectionGroup?.id ?? null,
     placeOfProduction: s.placeText.trim() || s.placeRegion ? { text: opt(s.placeText), regionId: s.placeRegion?.id ?? null } : null,
-    dynasty: opt(s.dynasty),
+    dynastyId: s.dynasty?.id ?? null,
     exhibitions: s.exhibitions.map((e) => e.text.trim()).filter((t) => t !== ''),
     catalogueEntryEn: opt(s.catalogueEntryEn),
-    holder: opt(s.holder),
-    storageLocation: opt(s.storageLocation),
+    holderId: s.holder?.id ?? null,
+    storageLocationId: s.storageLocation?.id ?? null,
     valuation: valuation === null ? null : { amount: valuation, currency: s.valuationCurrency.trim().toUpperCase() },
     provenance: s.provenance.map((p) => ({
       regionId: p.region?.id ?? '00000000-0000-0000-0000-000000000000',
@@ -210,22 +219,27 @@ defineWidget({
     descriptions: { type: 'map' },
     acquisitionMethod: { type: 'text' },
     acquisitionDate: { type: 'date' },
-    acquisitionSource: { type: 'text' },
+    acquisitionSourceId: { type: 'reference' },
+    acquisitionSourceName: { type: 'text' },
     acquisitionPrice: { type: 'money' },
     acquisitionLot: { type: 'text' },
     acquisitionNote: { type: 'text' },
     provenance: { type: 'list' },
     objectTypeId: { type: 'reference' },
     objectTypeName: { type: 'text' },
-    collectionGroup: { type: 'text' },
+    collectionGroupId: { type: 'reference' },
+    collectionGroupName: { type: 'text' },
     placeText: { type: 'text' },
     placeRegionId: { type: 'reference' },
     placeRegionName: { type: 'text' },
-    dynasty: { type: 'text' },
+    dynastyId: { type: 'reference' },
+    dynastyName: { type: 'text' },
     exhibitions: { type: 'any' },
     catalogueEntryEn: { type: 'text' },
-    holder: { type: 'text' },
-    storageLocation: { type: 'text' },
+    holderId: { type: 'reference' },
+    holderName: { type: 'text' },
+    storageLocationId: { type: 'reference' },
+    storageLocationName: { type: 'text' },
     valuation: { type: 'money' },
   },
   config: { cancelHref: '/artefacts' },
@@ -333,10 +347,10 @@ defineWidget({
           <legend>Classification and origin</legend>
           <div className="form-grid">
             <ObjectTypePicker label="Object type" value={state.objectType} onChange={(v) => set('objectType', v)} errors={errorsFor(errors, 'objectTypeId')} />
-            <TextField label="Collection group" value={state.collectionGroup} onChange={(v) => set('collectionGroup', v)} errors={errorsFor(errors, 'collectionGroup')} hint="As filed, e.g. CINA or LAMPASSI" />
+            <CollectionGroupPicker label="Collection group" value={state.collectionGroup} onChange={(v) => set('collectionGroup', v)} errors={errorsFor(errors, 'collectionGroupId')} />
             <TextField label="Place of production" value={state.placeText} onChange={(v) => set('placeText', v)} errors={errorsFor(errors, 'placeOfProduction.text')} hint="As written, uncertainty included" />
             <RegionPicker label="Region (optional)" value={state.placeRegion} onChange={(v) => set('placeRegion', v)} errors={errorsFor(errors, 'placeOfProduction.regionId')} />
-            <TextField label="Dynasty or period" value={state.dynasty} onChange={(v) => set('dynasty', v)} errors={errorsFor(errors, 'dynasty')} />
+            <DynastyPicker label="Dynasty or period" value={state.dynasty} onChange={(v) => set('dynasty', v)} errors={errorsFor(errors, 'dynastyId')} />
           </div>
         </fieldset>
 
@@ -352,7 +366,7 @@ defineWidget({
               ))}
             </SelectField>
             <DateField label="Date" value={state.acquisitionDate} disabled={!state.method} onChange={(v) => set('acquisitionDate', v)} errors={errorsFor(errors, 'acquisition.date')} />
-            <TextField label="Source" value={state.source} onChange={(v) => set('source', v)} errors={errorsFor(errors, 'acquisition.source')} />
+            <PartyPicker label="Source" value={state.source} onChange={(v) => set('source', v)} errors={errorsFor(errors, 'acquisition.sourceId')} />
             <MoneyField
               amount={state.priceAmount}
               currency={state.priceCurrency}
@@ -438,8 +452,14 @@ defineWidget({
         <fieldset className="form-section">
           <legend>Holding</legend>
           <div className="form-grid">
-            <TextField label="Holder" value={state.holder} onChange={(v) => set('holder', v)} errors={errorsFor(errors, 'holder')} />
-            <TextField label="Storage location" value={state.storageLocation} onChange={(v) => set('storageLocation', v)} errors={errorsFor(errors, 'storageLocation')} hint="e.g. MI F3, cella 16" />
+            <PartyPicker
+              label="Holder"
+              value={state.holder}
+              onChange={(v) => set('holder', v)}
+              errors={errorsFor(errors, 'holderId')}
+              hint="Leave empty when the collection itself holds the artefact."
+            />
+            <StorageLocationPicker label="Storage location" value={state.storageLocation} onChange={(v) => set('storageLocation', v)} errors={errorsFor(errors, 'storageLocationId')} />
             <MoneyField
               label="Valuation"
               amount={state.valuationAmount}

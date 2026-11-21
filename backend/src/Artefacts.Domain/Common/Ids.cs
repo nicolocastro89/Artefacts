@@ -29,3 +29,15 @@ public readonly record struct ObjectTypeId(Guid Value) : IGuidId
     public static ObjectTypeId New() => new(Guid.CreateVersion7());
     public override string ToString() => Value.ToString();
 }
+
+public readonly record struct ReferenceEntryId(Guid Value) : IGuidId
+{
+    public static ReferenceEntryId New() => new(Guid.CreateVersion7());
+    public override string ToString() => Value.ToString();
+}
+
+public readonly record struct PartyId(Guid Value) : IGuidId
+{
+    public static PartyId New() => new(Guid.CreateVersion7());
+    public override string ToString() => Value.ToString();
+}

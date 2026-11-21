@@ -19,3 +19,12 @@ export type Language = Schemas['LanguageDto']
 export type ArtefactSort = Schemas['ArtefactSort']
 export type SortDirection = Schemas['SortDirection']
 export type AcquisitionMethod = Schemas['AcquisitionMethod']
+export type ReferenceEntry = Schemas['ReferenceEntryDto']
+export type ListKind = Schemas['ListKind']
+export type Party = Schemas['PartyDto']
+export type PartyKind = Schemas['PartyKind']
+export type PartyRef = Schemas['PartyRefDto']
+export type NamedRef = Schemas['NamedRefDto']
+
+/** The URL segment of each managed list (`/api/lists/{list}`). */
+export type ListSlug = 'dynasties' | 'collection-groups' | 'storage-locations'

@@ -3,19 +3,22 @@ using System.Text.RegularExpressions;
 
 namespace Artefacts.Application.Imports;
 
-/// <summary>A name a region can be recognised by: one of its names in any language, or an alias from a template.</summary>
-public sealed record PlaceCandidate(Guid RegionId, string Name, bool Alias = false);
+/// <summary>
+/// A name a record (region, list entry, party) can be recognised by: one of its names in any language, or an alias
+/// from a template (a text linked to it before).
+/// </summary>
+public sealed record NameCandidate(Guid Id, string Name, bool Alias = false);
 
-/// <summary>A region suggested for a place text, with its similarity score (1 for an exact match).</summary>
-public sealed record PlaceSuggestion(Guid RegionId, string MatchedName, double Score, bool Exact, bool Alias);
+/// <summary>A record suggested for a text, with its similarity score (1 for an exact match).</summary>
+public sealed record NameSuggestion(Guid Id, string MatchedName, double Score, bool Exact, bool Alias);
 
 /// <summary>
-/// Matches place texts to regions. Texts are normalised (accents, case, punctuation and "?" removed). An exact match
-/// on any name or alias ranks first; other regions are scored with the higher of trigram Jaccard and Jaro-Winkler
+/// Matches workbook texts (places, list values, parties) to records. Texts are normalised (accents, case, punctuation and "?" removed). An exact match
+/// on any name or alias ranks first; other records are scored with the higher of trigram Jaccard and Jaro-Winkler
 /// similarity, also against each part of a text such as "Cairo, Egitto", and the best three at
 /// <see cref="Threshold"/> or above are suggested.
 /// </summary>
-public static partial class PlaceMatcher
+public static partial class NameMatcher
 {
     public const double Threshold = 0.6;
     public const int MaxSuggestions = 3;
@@ -26,32 +29,32 @@ public static partial class PlaceMatcher
     public static string Normalize(string text) =>
         WhitespaceRegex().Replace(PunctuationRegex().Replace(MappingSuggestion.Fold(text), " "), " ").Trim();
 
-    public static IReadOnlyList<PlaceSuggestion> Suggest(string text, IReadOnlyList<PlaceCandidate> candidates)
+    public static IReadOnlyList<NameSuggestion> Suggest(string text, IReadOnlyList<NameCandidate> candidates)
     {
         var key = Normalize(text);
         if (key.Length == 0) return [];
         var parts = PartSeparatorRegex().Split(MappingSuggestion.Fold(text))
             .Select(Normalize).Where(p => p.Length > 0 && p != key).Distinct().ToList();
 
-        var best = new Dictionary<Guid, PlaceSuggestion>();
+        var best = new Dictionary<Guid, NameSuggestion>();
         foreach (var candidate in candidates)
         {
             var name = Normalize(candidate.Name);
             if (name.Length == 0) continue;
-            PlaceSuggestion suggestion;
+            NameSuggestion suggestion;
             if (name == key)
             {
-                suggestion = new PlaceSuggestion(candidate.RegionId, candidate.Name, 1, true, candidate.Alias);
+                suggestion = new NameSuggestion(candidate.Id, candidate.Name, 1, true, candidate.Alias);
             }
             else
             {
                 var score = Similarity(key, name);
                 foreach (var part in parts) score = Math.Max(score, PartWeight * Similarity(part, name));
-                suggestion = new PlaceSuggestion(candidate.RegionId, candidate.Name, Math.Round(score, 3), false, candidate.Alias);
+                suggestion = new NameSuggestion(candidate.Id, candidate.Name, Math.Round(score, 3), false, candidate.Alias);
             }
 
-            if (!best.TryGetValue(candidate.RegionId, out var current) || Rank(suggestion) > Rank(current))
-                best[candidate.RegionId] = suggestion;
+            if (!best.TryGetValue(candidate.Id, out var current) || Rank(suggestion) > Rank(current))
+                best[candidate.Id] = suggestion;
         }
 
         return best.Values
@@ -63,7 +66,7 @@ public static partial class PlaceMatcher
     }
 
     /// <summary>Exact alias hits first, then exact names, then by score.</summary>
-    private static double Rank(PlaceSuggestion s) => (s.Exact ? 2 : 0) + (s.Exact && s.Alias ? 1 : 0) + s.Score;
+    private static double Rank(NameSuggestion s) => (s.Exact ? 2 : 0) + (s.Exact && s.Alias ? 1 : 0) + s.Score;
 
     /// <summary>
     /// Jaro-Winkler rates short unrelated names around 0.7 ("Iran" and "France"), so it only counts when it is

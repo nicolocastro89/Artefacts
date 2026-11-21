@@ -39,12 +39,8 @@ public sealed class ArtefactRow
     [CatalogField("objectType", "Object type", FieldType.Reference), Filterable, Sortable]
     public Guid? ObjectTypeId { get; init; }
 
-    [CatalogField("collectionGroup", "Collection group", FieldType.Text), Filterable, Sortable]
-    public string? CollectionGroup { get; init; }
-
-    /// <summary>Grouping key: lower case, whitespace collapsed.</summary>
-    [PartOf("collectionGroup")]
-    public string? CollectionGroupKey { get; init; }
+    [CatalogField("collectionGroup", "Collection group", FieldType.Reference), Filterable, Sortable]
+    public Guid? CollectionGroupId { get; init; }
 
     [CatalogField("placeOfProduction", "Place of production", FieldType.Text), Filterable, Sortable]
     public string? PlaceText { get; init; }
@@ -52,22 +48,19 @@ public sealed class ArtefactRow
     [CatalogField("placeRegion", "Place of production (region)", FieldType.Reference), Filterable, Sortable]
     public Guid? PlaceRegionId { get; init; }
 
-    [CatalogField("dynasty", "Dynasty or period", FieldType.Text), Filterable, Sortable]
-    public string? Dynasty { get; init; }
-
-    /// <summary>Grouping key: lower case, whitespace collapsed.</summary>
-    [PartOf("dynasty")]
-    public string? DynastyKey { get; init; }
+    [CatalogField("dynasty", "Dynasty or period", FieldType.Reference), Filterable, Sortable]
+    public Guid? DynastyId { get; init; }
 
     /// <summary>Century of the creation date (17 = 1601-1700; negative for BCE).</summary>
     [CatalogField("century", "Century", FieldType.Number), Filterable, Sortable]
     public int? Century { get; init; }
 
-    [CatalogField("holder", "Holder", FieldType.Text), Filterable, Sortable]
-    public string? Holder { get; init; }
+    /// <summary>The holding party; null when the collection itself holds the artefact.</summary>
+    [CatalogField("holder", "Holder", FieldType.Reference), Filterable, Sortable]
+    public Guid? HolderId { get; init; }
 
-    [CatalogField("storageLocation", "Storage location", FieldType.Text), Filterable, Sortable]
-    public string? StorageLocation { get; init; }
+    [CatalogField("storageLocation", "Storage location", FieldType.Reference), Filterable, Sortable]
+    public Guid? StorageLocationId { get; init; }
 
     [CatalogField("acquisitionMethod", "Acquisition method", FieldType.Text), Filterable, Sortable]
     public string? AcquisitionMethod { get; init; }
@@ -75,8 +68,8 @@ public sealed class ArtefactRow
     [CatalogField("acquisitionDate", "Acquisition date", FieldType.Date), Filterable, Sortable]
     public DateOnly? AcquisitionDate { get; init; }
 
-    [CatalogField("acquisitionSource", "Acquisition source", FieldType.Text), Filterable, Sortable]
-    public string? AcquisitionSource { get; init; }
+    [CatalogField("acquisitionSource", "Acquisition source", FieldType.Reference), Filterable, Sortable]
+    public Guid? AcquisitionSourceId { get; init; }
 
     [CatalogField("acquisitionLot", "Acquisition lot", FieldType.Text), Filterable]
     public string? AcquisitionLot { get; init; }

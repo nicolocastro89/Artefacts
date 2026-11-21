@@ -4,6 +4,7 @@ using System.Text.Json;
 using Artefacts.Api.IntegrationTests.Infrastructure;
 using Artefacts.Application.Contracts;
 using Artefacts.Domain.Catalogue;
+using Artefacts.Domain.Parties;
 
 namespace Artefacts.Api.IntegrationTests;
 
@@ -17,31 +18,37 @@ public class CatalogueFieldsApiTests(ApiFactory factory)
     {
         var type = await _client.AddObjectTypeAsync(HttpExtensions.Unique("Ceramics"));
         var china = await _client.AddRegionAsync(HttpExtensions.Unique("China"));
+        var group = await _client.AddListEntryAsync("collection-groups", HttpExtensions.Unique("CINA"));
+        var dynasty = await _client.AddListEntryAsync("dynasties", HttpExtensions.Unique("Sung"));
+        var location = await _client.AddListEntryAsync("storage-locations", HttpExtensions.Unique("MI F3"));
+        var sothebys = await _client.AddPartyAsync(HttpExtensions.Unique("Sotheby's London"));
+        var rossetti = await _client.AddPartyAsync(HttpExtensions.Unique("Rossetti Fine Arts srl"));
         var request = new ArtefactWriteRequest(HttpExtensions.Unique("CER"), "Coppa Celadon",
-            Acquisition: new AcquisitionInput(AcquisitionMethod.Purchase, new DateOnly(1990, 6, 12), "Sotheby's London",
+            Acquisition: new AcquisitionInput(AcquisitionMethod.Purchase, new DateOnly(1990, 6, 12), sothebys.Id,
                 new MoneyDto(350_000_000m, "ITL"), Lot: "170", Note: "acquistato fuori asta"),
             ObjectTypeId: type.Id,
-            CollectionGroup: " CINA ",
+            CollectionGroupId: group.Id,
             PlaceOfProduction: new PlaceOfProductionInput("Cina", china.Id),
-            Dynasty: "Sung",
+            DynastyId: dynasty.Id,
             Exhibitions: ["Arte Ottomana 1450-1600, Genova, 1999", "Exhibition of Persian Art, New York, 1940"],
             CatalogueEntryEn: "A JUNYAO BOWL\nJIN DYNASTY (1115-1234)",
-            Holder: "Rossetti Fine Arts srl",
-            StorageLocation: "MI F3",
+            HolderId: rossetti.Id,
+            StorageLocationId: location.Id,
             Valuation: new MoneyDto(200_000m, "GBP"));
 
         var created = await _client.CreateArtefactAsync(request);
 
         Assert.Equal(type.Id, created.ObjectType!.Id);
         Assert.Equal(type.Name, created.ObjectType.Name);
-        Assert.Equal("CINA", created.CollectionGroup);
+        Assert.Equal(new NamedRefDto(group.Id, group.Name), created.CollectionGroup);
         Assert.Equal("Cina", created.PlaceOfProduction!.Text);
         Assert.Equal(china.Name, created.PlaceOfProduction.Region!.Name);
-        Assert.Equal("Sung", created.Dynasty);
+        Assert.Equal(new NamedRefDto(dynasty.Id, dynasty.Name), created.Dynasty);
         Assert.Equal(["Arte Ottomana 1450-1600, Genova, 1999", "Exhibition of Persian Art, New York, 1940"], created.Exhibitions);
         Assert.Equal("A JUNYAO BOWL\nJIN DYNASTY (1115-1234)", created.CatalogueEntryEn);
-        Assert.Equal("Rossetti Fine Arts srl", created.Holder);
-        Assert.Equal("MI F3", created.StorageLocation);
+        Assert.Equal(new PartyRefDto(rossetti.Id, rossetti.Name, PartyKind.Organisation), created.Holder);
+        Assert.Equal(new NamedRefDto(location.Id, location.Name), created.StorageLocation);
+        Assert.Equal(sothebys.Name, created.Acquisition!.Source!.Name);
         Assert.Equal(new MoneyDto(200_000m, "GBP"), created.Valuation);
         Assert.Equal("170", created.Acquisition!.Lot);
         Assert.Equal("acquistato fuori asta", created.Acquisition.Note);
@@ -52,12 +59,40 @@ public class CatalogueFieldsApiTests(ApiFactory factory)
             PlaceOfProduction = new PlaceOfProductionInput("Anatolia o Asia Centrale?"),
             Exhibitions = ["Only one"],
             Valuation = null,
+            HolderId = null,
         })).ReadAsync<ArtefactDetail>();
 
         Assert.Equal("Anatolia o Asia Centrale?", updated.PlaceOfProduction!.Text);
         Assert.Null(updated.PlaceOfProduction.Region);
         Assert.Equal(["Only one"], updated.Exhibitions);
         Assert.Null(updated.Valuation);
+        // Without a holder the collection itself holds the artefact.
+        Assert.Null(updated.Holder);
+    }
+
+    [Fact]
+    public async Task Unknown_list_entries_and_parties_are_field_errors()
+    {
+        var response = await _client.PostJsonAsync("/api/artefacts", new ArtefactWriteRequest(HttpExtensions.Unique("INV"), "T",
+            Acquisition: new AcquisitionInput(AcquisitionMethod.Purchase, null, Guid.NewGuid(), null),
+            CollectionGroupId: Guid.NewGuid(), DynastyId: Guid.NewGuid(), HolderId: Guid.NewGuid(), StorageLocationId: Guid.NewGuid()));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var errors = (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("errors");
+        foreach (var field in new[] { "dynastyId", "collectionGroupId", "holderId", "storageLocationId", "acquisition.sourceId" })
+            Assert.True(errors.TryGetProperty(field, out _), field);
+    }
+
+    [Fact]
+    public async Task An_entry_of_another_list_is_not_accepted()
+    {
+        var location = await _client.AddListEntryAsync("storage-locations", HttpExtensions.Unique("Beta"));
+
+        var response = await _client.PostJsonAsync("/api/artefacts", new ArtefactWriteRequest(HttpExtensions.Unique("INV"), "T",
+            DynastyId: location.Id));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.True((await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("errors").TryGetProperty("dynastyId", out _));
     }
 
     [Fact]
@@ -91,14 +126,23 @@ public class CatalogueFieldsApiTests(ApiFactory factory)
     public async Task Search_matches_storage_location_dynasty_and_place()
     {
         var token = HttpExtensions.Unique("cella");
-        var byLocation = await _client.CreateArtefactAsync(new ArtefactWriteRequest(HttpExtensions.Unique("INV"), "A", StorageLocation: $"{token} 16"));
-        var byDynasty = await _client.CreateArtefactAsync(new ArtefactWriteRequest(HttpExtensions.Unique("INV"), "B", Dynasty: $"Ottomana {token}"));
+        var location = await _client.AddListEntryAsync("storage-locations", $"{token} 16");
+        // A dynasty matches on its name in any language, not only the reader's.
+        var dynasty = await _client.AddListEntryAsync("dynasties",
+            new Dictionary<string, string?> { ["en"] = HttpExtensions.Unique("Ottoman"), ["it"] = $"Ottomana {token}" });
+        var source = await _client.AddPartyAsync($"Galerie {token}");
+        var holder = await _client.AddPartyAsync($"Holder {token}");
+        var byLocation = await _client.CreateArtefactAsync(new ArtefactWriteRequest(HttpExtensions.Unique("INV"), "A", StorageLocationId: location.Id));
+        var byDynasty = await _client.CreateArtefactAsync(new ArtefactWriteRequest(HttpExtensions.Unique("INV"), "B", DynastyId: dynasty.Id));
         var byPlace = await _client.CreateArtefactAsync(new ArtefactWriteRequest(HttpExtensions.Unique("INV"), "C",
             PlaceOfProduction: new PlaceOfProductionInput($"Iran {token}")));
+        var bySource = await _client.CreateArtefactAsync(new ArtefactWriteRequest(HttpExtensions.Unique("INV"), "D",
+            Acquisition: new AcquisitionInput(AcquisitionMethod.Purchase, null, source.Id, null)));
+        var byHolder = await _client.CreateArtefactAsync(new ArtefactWriteRequest(HttpExtensions.Unique("INV"), "E", HolderId: holder.Id));
 
-        var result = await (await _client.GetAsync($"/api/artefacts?search={token.ToUpperInvariant()}")).ReadAsync<ArtefactListPage>();
+        var result = await (await _client.GetAsync($"/api/artefacts?search={token.ToUpperInvariant()}&lang=en")).ReadAsync<ArtefactListPage>();
 
-        Assert.Equal(new[] { byLocation.Id, byDynasty.Id, byPlace.Id }.Order(), result.Items.Select(i => i.Id).Order());
+        Assert.Equal(new[] { byLocation.Id, byDynasty.Id, byPlace.Id, bySource.Id, byHolder.Id }.Order(), result.Items.Select(i => i.Id).Order());
     }
 
     [Fact]
@@ -140,21 +184,40 @@ public class CatalogueFieldsApiTests(ApiFactory factory)
     }
 
     [Fact]
-    public async Task Grouping_by_collection_group_ignores_case_and_spacing()
+    public async Task Grouping_by_collection_group_groups_by_entry()
     {
         var token = HttpExtensions.Unique("cg");
-        await _client.CreateArtefactAsync(new ArtefactWriteRequest(HttpExtensions.Unique("INV"), $"One {token}", CollectionGroup: "CINA"));
-        await _client.CreateArtefactAsync(new ArtefactWriteRequest(HttpExtensions.Unique("INV"), $"Two {token}", CollectionGroup: "cina"));
-        await _client.CreateArtefactAsync(new ArtefactWriteRequest(HttpExtensions.Unique("INV"), $"Three {token}", CollectionGroup: "  CINA "));
+        var cina = await _client.AddListEntryAsync("collection-groups", $"CINA {token}");
+        var turchia = await _client.AddListEntryAsync("collection-groups", $"TURCHIA {token}");
+        await _client.CreateArtefactAsync(new ArtefactWriteRequest(HttpExtensions.Unique("INV"), $"One {token}", CollectionGroupId: turchia.Id));
+        await _client.CreateArtefactAsync(new ArtefactWriteRequest(HttpExtensions.Unique("INV"), $"Two {token}", CollectionGroupId: cina.Id));
+        await _client.CreateArtefactAsync(new ArtefactWriteRequest(HttpExtensions.Unique("INV"), $"Three {token}", CollectionGroupId: cina.Id));
+        await _client.CreateArtefactAsync(new ArtefactWriteRequest(HttpExtensions.Unique("INV"), $"Four {token}"));
 
         var result = await (await _client.GetAsync($"/api/artefacts?search={token}&group=collectionGroup")).ReadAsync<ArtefactListPage>();
 
+        Assert.Equal([(cina.Id.ToString(), cina.Name, 2), (turchia.Id.ToString(), turchia.Name, 1), ((string?)null, (string?)null, 1)],
+            result.Groups.Select(g => (g.Key, g.Label, g.Count)));
+        Assert.Equal([cina.Name, cina.Name, turchia.Name, null], result.Items.Select(i => i.GroupLabel));
+        Assert.Equal(cina.Name, result.Items[0].CollectionGroup);
+    }
+
+    [Theory]
+    [InlineData("en", "Safavid")]
+    [InlineData("it", "Safavide")]
+    public async Task Grouping_by_dynasty_uses_the_readers_language(string lang, string label)
+    {
+        var token = HttpExtensions.Unique("dy");
+        var dynasty = await _client.AddListEntryAsync("dynasties",
+            new Dictionary<string, string?> { ["it"] = $"Safavide {token}", ["en"] = $"Safavid {token}" });
+        await _client.CreateArtefactAsync(new ArtefactWriteRequest(HttpExtensions.Unique("INV"), $"One {token}", DynastyId: dynasty.Id));
+        await _client.CreateArtefactAsync(new ArtefactWriteRequest(HttpExtensions.Unique("INV"), $"Two {token}", DynastyId: dynasty.Id));
+
+        var result = await (await _client.GetAsync($"/api/artefacts?search={token}&group=dynasty&lang={lang}")).ReadAsync<ArtefactListPage>();
+
         var group = Assert.Single(result.Groups);
-        Assert.Equal(3, group.Count);
-        Assert.Equal("cina", group.Key);
-        // Labelled with the most frequent spelling as written.
-        Assert.Equal("CINA", group.Label);
-        Assert.All(result.Items, i => Assert.Equal("CINA", i.GroupLabel));
+        Assert.Equal((dynasty.Id.ToString(), $"{label} {token}", 2), (group.Key, group.Label, group.Count));
+        Assert.All(result.Items, i => Assert.Equal($"{label} {token}", i.Dynasty));
     }
 
     [Fact]
@@ -176,6 +239,10 @@ public class CatalogueFieldsApiTests(ApiFactory factory)
         Assert.Equal(FieldType.Money, valuation.Type);
         Assert.Equal("financial", valuation.Sensitivity);
         Assert.Equal(["valuation_amount", "valuation_currency"], valuation.Columns);
-        Assert.Null(Assert.Single(artefact.Fields, f => f.Id == "dynasty").Sensitivity);
+        var dynasty = Assert.Single(artefact.Fields, f => f.Id == "dynasty");
+        Assert.Null(dynasty.Sensitivity);
+        Assert.Equal(FieldType.Reference, dynasty.Type);
+        foreach (var link in new[] { "collectionGroup", "storageLocation", "holder", "acquisitionSource" })
+            Assert.Equal(FieldType.Reference, Assert.Single(artefact.Fields, f => f.Id == link).Type);
     }
 }

@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
-import { useEffect, useId, useState, type KeyboardEvent } from 'react'
+import { useEffect, useId, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { useReaderLanguage } from '../../../app/languages'
 
 export interface PickedRef {
@@ -18,15 +18,18 @@ export interface RefSource {
   /** Query key root for caching and invalidation (e.g. 'regions'). */
   key: string
   search: (text: string) => Promise<RefOption[]>
-  /** Adds an entry named `name` in `language` (the reader's language). */
-  add: (name: string, language: string) => Promise<PickedRef>
+  /** Adds an entry named `name` in `language` (the reader's language), of `kind` when the source has kinds. */
+  add: (name: string, language: string, kind?: string) => Promise<PickedRef>
   /** "region", "object type": used in the placeholder and error messages. */
   noun: string
+  /** When set, adding asks which kind the new entry is: one "Add" option per kind, the first being the default. */
+  addKinds?: { value: string; label: string }[]
 }
 
 /**
- * Combobox for choosing an entry from a reference list (regions, object types). Typing a name that does not
- * exist offers "Add …", which adds it to the list (or returns the existing match) and selects it.
+ * Combobox for choosing an entry from a reference list (regions, object types, list entries, parties). Typing a name
+ * that does not exist offers "Add …" (one per kind, for sources with kinds), which adds it to the list (or returns the
+ * existing match) and selects it.
  * Reads reference options only, like a select; it never reads the record being edited.
  */
 export function ReferencePicker({
@@ -35,12 +38,19 @@ export function ReferencePicker({
   onChange,
   errors,
   source,
+  hint,
+  allowAdd = true,
+  placeholder,
 }: {
   label: string
   value: PickedRef | null
   onChange: (picked: PickedRef | null) => void
   errors?: string[]
   source: RefSource
+  hint?: ReactNode
+  /** When false the picker only chooses existing entries (a searchable select). */
+  allowAdd?: boolean
+  placeholder?: string
 }) {
   const id = useId()
   const queryClient = useQueryClient()
@@ -62,9 +72,10 @@ export function ReferencePicker({
   })
 
   const exact = options.some((r) => r.name.toLowerCase() === search.toLowerCase())
-  const items: ({ kind: 'option'; option: RefOption } | { kind: 'add' })[] = [
+  const addKinds = source.addKinds ?? [{ value: '', label: '' }]
+  const items: ({ kind: 'option'; option: RefOption } | { kind: 'add'; addKind: string; addLabel: string })[] = [
     ...options.slice(0, 8).map((option) => ({ kind: 'option' as const, option })),
-    ...(search && !exact ? [{ kind: 'add' as const }] : []),
+    ...(allowAdd && search && !exact ? addKinds.map((k) => ({ kind: 'add' as const, addKind: k.value, addLabel: k.label })) : []),
   ]
 
   const choose = (picked: PickedRef) => {
@@ -73,11 +84,11 @@ export function ReferencePicker({
     setOpen(false)
   }
 
-  const add = async () => {
+  const add = async (kind: string) => {
     setAdding(true)
     setAddError(null)
     try {
-      const added = await source.add(search, readerLanguage)
+      const added = await source.add(search, readerLanguage, kind || undefined)
       await queryClient.invalidateQueries({ queryKey: [source.key] })
       await queryClient.invalidateQueries({ queryKey: ['count', source.key] })
       choose({ id: added.id, name: added.name })
@@ -91,7 +102,7 @@ export function ReferencePicker({
   const pick = (index: number) => {
     const item = items[index]
     if (!item) return
-    if (item.kind === 'add') void add()
+    if (item.kind === 'add') void add(item.addKind)
     else choose({ id: item.option.id, name: item.option.name })
   }
 
@@ -130,7 +141,7 @@ export function ReferencePicker({
           aria-activedescendant={open && items[active] ? `${listId}-${active}` : undefined}
           aria-invalid={allErrors.length > 0}
           value={text}
-          placeholder={`Choose or add ${/^[aeiou]/i.test(source.noun) ? 'an' : 'a'} ${source.noun}`}
+          placeholder={placeholder ?? `Choose or add ${/^[aeiou]/i.test(source.noun) ? 'an' : 'a'} ${source.noun}`}
           onChange={(e) => {
             setText(e.target.value)
             setOpen(true)
@@ -145,7 +156,7 @@ export function ReferencePicker({
           <ul id={listId} role="listbox" className="region-picker__list">
             {items.map((item, i) => (
               <li
-                key={item.kind === 'add' ? 'add' : item.option.id}
+                key={item.kind === 'add' ? `add-${item.addKind}` : item.option.id}
                 id={`${listId}-${i}`}
                 role="option"
                 aria-selected={i === active}
@@ -158,7 +169,14 @@ export function ReferencePicker({
               >
                 {item.kind === 'add' ? (
                   <>
-                    <Plus aria-hidden="true" /> {adding ? 'Adding…' : <>Add “{search}”</>}
+                    <Plus aria-hidden="true" />{' '}
+                    {adding ? (
+                      'Adding…'
+                    ) : (
+                      <>
+                        Add “{search}”{item.addLabel && <span className="muted"> as {item.addLabel}</span>}
+                      </>
+                    )}
                   </>
                 ) : (
                   <>
@@ -171,6 +189,7 @@ export function ReferencePicker({
           </ul>
         )}
       </div>
+      {hint && <p className="field__hint">{hint}</p>}
       {allErrors.map((e) => (
         <p key={e} className="field__error">
           {e}

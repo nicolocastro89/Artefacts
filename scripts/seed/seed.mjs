@@ -4,10 +4,10 @@
 //
 // Usage (API running, e.g. `dotnet run --project backend/src/Artefacts.Api`):
 //   node scripts/seed/seed.mjs [--api http://localhost:5032]
-// The API URL can also come from ARTEFACTS_API_URL. Rerunning is safe: regions and object types are
-// matched by name, and artefacts whose inventory number already exists are skipped.
+// The API URL can also come from ARTEFACTS_API_URL. Rerunning is safe: regions, object types, list entries and
+// parties are matched by name, and artefacts whose inventory number already exists are skipped.
 // To start again from empty, reset the stack's volumes: docker compose -f docker/docker-compose.yml down -v
-import { catalogue, descriptionsIt, italianOnly, objectTypes, regionNamesIt } from './data-catalogue.mjs'
+import { catalogue, descriptionsIt, dynastyNamesEn, groupNamesEn, italianOnly, objectTypes, regionNamesIt } from './data-catalogue.mjs'
 import { artefacts, regions } from './data.mjs'
 import { encodePng, encodeTiff, renderImage } from './images.mjs'
 
@@ -64,6 +64,40 @@ async function seedObjectTypes() {
   return ids
 }
 
+/** People among the seed's sources: bequests, gifts from named people, families and private collectors. */
+const isPerson = (name) => /bequest of|gift of mr|family|private collector/i.test(name)
+
+/**
+ * The collection groups, dynasties, storage locations and parties the records use, created first (adding returns an
+ * existing entry with the same name, so variants such as "Olanda" link to "OLANDA"). Returns a lookup by text.
+ */
+async function seedLists() {
+  const records = artefacts.map((a) => ({ a, c: catalogue[a.inventoryNumber] ?? {} }))
+  const lookups = { group: new Map(), dynasty: new Map(), location: new Map(), party: new Map() }
+  const counts = { group: 0, dynasty: 0, location: 0, party: 0 }
+  const add = async (kind, text, path, json) => {
+    if (text == null || lookups[kind].has(text)) return
+    const { status, body } = await call('POST', path, { json })
+    if (status === 201) counts[kind]++
+    lookups[kind].set(text, body.id)
+  }
+  for (const { a, c } of records) {
+    const groupEn = c.group && groupNamesEn[c.group.trim().toUpperCase()]
+    await add('group', c.group, '/api/lists/collection-groups', { names: { it: c.group, ...(groupEn ? { en: groupEn } : {}) } })
+    const dynastyEn = c.dynasty && dynastyNamesEn[c.dynasty]
+    await add('dynasty', c.dynasty, '/api/lists/dynasties', { names: { it: c.dynasty, ...(dynastyEn ? { en: dynastyEn } : {}) } })
+    await add('location', c.location, '/api/lists/storage-locations', { name: c.location })
+    await add('party', c.holder, '/api/parties', { name: c.holder, kind: 'organisation' })
+    const source = a.acquisition?.source
+    await add('party', source, '/api/parties', { name: source, kind: isPerson(source ?? '') ? 'person' : 'organisation' })
+  }
+  console.log(
+    `Lists: ${counts.group} collection groups, ${counts.dynasty} dynasties, ${counts.location} storage locations and ${counts.party} parties created ` +
+      `(the rest already present).`,
+  )
+  return lookups
+}
+
 async function exists(inventoryNumber) {
   const query = new URLSearchParams({ search: inventoryNumber, pageSize: '100' })
   const { body } = await call('GET', `/api/artefacts?${query}`)
@@ -71,7 +105,7 @@ async function exists(inventoryNumber) {
 }
 
 /** Classification, origin and holding from data-catalogue.mjs, as request fields. */
-function catalogueFields(a, regionIds, typeIds) {
+function catalogueFields(a, regionIds, typeIds, lists) {
   const c = catalogue[a.inventoryNumber]
   if (!c) return {}
   const region = c.place?.region ? regionIds.get(c.place.region) : null
@@ -80,24 +114,25 @@ function catalogueFields(a, regionIds, typeIds) {
   if (c.type && !typeId) throw new Error(`${a.inventoryNumber}: unknown object type "${c.type}".`)
   return {
     objectTypeId: typeId,
-    collectionGroup: c.group ?? null,
+    collectionGroupId: c.group ? lists.group.get(c.group) : null,
     placeOfProduction: c.place ? { text: c.place.text ?? null, regionId: region } : null,
-    dynasty: c.dynasty ?? null,
+    dynastyId: c.dynasty ? lists.dynasty.get(c.dynasty) : null,
     exhibitions: c.exhibitions ?? [],
     catalogueEntryEn: c.entry ?? null,
-    holder: c.holder ?? null,
-    storageLocation: c.location ?? null,
+    holderId: c.holder ? lists.party.get(c.holder) : null,
+    storageLocationId: c.location ? lists.location.get(c.location) : null,
     valuation: c.valuation ?? null,
   }
 }
 
-function toRequest(a, regionIds, typeIds) {
+function toRequest(a, regionIds, typeIds, lists) {
   const c = catalogue[a.inventoryNumber] ?? {}
+  const { source, ...acquired } = a.acquisition ?? {}
   const acquisition = a.acquisition
-    ? { ...a.acquisition, ...(c.price ? { price: c.price } : {}), lot: c.lot ?? null, note: c.note ?? null }
+    ? { ...acquired, sourceId: source ? lists.party.get(source) : null, ...(c.price ? { price: c.price } : {}), lot: c.lot ?? null, note: c.note ?? null }
     : null
   return {
-    ...catalogueFields(a, regionIds, typeIds),
+    ...catalogueFields(a, regionIds, typeIds, lists),
     inventoryNumber: a.inventoryNumber,
     title: a.title,
     maker: a.maker,
@@ -153,6 +188,7 @@ async function main() {
   const started = Date.now()
   const regionIds = await seedRegions()
   const typeIds = await seedObjectTypes()
+  const lists = await seedLists()
 
   const totals = { created: 0, skipped: 0, failed: 0, images: 0 }
   for (const a of artefacts) {
@@ -163,7 +199,7 @@ async function main() {
         console.log(`  skip    ${label} (already present)`)
         continue
       }
-      const { body: created } = await call('POST', '/api/artefacts', { json: toRequest(a, regionIds, typeIds) })
+      const { body: created } = await call('POST', '/api/artefacts', { json: toRequest(a, regionIds, typeIds, lists) })
       const images = await uploadImages(a, created.id)
       totals.created++
       totals.images += images

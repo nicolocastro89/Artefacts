@@ -24,6 +24,19 @@ public sealed record StagedRow(
 /// <summary>A place text resolved for import: the linked region, or a region still to be created.</summary>
 public sealed record ResolvedPlace(Guid? RegionId, bool PendingCreate, PlaceAction? Decided);
 
+/// <summary>
+/// A list text resolved for import: the linked entry or party, or one still to be created at commit (which counts as
+/// decided). Neither means the text is undecided.
+/// </summary>
+public sealed record ResolvedEntry(Guid? EntryId, bool PendingCreate)
+{
+    public static readonly ResolvedEntry Undecided = new(null, false);
+    public bool IsDecided => EntryId is not null || PendingCreate;
+}
+
+/// <summary>A text of a row that is curated against a list, with the field it came from.</summary>
+public sealed record ListText(ImportList List, ImportField Field, string Text);
+
 /// <summary>Everything the evaluation needs besides the rows.</summary>
 public sealed record EvaluationContext(
     ImportMapping Mapping,
@@ -32,7 +45,8 @@ public sealed record EvaluationContext(
     IReadOnlySet<string> ExistingInventoryNumbers,
     Func<string, ResolvedPlace> Place,
     IReadOnlyDictionary<string, DateResolution> DateResolutions,
-    string? SheetName = null);
+    string? SheetName = null,
+    Func<ImportList, string, ResolvedEntry>? ListValue = null);
 
 /// <summary>A row as it will be imported.</summary>
 public sealed record EvaluatedRow(
@@ -45,7 +59,8 @@ public sealed record EvaluatedRow(
     IReadOnlyList<string> Warnings,
     string? PlaceText,
     string? DateText,
-    bool DateUnresolved);
+    bool DateUnresolved,
+    IReadOnlyList<ListText> ListTexts);
 
 /// <summary>
 /// Turns staged rows, the mapping and the decisions into would-be artefact requests, in sheet order: the first row
@@ -145,6 +160,28 @@ public static class RowEvaluator
             place = new PlaceOfProductionInput(placeText, resolved.RegionId);
         }
 
+        // ---------- list values and parties ----------
+        // Every text must be linked to an entry or marked for creation; empty cells need no decision.
+        var listTexts = new List<ListText>();
+        Guid? Entry(ImportList list, ImportField field, string? text, string problemField, string noun)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return null;
+            text = text.Trim();
+            listTexts.Add(new ListText(list, field, text));
+            var resolved = context.ListValue?.Invoke(list, text) ?? ResolvedEntry.Undecided;
+            if (!resolved.IsDecided)
+                problems.Add(new RowProblem(problemField, text, $"Link \"{text}\" to a {noun} or create one in the lists step."));
+            return resolved.EntryId;
+        }
+
+        // A mapped column is more specific than the group heading above the row.
+        var collectionGroupId = Entry(ImportList.CollectionGroup, ImportField.CollectionGroup,
+            Joined(ImportField.CollectionGroup) ?? row.GroupLabel, "collectionGroup", "collection group");
+        var dynastyId = Entry(ImportList.Dynasty, ImportField.Dynasty, Joined(ImportField.Dynasty), "dynasty", "dynasty");
+        var storageLocationId = Entry(ImportList.StorageLocation, ImportField.StorageLocation, Joined(ImportField.StorageLocation),
+            "storageLocation", "storage location");
+        var holderId = Entry(ImportList.Party, ImportField.Holder, Joined(ImportField.Holder), "holder", "party");
+
         // ---------- acquisition ----------
         var notes = mapped.Of(ImportField.AcquisitionNote).Select(v => v.Text).ToList();
         DateOnly? acquisitionDate = null;
@@ -174,10 +211,11 @@ public static class RowEvaluator
         }
 
         var source = Joined(ImportField.AcquisitionSource);
+        var sourceId = Entry(ImportList.Party, ImportField.AcquisitionSource, source, "acquisition.source", "party");
         var lot = mapped.First(ImportField.AcquisitionLot)?.Text;
         var note = notes.Count > 0 ? string.Join("\n", notes) : null;
         var acquisition = source is not null || acquisitionDate is not null || lot is not null || price is not null || note is not null
-            ? new AcquisitionInput(mapping.AcquisitionMethod, acquisitionDate, source, price, lot, note)
+            ? new AcquisitionInput(mapping.AcquisitionMethod, acquisitionDate, sourceId, price, lot, note)
             : null;
 
         // ---------- valuation ----------
@@ -203,13 +241,13 @@ public static class RowEvaluator
             acquisition,
             null,
             context.ObjectTypeId,
-            row.GroupLabel,
+            collectionGroupId,
             place,
-            Joined(ImportField.Dynasty),
+            dynastyId,
             mapped.Of(ImportField.Exhibitions).Select(v => v.Text).ToList(),
             Joined(ImportField.CatalogueEntryEn),
-            Joined(ImportField.Holder),
-            Joined(ImportField.StorageLocation),
+            holderId,
+            storageLocationId,
             valuation);
 
         var status = problems.Count > 0
@@ -219,7 +257,7 @@ public static class RowEvaluator
                 : ImportRowStatus.Ready;
 
         return new EvaluatedRow(row, inventoryNumber, status, request, mapped, problems, warnings, placeText,
-            dateValue?.Text, dateUnresolved);
+            dateValue?.Text, dateUnresolved, listTexts);
     }
 
     /// <summary>Date resolutions apply to every row with the same text, ignoring case and spacing.</summary>

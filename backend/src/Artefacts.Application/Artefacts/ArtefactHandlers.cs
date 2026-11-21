@@ -7,6 +7,8 @@ using Artefacts.Domain.Classification;
 using Artefacts.Domain.Common;
 using Artefacts.Domain.Dating;
 using Artefacts.Domain.Finance;
+using Artefacts.Domain.Lists;
+using Artefacts.Domain.Parties;
 
 namespace Artefacts.Application.Artefacts;
 
@@ -15,6 +17,8 @@ public sealed class ArtefactCommandHandler(
     IArtefactRepository artefacts,
     IRegionRepository regions,
     IObjectTypeRepository objectTypes,
+    IReferenceEntryRepository listEntries,
+    IPartyRepository parties,
     IContentLanguages contentLanguages,
     IUnitOfWork unitOfWork,
     ArtefactDetailQueryHandler detail)
@@ -94,7 +98,10 @@ public sealed class ArtefactCommandHandler(
         if (request.Acquisition is { } acq)
         {
             var price = acq.Price is { } p ? v.Try("acquisition.price", () => Money.Create(p.Amount, p.Currency)) : null;
-            var acquisition = v.Try("acquisition", () => Acquisition.Create(acq.Method, acq.Date, acq.Source, price, acq.Lot, acq.Note));
+            PartyId? sourceId = acq.SourceId is { } s ? new PartyId(s) : null;
+            if (sourceId is { } sid && await parties.GetAsync(sid, ct) is null)
+                v.Add("acquisition.sourceId", "The party does not exist.");
+            var acquisition = v.Try("acquisition", () => Acquisition.Create(acq.Method, acq.Date, sourceId, price, acq.Lot, acq.Note));
             if (acquisition is not null) artefact.SetAcquisition(acquisition);
         }
         else
@@ -130,19 +137,35 @@ public sealed class ArtefactCommandHandler(
         ObjectTypeId? objectTypeId = request.ObjectTypeId is { } t ? new ObjectTypeId(t) : null;
         if (objectTypeId is { } typeId && await objectTypes.GetAsync(typeId, ct) is null)
             v.Add("objectTypeId", "The object type does not exist.");
-        v.Try("", () => artefact.Classify(objectTypeId, request.CollectionGroup));
+        var collectionGroupId = await EntryAsync(ListKind.CollectionGroup, request.CollectionGroupId, "collectionGroupId", "collection group", v, ct);
+        v.Try("", () => artefact.Classify(objectTypeId, collectionGroupId));
 
         RegionId? placeRegion = request.PlaceOfProduction?.RegionId is { } r ? new RegionId(r) : null;
         if (placeRegion is { } regionId && await regions.GetAsync(regionId, ct) is null)
             v.Add("placeOfProduction.regionId", "The region does not exist.");
         var place = v.Try("", () => PlaceOfProduction.Create(request.PlaceOfProduction?.Text, placeRegion));
-        v.Try("", () => artefact.SetOrigin(place, request.Dynasty));
+        var dynastyId = await EntryAsync(ListKind.Dynasty, request.DynastyId, "dynastyId", "dynasty", v, ct);
+        v.Try("", () => artefact.SetOrigin(place, dynastyId));
 
         v.Try("", () => artefact.ReplaceExhibitions(request.Exhibitions ?? []));
         v.Try("", () => artefact.SetCatalogueEntry(request.CatalogueEntryEn));
 
         var valuation = request.Valuation is { } val ? v.Try("valuation", () => Money.Create(val.Amount, val.Currency)) : null;
-        v.Try("", () => artefact.SetHolding(request.Holder, request.StorageLocation, valuation));
+        PartyId? holderId = request.HolderId is { } h ? new PartyId(h) : null;
+        if (holderId is { } hid && await parties.GetAsync(hid, ct) is null)
+            v.Add("holderId", "The party does not exist.");
+        var locationId = await EntryAsync(ListKind.StorageLocation, request.StorageLocationId, "storageLocationId", "storage location", v, ct);
+        v.Try("", () => artefact.SetHolding(holderId, locationId, valuation));
+    }
+
+    /// <summary>The id of an entry of <paramref name="kind"/>, or a validation error naming the field when there is no such entry.</summary>
+    private async Task<ReferenceEntryId?> EntryAsync(
+        ListKind kind, Guid? id, string field, string noun, ValidationCollector v, CancellationToken ct)
+    {
+        if (id is not { } value) return null;
+        var entryId = new ReferenceEntryId(value);
+        if (await listEntries.GetAsync(kind, entryId, ct) is null) v.Add(field, $"The {noun} does not exist.");
+        return entryId;
     }
 
     private async Task EnsureUniqueInventoryNumberAsync(string inventoryNumber, ArtefactId? excluding, ValidationCollector v, CancellationToken ct)
@@ -157,6 +180,8 @@ public sealed class ArtefactDetailQueryHandler(
     IArtefactRepository artefacts,
     IRegionRepository regions,
     IObjectTypeRepository objectTypes,
+    IReferenceEntryRepository listEntries,
+    IPartyRepository parties,
     ILanguagePreferences preferences,
     IMediaAssetRepository mediaAssets,
     IImageUrlBuilder imageUrls)
@@ -172,6 +197,13 @@ public sealed class ArtefactDetailQueryHandler(
         var languages = preferences.Current;
         var description = a.DescriptionIn(languages);
         var assetMap = await mediaAssets.GetManyAsync(a.Images.Select(i => i.MediaAssetId), ct);
+        var entryMap = await listEntries.GetManyAsync(
+            new[] { a.CollectionGroupId, a.DynastyId, a.StorageLocationId }.OfType<ReferenceEntryId>(), ct);
+        var partyMap = await parties.GetManyAsync(new[] { a.HolderId, a.Acquisition?.SourceId }.OfType<PartyId>(), ct);
+        NamedRefDto? Entry(ReferenceEntryId? id) =>
+            id is { } e && entryMap.TryGetValue(e, out var entry) ? new NamedRefDto(e.Value, entry.NameIn(languages)?.Text ?? "") : null;
+        PartyRefDto? PartyRef(PartyId? id) =>
+            id is { } pid && partyMap.TryGetValue(pid, out var party) ? new PartyRefDto(pid.Value, party.Name, party.Kind) : null;
 
         var images = a.Images
             .Where(i => assetMap.ContainsKey(i.MediaAssetId))
@@ -196,7 +228,7 @@ public sealed class ArtefactDetailQueryHandler(
             a.Translations.Where(t => t.Description is not null).ToDictionary(t => t.Language, t => t.Description!),
             languages.FirstOrDefault() ?? "",
             a.Acquisition is { } acq
-                ? new AcquisitionDto(acq.Method, acq.Date, acq.Source,
+                ? new AcquisitionDto(acq.Method, acq.Date, PartyRef(acq.SourceId),
                     acq.Price is { } p ? new MoneyDto(p.Amount, p.Currency) : null, acq.Lot, acq.Note)
                 : null,
             a.Provenance
@@ -209,18 +241,18 @@ public sealed class ArtefactDetailQueryHandler(
             images.SingleOrDefault(i => i.IsPrimary),
             images,
             objectType is null ? null : new NamedRefDto(objectType.Id.Value, objectType.NameIn(languages)?.Text ?? ""),
-            a.CollectionGroup,
+            Entry(a.CollectionGroupId),
             a.PlaceOfProduction is { } place
                 ? new PlaceOfProductionDto(place.Text,
                     place.RegionId is { } pr && regionMap.TryGetValue(pr, out var placeRegion)
                         ? new NamedRefDto(placeRegion.Id.Value, placeRegion.NameIn(languages)?.Text ?? "")
                         : null)
                 : null,
-            a.Dynasty,
+            Entry(a.DynastyId),
             a.Exhibitions.Select(e => e.Text).ToList(),
             a.CatalogueEntryEn,
-            a.Holder,
-            a.StorageLocation,
+            PartyRef(a.HolderId),
+            Entry(a.StorageLocationId),
             a.Valuation is { } val ? new MoneyDto(val.Amount, val.Currency) : null);
     }
 }

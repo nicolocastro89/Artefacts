@@ -12,7 +12,7 @@ export const acquisitionFields: WidgetNode = {
   bindings: {
     method: 'acquisition.method',
     date: 'acquisition.date',
-    source: 'acquisition.source',
+    source: 'acquisition.source.name',
     lot: 'acquisition.lot',
     price: 'acquisition.price',
   },
@@ -38,10 +38,10 @@ export const classificationSection: LayoutNode = {
       widgetId: 'field-list',
       bindings: {
         objectType: 'objectType.name',
-        collectionGroup: 'collectionGroup',
+        collectionGroup: 'collectionGroup.name',
         place: 'placeOfProduction.text',
         region: 'placeOfProduction.region.name',
-        dynasty: 'dynasty',
+        dynasty: 'dynasty.name',
       },
       config: {
         labels: {
@@ -66,7 +66,7 @@ export const holdingSection: LayoutNode = {
       type: 'widget',
       id: 'holding-fields',
       widgetId: 'field-list',
-      bindings: { holder: 'holder', storageLocation: 'storageLocation', valuation: 'valuation' },
+      bindings: { holder: 'holder.name', storageLocation: 'storageLocation.name', valuation: 'valuation' },
       config: { labels: { holder: 'Holder', storageLocation: 'Storage location', valuation: 'Valuation' } },
     },
   ],

@@ -472,7 +472,8 @@ export function PreviewRows({ review }: { review: ImportReview }) {
   )
 }
 
-function TemplateSaver({ job, beforeSave }: { job: ImportJob; beforeSave: () => Promise<void> }) {
+/** Saves the job's mapping and decisions as a template (updating the job's template when the name is unchanged). */
+export function TemplateSaver({ job, beforeSave }: { job: ImportJob; beforeSave?: () => Promise<void> }) {
   const queryClient = useQueryClient()
   const nameId = useId()
   const [name, setName] = useState(job.template?.name ?? '')
@@ -481,7 +482,7 @@ function TemplateSaver({ job, beforeSave }: { job: ImportJob; beforeSave: () => 
   const save = async () => {
     setMessage(null)
     try {
-      await beforeSave()
+      await beforeSave?.()
       const existing = job.template && name.trim() === job.template.name
       const template = existing
         ? unwrap(await api.PUT('/api/import-templates/{id}', { params: { path: { id: job.template!.id } }, body: { name, fromJobId: job.id } }))

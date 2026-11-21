@@ -48,6 +48,32 @@ internal static class TestData
         return await response.ReadAsync<ObjectTypeDto>();
     }
 
+    /// <summary>Adds an entry to a translated list ("dynasties", "collection-groups") with names per language.</summary>
+    public static async Task<ReferenceEntryDto> AddListEntryAsync(this HttpClient client, string list, IReadOnlyDictionary<string, string?> names)
+    {
+        var response = await client.PostJsonAsync($"/api/lists/{list}", new ReferenceEntryNamesRequest(names));
+        response.EnsureSuccessStatusCode();
+        return await response.ReadAsync<ReferenceEntryDto>();
+    }
+
+    /// <summary>Adds an entry with an Italian name to a translated list, or with its single name to "storage-locations".</summary>
+    public static async Task<ReferenceEntryDto> AddListEntryAsync(this HttpClient client, string list, string name)
+    {
+        var request = list == "storage-locations"
+            ? new ReferenceEntryNamesRequest(Name: name)
+            : new ReferenceEntryNamesRequest(new Dictionary<string, string?> { ["it"] = name });
+        var response = await client.PostJsonAsync($"/api/lists/{list}", request);
+        response.EnsureSuccessStatusCode();
+        return await response.ReadAsync<ReferenceEntryDto>();
+    }
+
+    public static async Task<PartyDto> AddPartyAsync(this HttpClient client, string name, Domain.Parties.PartyKind kind = Domain.Parties.PartyKind.Organisation)
+    {
+        var response = await client.PostJsonAsync("/api/parties", new PartyRequest(name, kind));
+        response.EnsureSuccessStatusCode();
+        return await response.ReadAsync<PartyDto>();
+    }
+
     public static async Task<ArtefactDetail> UploadAsync(this HttpClient client, Guid artefactId, params (string Name, byte[] Bytes)[] files)
     {
         var response = await client.PostAsync($"/api/artefacts/{artefactId}/images", Multipart(files));

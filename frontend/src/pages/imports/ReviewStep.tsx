@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { api } from '../../api/client'
 import { unwrap } from '../../api/problem'
 import { errorMessage, fieldLabel, type ImportJob, type ImportRowStatus, type ReviewRow } from './importApi'
+import { TemplateSaver } from './MappingStep'
 import { StatusChip } from './parts'
 
 const FILTERS: { value: ImportRowStatus | null; label: string; count: (c: { total: number; ready: number; skipped: number; problems: number }) => number }[] = [
@@ -84,7 +85,7 @@ export function ReviewStep({ job }: { job: ImportJob }) {
             )}
           </p>
         </div>
-        <div className="seg" role="group" aria-label="Show rows">
+        <div className="seg imports__row-filter" role="group" aria-label="Show rows">
           {FILTERS.map((f) => (
             <button
               key={f.label}
@@ -129,6 +130,12 @@ export function ReviewStep({ job }: { job: ImportJob }) {
             Show more rows ({(total - rows.length).toLocaleString()} left)
           </button>
         )}
+      </section>
+      <section className="plate imports__section" aria-label="Template">
+        <p className="muted imports__section-sub">
+          Save the mapping with every place, list and date decision as a template, so the next workbook starts from them.
+        </p>
+        <TemplateSaver job={job} />
       </section>
       <div className="imports__actions">
         <p className="muted">Each row is saved on its own: problem rows are listed in the report and never hold up the others.</p>

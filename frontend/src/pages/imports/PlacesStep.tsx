@@ -117,7 +117,7 @@ export function PlacesStep({ job, onDone }: { job: ImportJob; onDone: () => void
             </p>
           )}
           <button type="button" className="btn btn--primary" disabled={saving} onClick={() => void save()}>
-            Save and continue to dates <ArrowRight aria-hidden="true" />
+            Save and continue to lists <ArrowRight aria-hidden="true" />
           </button>
         </div>
       </div>

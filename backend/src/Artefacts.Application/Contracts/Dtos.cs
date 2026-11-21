@@ -1,6 +1,8 @@
 using Artefacts.Domain.Catalogue;
 using Artefacts.Domain.Dating;
+using Artefacts.Domain.Lists;
 using Artefacts.Domain.Media;
+using Artefacts.Domain.Parties;
 
 namespace Artefacts.Application.Contracts;
 
@@ -25,10 +27,13 @@ public sealed record PagedResult<T>(IReadOnlyList<T> Items, int Total, int Page,
 // ---------- Artefacts ----------
 
 public sealed record AcquisitionDto(
-    AcquisitionMethod Method, DateOnly? Date, string? Source, MoneyDto? Price, string? Lot = null, string? Note = null);
+    AcquisitionMethod Method, DateOnly? Date, PartyRefDto? Source, MoneyDto? Price, string? Lot = null, string? Note = null);
 
 /// <summary>A reference to another aggregate together with its current display name.</summary>
 public sealed record NamedRefDto(Guid Id, string Name);
+
+/// <summary>A reference to a party with its name and kind.</summary>
+public sealed record PartyRefDto(Guid Id, string Name, PartyKind Kind);
 
 /// <summary>Where an artefact was made: the text as written and the linked region, if any.</summary>
 public sealed record PlaceOfProductionDto(string? Text, NamedRefDto? Region);
@@ -62,13 +67,13 @@ public sealed record ArtefactDetail(
     ArtefactImageDto? PrimaryImage,
     IReadOnlyList<ArtefactImageDto> Images,
     NamedRefDto? ObjectType,
-    string? CollectionGroup,
+    NamedRefDto? CollectionGroup,
     PlaceOfProductionDto? PlaceOfProduction,
-    string? Dynasty,
+    NamedRefDto? Dynasty,
     IReadOnlyList<string> Exhibitions,
     string? CatalogueEntryEn,
-    string? Holder,
-    string? StorageLocation,
+    PartyRefDto? Holder,
+    NamedRefDto? StorageLocation,
     MoneyDto? Valuation);
 
 public sealed record ArtefactListItem(
@@ -130,7 +135,7 @@ public sealed record ArtefactListRequest(
     ArtefactGrouping Group = ArtefactGrouping.None);
 
 public sealed record AcquisitionInput(
-    AcquisitionMethod Method, DateOnly? Date, string? Source, MoneyDto? Price, string? Lot = null, string? Note = null);
+    AcquisitionMethod Method, DateOnly? Date, Guid? SourceId, MoneyDto? Price, string? Lot = null, string? Note = null);
 
 public sealed record PlaceOfProductionInput(string? Text, Guid? RegionId = null);
 
@@ -147,16 +152,38 @@ public sealed record ArtefactWriteRequest(
     AcquisitionInput? Acquisition = null,
     IReadOnlyList<ProvenanceEntryInput>? Provenance = null,
     Guid? ObjectTypeId = null,
-    string? CollectionGroup = null,
+    Guid? CollectionGroupId = null,
     PlaceOfProductionInput? PlaceOfProduction = null,
-    string? Dynasty = null,
+    Guid? DynastyId = null,
     IReadOnlyList<string>? Exhibitions = null,
     string? CatalogueEntryEn = null,
-    string? Holder = null,
-    string? StorageLocation = null,
+    Guid? HolderId = null,
+    Guid? StorageLocationId = null,
     MoneyDto? Valuation = null);
 
 public sealed record SetCaptionRequest(string? Caption);
+
+// ---------- Lists and parties ----------
+
+/// <summary>
+/// An entry of a managed list. <see cref="Name"/> is resolved in the reader's language; translated lists (dynasties,
+/// collection groups) also give <see cref="NameLanguage"/> and every <see cref="Names"/>, storage locations neither.
+/// </summary>
+public sealed record ReferenceEntryDto(
+    Guid Id, ListKind Kind, string Name, string? NameLanguage, IReadOnlyDictionary<string, string>? Names, int ArtefactCount);
+
+/// <summary>Names per language for dynasties and collection groups, or the single name of a storage location.</summary>
+public sealed record ReferenceEntryNamesRequest(IReadOnlyDictionary<string, string?>? Names = null, string? Name = null);
+
+public sealed record AddReferenceEntryResult(ReferenceEntryDto Entry, bool Created);
+
+/// <summary>A party with the number of artefacts acquired from it and held by it.</summary>
+public sealed record PartyDto(Guid Id, string Name, PartyKind Kind, int SourceCount, int HolderCount);
+
+/// <summary>A party's name and kind (organisation when adding without a kind; kept when updating without one).</summary>
+public sealed record PartyRequest(string? Name, PartyKind? Kind = null);
+
+public sealed record AddPartyResult(PartyDto Party, bool Created);
 
 // ---------- Object types ----------
 

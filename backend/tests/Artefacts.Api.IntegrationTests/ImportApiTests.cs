@@ -218,6 +218,154 @@ public class ImportApiTests(ApiFactory factory)
         Assert.Equal(ImportJobState.AwaitingMapping, (await _client.GetImportAsync(job.Id)).State);
     }
 
+    // ---------- list values and parties ----------
+
+    [Fact]
+    public async Task List_texts_are_listed_with_counts_exact_matches_and_suggestions()
+    {
+        var token = HttpExtensions.Unique("x");
+        var safavide = await _client.AddListEntryAsync("dynasties",
+            new Dictionary<string, string?> { ["it"] = $"Safavide {token}", ["en"] = $"Safavid {token}" });
+        var job = await _client.StartImportAsync(ImportTestData.Ceramics(
+            ("01. Coppa", $"Iran\nXVI\nSafavide {token}", $"Sotheby's {token}\n12 06 1990"),
+            ("02. Piatto", $"Iran\nXVI\nSfavide {token}", null),
+            ("03. Vaso", $"Iran\nXVI\nSfavide {token}", null)).Build(), await ObjectTypeAsync());
+
+        var lists = await _client.ListsAsync(job.Id);
+
+        Assert.Equal([ImportList.CollectionGroup, ImportList.Dynasty, ImportList.StorageLocation, ImportList.Party], lists.Select(l => l.List));
+        var dynasties = lists.Single(l => l.List == ImportList.Dynasty);
+        var exact = dynasties.Values.Single(v => v.Text == $"Safavide {token}");
+        Assert.Equal((1, false, safavide.Id), (exact.Rows, exact.Decided, exact.Decision!.EntryId));
+        var variant = dynasties.Values.Single(v => v.Text == $"Sfavide {token}");
+        Assert.Equal(2, variant.Rows);
+        Assert.Null(variant.Decision);
+        Assert.Equal(safavide.Id, variant.Suggestions[0].EntryId);
+        Assert.Equal(1, dynasties.Undecided);
+        Assert.Equal(3, lists.Single(l => l.List == ImportList.CollectionGroup).Values.Single(v => v.Text == "CINA").Rows);
+        var parties = lists.Single(l => l.List == ImportList.Party).Values;
+        Assert.Equal([ImportField.AcquisitionSource], parties.Single(v => v.Text == $"Sotheby's {token}").Fields);
+        // "GE" in the holding column is a location code.
+        Assert.Equal([ImportField.StorageLocation], lists.Single(l => l.List == ImportList.StorageLocation).Values.Single(v => v.Text == "GE").Fields);
+    }
+
+    [Fact]
+    public async Task Undecided_list_text_holds_back_its_rows_until_linked()
+    {
+        var token = HttpExtensions.Unique("x");
+        var safavide = await _client.AddListEntryAsync("dynasties", $"Safavide {token}");
+        var job = await _client.StartImportAsync(ImportTestData.Ceramics(
+            ("01. Coppa", $"Iran\nXVI\nSfavide {token}", null), ("02. Piatto", "Iran\nXVI", null)).Build(), await ObjectTypeAsync());
+        await _client.UseUniqueNumbersAsync(job, decideLists: false);
+        var before = (await _client.ReviewAsync(job.Id)).Rows.Single(r => r.SheetRow == 3);
+        Assert.Equal(ImportRowStatus.Problem, before.Status);
+        Assert.Equal($"Sfavide {token}", before.Problems.Single(p => p.Field == "dynasty").Text);
+
+        var linked = await _client.SetListsAsync(job.Id, new ListDecision(ImportList.Dynasty, $"sfavide {token}", ListAction.Link, safavide.Id));
+
+        var value = linked.Single(l => l.List == ImportList.Dynasty).Values.Single();
+        Assert.True(value.Decided);
+        Assert.Equal(safavide.Id, value.Decision!.EntryId);
+        var row = (await _client.ReviewAsync(job.Id)).Rows.Single(r => r.SheetRow == 3);
+        Assert.DoesNotContain(row.Problems, p => p.Field == "dynasty");
+        // The review shows the text as written and the entry it links to.
+        Assert.Contains(row.Fields, f => f.Field == ImportField.Dynasty && f.Value == $"Sfavide {token} → {safavide.Name}");
+    }
+
+    [Fact]
+    public async Task List_decisions_are_validated()
+    {
+        var job = await _client.StartImportAsync(ImportTestData.Ceramics(("01. Coppa", "Iran\nXVI", null)).Build(), await ObjectTypeAsync());
+
+        var response = await _client.PutJsonAsync($"/api/imports/{job.Id}/lists", new SetListDecisionsRequest(
+        [
+            new ListDecision(ImportList.Dynasty, "Sfavide", ListAction.Link),
+            new ListDecision(ImportList.Party, "Rossi", ListAction.Create, Name: "Rossi"),
+            new ListDecision(ImportList.Dynasty, "Nuova", ListAction.Create, Names: new Dictionary<string, string?> { ["it"] = " " }),
+            new ListDecision(ImportList.StorageLocation, "Beta2", ListAction.Link, Guid.NewGuid()),
+            new ListDecision(ImportList.StorageLocation, "Beta3", ListAction.Create),
+        ]));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var errors = await response.ValidationErrorsAsync();
+        foreach (var key in new[] { "lists[0].entryId", "lists[1].partyKind", "lists[2].names", "lists[3].entryId", "lists[4].name" })
+            Assert.True(errors.ContainsKey(key), $"{key} missing in {string.Join(", ", errors.Keys)}");
+    }
+
+    [Fact]
+    public async Task Entries_and_parties_marked_for_creation_are_created_once_and_linked_from_every_row()
+    {
+        var token = HttpExtensions.Unique("x");
+        var dynasty = $"Ilkhanide {token}";
+        var seller = $"Rossi Antiquariato {token}";
+        var job = await _client.StartImportAsync(ImportTestData.Ceramics(
+            ("01. Coppa", $"Iran\nXIV\n{dynasty}", $"{seller}\n12 06 1990"),
+            ("02. Piatto", $"Iran\nXIV\n{dynasty}", $"{seller}\n13 06 1990")).Build(), await ObjectTypeAsync());
+        await _client.SetListsAsync(job.Id,
+            new ListDecision(ImportList.Dynasty, dynasty, ListAction.Create, Names: new Dictionary<string, string?> { ["it"] = dynasty, ["en"] = $"Ilkhanid {token}" }),
+            new ListDecision(ImportList.Party, seller, ListAction.Create, Name: seller, PartyKind: Domain.Parties.PartyKind.Organisation));
+        await _client.UseUniqueNumbersAsync(job);
+
+        var finished = await _client.CommitAndWaitAsync(job.Id);
+
+        Assert.Equal(2, finished.ImportedRows);
+        var entry = Assert.Single(await (await _client.GetAsync($"/api/lists/dynasties?search={Uri.EscapeDataString(token)}")).ReadAsync<List<ReferenceEntryDto>>());
+        Assert.Equal(2, entry.ArtefactCount);
+        Assert.Equal($"Ilkhanid {token}", entry.Names!["en"]);
+        var party = Assert.Single(await (await _client.GetAsync($"/api/parties?search={Uri.EscapeDataString(seller)}")).ReadAsync<List<PartyDto>>());
+        Assert.Equal((2, Domain.Parties.PartyKind.Organisation), (party.SourceCount, party.Kind));
+        var report = await (await _client.GetAsync($"/api/imports/{job.Id}/report")).ReadAsync<ImportReportDto>();
+        foreach (var row in report.Rows)
+        {
+            var artefact = await (await _client.GetAsync($"/api/artefacts/{row.ArtefactId}")).ReadAsync<ArtefactDetail>();
+            Assert.Equal(entry.Id, artefact.Dynasty!.Id);
+            Assert.Equal(party.Id, artefact.Acquisition!.Source!.Id);
+        }
+
+        // The ids are recorded on the job.
+        Assert.All((await _client.GetImportAsync(job.Id)).Decisions.Lists.Where(d => d.Action == ListAction.Create), d => Assert.NotNull(d.EntryId));
+    }
+
+    [Fact]
+    public async Task Committed_import_teaches_its_template_its_decisions()
+    {
+        var token = HttpExtensions.Unique("x");
+        var type = await ObjectTypeAsync();
+        var safavide = await _client.AddListEntryAsync("dynasties", $"Safavide {token}");
+        var china = await _client.AddRegionAsync(HttpExtensions.Unique("China"));
+        var seed = await _client.StartImportAsync(ImportTestData.Ceramics(("01. Coppa", "Iran\nXV", null)).Build(), type);
+        await _client.PutJsonAsync($"/api/imports/{seed.Id}/places", new SetPlaceDecisionsRequest([new PlaceDecision("Iran", PlaceAction.Keep)]));
+        var template = await (await _client.PostJsonAsync("/api/import-templates",
+            new SaveImportTemplateRequest(HttpExtensions.Unique("Collection workbook 2024"), seed.Id))).ReadAsync<ImportTemplateDto>();
+
+        var first = await _client.StartImportAsync(ImportTestData.Ceramics(
+            ("01. Coppa", $"Cina {token}\nXVI\nSfavide {token}", null),
+            ("02. Piatto", $"Cina {token}\nXVI\nNuova {token}", null)).Build(), type, templateId: template.Id);
+        await _client.SetListsAsync(first.Id,
+            new ListDecision(ImportList.Dynasty, $"Sfavide {token}", ListAction.Link, safavide.Id),
+            ImportTestData.CreateDecision(ImportList.Dynasty, $"Nuova {token}"));
+        await _client.PutJsonAsync($"/api/imports/{first.Id}/places",
+            new SetPlaceDecisionsRequest([new PlaceDecision($"Cina {token}", PlaceAction.Link, china.Id)]));
+        await _client.UseUniqueNumbersAsync(first);
+        Assert.Equal(2, (await _client.CommitAndWaitAsync(first.Id)).ImportedRows);
+
+        var second = await _client.StartImportAsync(ImportTestData.Ceramics(
+            ("01. Tappeto", $"Cina {token}\nXVI\nSfavide {token}", null),
+            ("02. Tappeto", $"Cina {token}\nXVI\nNuova {token}", null)).Build(), type, "tessuti.xlsx", template.Id);
+
+        var dynasties = (await _client.ListsAsync(second.Id)).Single(l => l.List == ImportList.Dynasty).Values;
+        var sfavide = dynasties.Single(v => v.Text == $"Sfavide {token}");
+        Assert.True(sfavide.Decided);
+        Assert.Equal((ListAction.Link, safavide.Id), (sfavide.Decision!.Action, sfavide.Decision.EntryId));
+        // The entry created by the first import is linked, not created again.
+        var created = Assert.Single(await (await _client.GetAsync($"/api/lists/dynasties?search={Uri.EscapeDataString("Nuova " + token)}")).ReadAsync<List<ReferenceEntryDto>>());
+        Assert.Equal(created.Id, dynasties.Single(v => v.Text == $"Nuova {token}").Decision!.EntryId);
+        // Place decisions are learned too, and the template's earlier decisions are kept.
+        var learned = await (await _client.GetAsync($"/api/import-templates/{template.Id}")).ReadAsync<ImportTemplateDto>();
+        Assert.Contains(learned.Decisions.Places, p => p.Text == $"Cina {token}" && p.RegionId == china.Id);
+        Assert.Contains(learned.Decisions.Places, p => p is { Text: "Iran", Action: PlaceAction.Keep });
+    }
+
     // ---------- commit ----------
 
     [Fact]
@@ -243,7 +391,9 @@ public class ImportApiTests(ApiFactory factory)
         var artefact = await (await _client.GetAsync($"/api/artefacts/{first.ArtefactId}")).ReadAsync<ArtefactDetail>();
         Assert.Equal(prefix + "-01-01", artefact.InventoryNumber);
         Assert.Equal("Coppa Celadon", artefact.Title);
-        Assert.Equal("CINA", artefact.CollectionGroup);
+        Assert.Equal("CINA", artefact.CollectionGroup!.Name);
+        Assert.Equal("Sotheby's London", artefact.Acquisition!.Source!.Name);
+        Assert.Equal("GE", artefact.StorageLocation!.Name);
         Assert.Equal("fine XII inizio XIII", artefact.CreationDate!.Display);
         Assert.Equal(7865m, artefact.Acquisition!.Price!.Amount);
         Assert.Equal(2, artefact.Images.Count);

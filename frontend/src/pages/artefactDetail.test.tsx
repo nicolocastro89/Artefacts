@@ -27,7 +27,7 @@ const artefact = {
   medium: 'Oil on panel',
   dimensions: '52 × 41 cm',
   description: null,
-  acquisition: { method: 'purchase', date: '1998-03-02', source: 'Private collection', price: { amount: 12000, currency: 'EUR' } },
+  acquisition: { method: 'purchase', date: '1998-03-02', source: { id: 'p1', name: 'Private collection', kind: 'person' }, price: { amount: 12000, currency: 'EUR' } },
   provenance: [
     { regionId: 'r1', regionName: 'Flanders', period: { display: 'c. 1650', earliestYear: 1640, latestYear: 1660, precision: 'approximate' }, note: 'Painted here' },
     { regionId: 'r2', regionName: 'Paris', period: { display: '1780s', earliestYear: 1780, latestYear: 1789, precision: 'decade' }, note: null },

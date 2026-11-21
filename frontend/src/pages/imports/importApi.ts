@@ -16,6 +16,10 @@ export type ImportRowStatus = Schemas['ImportRowStatus']
 export type ImportPlace = Schemas['ImportPlaceDto']
 export type PlaceDecision = Schemas['PlaceDecision']
 export type ImportDate = Schemas['ImportDateDto']
+export type ImportList = Schemas['ImportList']
+export type ImportListGroup = Schemas['ImportListGroupDto']
+export type ImportListValue = Schemas['ImportListValueDto']
+export type ListDecision = Schemas['ListDecision']
 export type ImportTemplate = Schemas['ImportTemplateDto']
 export type ImportReport = Schemas['ImportReportDto']
 
@@ -43,6 +47,7 @@ export const FIELDS: { value: ImportField; label: string }[] = [
   { value: 'holder', label: 'Holder' },
   { value: 'storageLocation', label: 'Storage location' },
   { value: 'valuation', label: 'Valuation' },
+  { value: 'collectionGroup', label: 'Collection group' },
 ]
 
 export const DETECTORS: { value: LineDetector; label: string; example: string }[] = [

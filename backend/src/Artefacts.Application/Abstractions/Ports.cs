@@ -4,7 +4,9 @@ using Artefacts.Domain.Classification;
 using Artefacts.Domain.Common;
 using Artefacts.Domain.Imports;
 using Artefacts.Domain.Languages;
+using Artefacts.Domain.Lists;
 using Artefacts.Domain.Media;
+using Artefacts.Domain.Parties;
 using Artefacts.Domain.Regions;
 
 namespace Artefacts.Application.Abstractions;
@@ -37,6 +39,42 @@ public interface IObjectTypeRepository
     Task<IReadOnlyList<ObjectType>> SearchAsync(string? text, CancellationToken ct);
     void Add(ObjectType objectType);
     void Remove(ObjectType objectType);
+}
+
+public interface IReferenceEntryRepository
+{
+    Task<ReferenceEntry?> GetAsync(ListKind kind, ReferenceEntryId id, CancellationToken ct);
+    Task<IReadOnlyDictionary<ReferenceEntryId, ReferenceEntry>> GetManyAsync(IEnumerable<ReferenceEntryId> ids, CancellationToken ct);
+
+    /// <summary>
+    /// The entry of the list whose name normalises to <paramref name="normalizedName"/>: in <paramref name="language"/>
+    /// (any language when null) for translated lists, its single name otherwise.
+    /// </summary>
+    Task<ReferenceEntry?> FindByNameAsync(ListKind kind, string? language, string normalizedName, CancellationToken ct);
+
+    /// <summary>Entries of the list with a name in any language containing <paramref name="text"/> (all when empty).</summary>
+    Task<IReadOnlyList<ReferenceEntry>> SearchAsync(ListKind kind, string? text, CancellationToken ct);
+
+    /// <summary>The number of artefacts that use each entry of the list.</summary>
+    Task<IReadOnlyDictionary<ReferenceEntryId, int>> CountUsesAsync(ListKind kind, CancellationToken ct);
+    void Add(ReferenceEntry entry);
+    void Remove(ReferenceEntry entry);
+}
+
+/// <summary>How many artefacts use a party as acquisition source and as holder.</summary>
+public readonly record struct PartyUses(int Source, int Holder);
+
+public interface IPartyRepository
+{
+    Task<Party?> GetAsync(PartyId id, CancellationToken ct);
+    Task<IReadOnlyDictionary<PartyId, Party>> GetManyAsync(IEnumerable<PartyId> ids, CancellationToken ct);
+    Task<Party?> FindByNameAsync(string normalizedName, CancellationToken ct);
+
+    /// <summary>Parties whose name contains <paramref name="text"/>, optionally of one kind, ordered by name.</summary>
+    Task<IReadOnlyList<Party>> SearchAsync(string? text, PartyKind? kind, CancellationToken ct);
+    Task<IReadOnlyDictionary<PartyId, PartyUses>> CountUsesAsync(CancellationToken ct);
+    void Add(Party party);
+    void Remove(Party party);
 }
 
 public interface IRegionRepository

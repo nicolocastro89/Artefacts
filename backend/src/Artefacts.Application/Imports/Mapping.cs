@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using Artefacts.Domain.Catalogue;
+using Artefacts.Domain.Parties;
 
 namespace Artefacts.Application.Imports;
 
@@ -28,6 +29,9 @@ public enum ImportField
     Holder = 19,
     StorageLocation = 20,
     Valuation = 21,
+
+    /// <summary>The collection group, when a column holds it (otherwise the group heading above the row gives it).</summary>
+    CollectionGroup = 22,
 }
 
 /// <summary>
@@ -89,10 +93,58 @@ public sealed record PlaceDecision(
 /// <summary>A year range given for a date text the rules do not understand.</summary>
 public sealed record DateResolution(string Text, int EarliestYear, int LatestYear);
 
-/// <summary>Place and date decisions, stored on the job and copied into templates.</summary>
-public sealed record ImportDecisions(IReadOnlyList<PlaceDecision> Places, IReadOnlyList<DateResolution> Dates)
+/// <summary>The managed lists a workbook text is curated against. Acquisition source and holder share <see cref="Party"/>.</summary>
+public enum ImportList
 {
-    public static readonly ImportDecisions Empty = new([], []);
+    CollectionGroup = 0,
+    Dynasty = 1,
+    StorageLocation = 2,
+    Party = 3,
+}
+
+public enum ListAction
+{
+    /// <summary>Link the text to an existing entry (or party).</summary>
+    Link = 0,
+
+    /// <summary>Create an entry (or party) when the import is committed, and link it.</summary>
+    Create = 1,
+}
+
+/// <summary>
+/// What to do with one distinct text of a list. Decisions match on the normalised text within the list. For
+/// <see cref="ListAction.Create"/>: <see cref="Names"/> per language for dynasties and collection groups,
+/// <see cref="Name"/> for storage locations and parties, and <see cref="PartyKind"/> for parties;
+/// <see cref="EntryId"/> is filled once the entry exists.
+/// </summary>
+public sealed record ListDecision(
+    ImportList List,
+    string Text,
+    ListAction Action,
+    Guid? EntryId = null,
+    IReadOnlyDictionary<string, string?>? Names = null,
+    string? Name = null,
+    PartyKind? PartyKind = null);
+
+/// <summary>Place, date and list decisions, stored on the job and copied into templates.</summary>
+public sealed record ImportDecisions(IReadOnlyList<PlaceDecision> Places, IReadOnlyList<DateResolution> Dates, IReadOnlyList<ListDecision> Lists)
+{
+    public static readonly ImportDecisions Empty = new([], [], []);
+
+    /// <summary>
+    /// These decisions with <paramref name="newer"/> laid over them: per place text, date text, and list and text,
+    /// the newer decision wins; decisions only one side has are kept.
+    /// </summary>
+    public ImportDecisions MergedWith(ImportDecisions newer)
+    {
+        var places = new Dictionary<string, PlaceDecision>();
+        foreach (var d in Places.Concat(newer.Places)) places[NameMatcher.Normalize(d.Text)] = d;
+        var dates = new Dictionary<string, DateResolution>();
+        foreach (var d in Dates.Concat(newer.Dates)) dates[RowEvaluator.DateKey(d.Text)] = d;
+        var lists = new Dictionary<(ImportList, string), ListDecision>();
+        foreach (var d in Lists.Concat(newer.Lists)) lists[(d.List, NameMatcher.Normalize(d.Text))] = d;
+        return new ImportDecisions(places.Values.ToList(), dates.Values.ToList(), lists.Values.ToList());
+    }
 }
 
 /// <summary>A value assigned to a field from one line (or part of a line) of a cell.</summary>

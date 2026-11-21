@@ -526,7 +526,8 @@
   color: var(--warning);
 }
 
-.imports__review-head {
+.imports__review-head,
+.imports__list-head {
   display: flex;
   flex-wrap: wrap;
   gap: var(--s2) var(--s4);
@@ -748,4 +749,15 @@
   .imports__years {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+.imports__list-filter {
+  justify-self: start;
+}
+
+/* The row filter wraps on narrow screens rather than cutting off its last buttons. */
+.imports__row-filter {
+  flex-wrap: wrap;
+  justify-self: start;
+  max-width: 100%;
 }

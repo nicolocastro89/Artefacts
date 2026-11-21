@@ -63,7 +63,19 @@ internal static class ImportEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
 
-        g.MapGet("/{id:guid}/dates", async (Guid id, ImportHandler h, CancellationToken ct) => TypedResults.Ok(await h.DatesAsync(id, ct)))
+        g.MapGet("/{id:guid}/lists", async (Guid id, ImportHandler h, CancellationToken ct) => TypedResults.Ok(await h.ListsAsync(id, ct)))
+            .WithName("getImportLists")
+            .WithSummary("The workbook's collection group, dynasty, storage location and party texts with their decisions.")
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
+        g.MapPut("/{id:guid}/lists", async (Guid id, SetListDecisionsRequest request, ImportHandler h, CancellationToken ct) =>
+                TypedResults.Ok(await h.SetListsAsync(id, request, ct)))
+            .WithName("setImportLists")
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+
+        g.MapGet("/{id:guid}/dates",async (Guid id, ImportHandler h, CancellationToken ct) => TypedResults.Ok(await h.DatesAsync(id, ct)))
             .WithName("getImportDates")
             .ProducesProblem(StatusCodes.Status404NotFound);
 
