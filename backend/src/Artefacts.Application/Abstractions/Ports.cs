@@ -6,6 +6,7 @@ using Artefacts.Domain.Imports;
 using Artefacts.Domain.Languages;
 using Artefacts.Domain.Lists;
 using Artefacts.Domain.Media;
+using Artefacts.Domain.Pages;
 using Artefacts.Domain.Parties;
 using Artefacts.Domain.Queries;
 using Artefacts.Domain.Regions;
@@ -216,6 +217,18 @@ public interface IStoredQueryRepository
 
     void Add(StoredQuery query);
     void Remove(StoredQuery query);
+}
+
+public interface IStoredPageRepository
+{
+    Task<StoredPage?> GetAsync(string id, CancellationToken ct);
+    Task<StoredPage?> GetBySlugAsync(string slug, CancellationToken ct);
+
+    /// <summary>Every stored page, system pages first, then by name; only those shown in navigation when asked.</summary>
+    Task<IReadOnlyList<StoredPage>> ListAsync(bool navigationOnly, CancellationToken ct);
+
+    void Add(StoredPage page);
+    void Remove(StoredPage page);
 }
 
 public interface IImportTemplateRepository

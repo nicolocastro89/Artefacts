@@ -50,6 +50,10 @@
   gap: 2px;
 }
 
+.rail__nav--pages {
+  margin-top: var(--s4);
+}
+
 .rail__link {
   display: flex;
   align-items: center;
@@ -186,6 +190,13 @@
   .rail__nav {
     display: flex;
     gap: 2px;
+  }
+
+  /* Custom pages follow the sections in the bar and scroll sideways when there are many. */
+  .rail__nav--pages {
+    margin-top: 0;
+    min-width: 0;
+    overflow-x: auto;
   }
 
   .rail__count {

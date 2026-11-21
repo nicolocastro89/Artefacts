@@ -6,9 +6,7 @@ import { languagesRoute, mockFetch, problem } from '../test/fetchMock'
 import { artefactListRoutes, sentVariables } from '../test/queryFixtures'
 import { artefactDetailRoutes } from '../test/queryFixtures'
 import { renderWithProviders } from '../test/render'
-import { artefactDetailPage } from './definitions/artefactDetail'
 import { artefactNewPage } from './definitions/artefactEdit'
-import { artefactListPage } from './definitions/artefactList'
 import { ObjectTypesPage } from './ObjectTypesPage'
 import { PageRoute } from './PageRoute'
 
@@ -43,7 +41,7 @@ describe('grouped artefact list', () => {
     return renderWithProviders(
       <>
         <Routes>
-          <Route path="/artefacts" element={<PageRoute page={artefactListPage} />} />
+          <Route path="/artefacts" element={<PageRoute slug="artefact-list" />} />
         </Routes>
         <LocationSpy />
       </>,
@@ -139,7 +137,7 @@ describe('artefact detail with catalogue fields', () => {
     })
     renderWithProviders(
       <Routes>
-        <Route path="/artefacts/:id" element={<PageRoute page={artefactDetailPage} />} />
+        <Route path="/artefacts/:id" element={<PageRoute slug="artefact-detail" />} />
       </Routes>,
       { route: '/artefacts/a1' },
     )

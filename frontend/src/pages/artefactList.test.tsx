@@ -4,7 +4,6 @@ import { Route, Routes, useLocation } from 'react-router'
 import { mockFetch } from '../test/fetchMock'
 import { artefactListRoutes, sentVariables } from '../test/queryFixtures'
 import { renderWithProviders } from '../test/render'
-import { artefactListPage } from './definitions/artefactList'
 import { PageRoute } from './PageRoute'
 
 const urls = (n: string) => ({ thumb: `/img/${n}/thumb`, web: `/img/${n}/web`, print: `/img/${n}/print` })
@@ -25,7 +24,7 @@ function renderList(route = '/artefacts') {
   return renderWithProviders(
     <>
       <Routes>
-        <Route path="/artefacts" element={<PageRoute page={artefactListPage} />} />
+        <Route path="/artefacts" element={<PageRoute slug="artefact-list" />} />
         <Route path="/artefacts/:id" element={<p>Detail</p>} />
       </Routes>
       <LocationSpy />

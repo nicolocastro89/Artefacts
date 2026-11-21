@@ -6,7 +6,6 @@ import { readerLanguageOf } from '../app/languages'
 import { languagesRoute, mockFetch, problem } from '../test/fetchMock'
 import { artefactDetailRoutes } from '../test/queryFixtures'
 import { renderWithProviders } from '../test/render'
-import { artefactDetailPage } from './definitions/artefactDetail'
 import { artefactNewPage } from './definitions/artefactEdit'
 import { LanguagesPage } from './LanguagesPage'
 import { PageRoute } from './PageRoute'
@@ -155,7 +154,7 @@ describe('description per language', () => {
     })
     renderWithProviders(
       <Routes>
-        <Route path="/artefacts/:id" element={<PageRoute page={artefactDetailPage} />} />
+        <Route path="/artefacts/:id" element={<PageRoute slug="artefact-detail" />} />
       </Routes>,
       { route: '/artefacts/a1' },
     )
@@ -225,7 +224,7 @@ describe('catalogue entry per language', () => {
     })
     renderWithProviders(
       <Routes>
-        <Route path="/artefacts/:id" element={<PageRoute page={artefactDetailPage} />} />
+        <Route path="/artefacts/:id" element={<PageRoute slug="artefact-detail" />} />
       </Routes>,
       { route: '/artefacts/a1' },
     )

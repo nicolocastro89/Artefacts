@@ -5,6 +5,7 @@ using Artefacts.Domain.Imports;
 using Artefacts.Domain.Languages;
 using Artefacts.Domain.Lists;
 using Artefacts.Domain.Media;
+using Artefacts.Domain.Pages;
 using Artefacts.Domain.Parties;
 using Artefacts.Domain.Queries;
 using Artefacts.Domain.Regions;
@@ -25,6 +26,8 @@ public sealed class CollectionDbContext(DbContextOptions<CollectionDbContext> op
     public const string ReferenceEntrySingleNameIndex = "ux_reference_entries_kind_normalized_name";
     public const string PartyNameIndex = "ux_parties_normalized_name";
     public const string StoredQueryNameIndex = "ux_stored_queries_normalized_name";
+    public const string StoredPageNameIndex = "ux_stored_pages_normalized_name";
+    public const string StoredPageSlugIndex = "ux_stored_pages_slug";
 
     public DbSet<Artefact> Artefacts => Set<Artefact>();
     public DbSet<Region> Regions => Set<Region>();
@@ -37,6 +40,7 @@ public sealed class CollectionDbContext(DbContextOptions<CollectionDbContext> op
     public DbSet<ImportRow> ImportRows => Set<ImportRow>();
     public DbSet<ImportTemplate> ImportTemplates => Set<ImportTemplate>();
     public DbSet<StoredQuery> StoredQueries => Set<StoredQuery>();
+    public DbSet<StoredPage> StoredPages => Set<StoredPage>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder builder)
     {
@@ -296,6 +300,21 @@ public sealed class CollectionDbContext(DbContextOptions<CollectionDbContext> op
             b.Property(q => q.NormalizedName).HasMaxLength(StoredQuery.MaxNameLength).IsRequired();
             b.HasIndex(q => q.NormalizedName).IsUnique().HasDatabaseName(StoredQueryNameIndex);
             b.Property(q => q.Document).IsRequired();
+        });
+
+        model.Entity<StoredPage>(b =>
+        {
+            b.ToTable("stored_pages");
+            b.HasKey(p => p.Id);
+            b.Property(p => p.Id).HasMaxLength(64).ValueGeneratedNever();
+            b.Property(p => p.Slug).HasMaxLength(StoredPage.MaxSlugLength).IsRequired();
+            b.Property(p => p.Name).HasMaxLength(StoredPage.MaxNameLength).IsRequired();
+            b.Property(p => p.NormalizedName).HasMaxLength(StoredPage.MaxNameLength).IsRequired();
+            b.Property(p => p.NavigationLabel).HasMaxLength(StoredPage.MaxNavigationLabelLength);
+            // json, not jsonb: jsonb reorders object keys, and the order of a widget's bindings is the order its fields are shown in.
+            b.Property(p => p.Definition).HasColumnType("json").IsRequired();
+            b.HasIndex(p => p.Slug).IsUnique().HasDatabaseName(StoredPageSlugIndex);
+            b.HasIndex(p => p.NormalizedName).IsUnique().HasDatabaseName(StoredPageNameIndex);
         });
 
         model.Entity<ImportTemplate>(b =>

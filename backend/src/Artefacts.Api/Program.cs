@@ -63,6 +63,7 @@ app.MapPartyEndpoints();
 app.MapLanguageEndpoints();
 app.MapImportEndpoints();
 app.MapQueryEndpoints();
+app.MapPageEndpoints();
 app.MapSupportEndpoints();
 app.MapGraphQL("/graphql");
 

@@ -4,6 +4,7 @@ using Artefacts.Application.Media;
 using Artefacts.Application.Languages;
 using Artefacts.Application.Lists;
 using Artefacts.Application.ObjectTypes;
+using Artefacts.Application.Pages;
 using Artefacts.Application.Parties;
 using Artefacts.Application.Queries;
 using Artefacts.Application.Regions;
@@ -28,6 +29,8 @@ public static class DependencyInjection
         services.AddScoped<ImportHandler>();
         services.AddScoped<ImportTemplateHandler>();
         services.AddScoped<StoredQueryHandler>();
+        services.AddScoped<StoredPageValidator>();
+        services.AddScoped<StoredPageHandler>();
         services.AddSingleton<ImportProcessor>();
         return services;
     }

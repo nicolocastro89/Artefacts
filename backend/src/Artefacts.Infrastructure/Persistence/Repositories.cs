@@ -282,6 +282,10 @@ internal sealed class UnitOfWork(CollectionDbContext db) : IUnitOfWork
                     new DomainValidationException("name", "Another party already has this name."),
                 { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: CollectionDbContext.StoredQueryNameIndex } =>
                     new DomainValidationException("name", "Another stored query already has this name."),
+                { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: CollectionDbContext.StoredPageNameIndex } =>
+                    new DomainValidationException("name", "Another stored page already has this name."),
+                { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: CollectionDbContext.StoredPageSlugIndex } =>
+                    new DomainValidationException("slug", "Another stored page already has this slug."),
                 { SqlState: PostgresErrorCodes.ForeignKeyViolation } when pg.ConstraintName?.StartsWith(CollectionDbContext.LanguageForeignKeyPrefix) == true =>
                     new ConflictException("language_in_use", "The language is used by names or descriptions."),
                 { SqlState: PostgresErrorCodes.ForeignKeyViolation } when pg.TableName == "object_types" ||

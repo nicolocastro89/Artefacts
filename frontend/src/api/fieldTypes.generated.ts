@@ -1056,6 +1056,61 @@ export const responseFieldTypes = {
     "kind": "text",
     "name": "text",
     "updatedAt": "date"
+  },
+  "listPages": {
+    "[]": "list",
+    "[].id": "text",
+    "[].kind": "text",
+    "[].name": "text",
+    "[].navigationLabel": "text",
+    "[].showInNavigation": "boolean",
+    "[].slug": "text",
+    "[].updatedAt": "date"
+  },
+  "createPage": {
+    "id": "text",
+    "kind": "text",
+    "name": "text",
+    "navigationLabel": "text",
+    "showInNavigation": "boolean",
+    "slug": "text",
+    "updatedAt": "date"
+  },
+  "getPage": {
+    "id": "text",
+    "kind": "text",
+    "name": "text",
+    "navigationLabel": "text",
+    "showInNavigation": "boolean",
+    "slug": "text",
+    "updatedAt": "date"
+  },
+  "updatePage": {
+    "id": "text",
+    "kind": "text",
+    "name": "text",
+    "navigationLabel": "text",
+    "showInNavigation": "boolean",
+    "slug": "text",
+    "updatedAt": "date"
+  },
+  "getPageBySlug": {
+    "id": "text",
+    "kind": "text",
+    "name": "text",
+    "navigationLabel": "text",
+    "showInNavigation": "boolean",
+    "slug": "text",
+    "updatedAt": "date"
+  },
+  "duplicatePage": {
+    "id": "text",
+    "kind": "text",
+    "name": "text",
+    "navigationLabel": "text",
+    "showInNavigation": "boolean",
+    "slug": "text",
+    "updatedAt": "date"
   }
 } as const satisfies Record<string, Record<string, FieldType>>
 
@@ -1318,5 +1373,33 @@ export const operations = {
   "duplicateQuery": {
     "method": "POST",
     "path": "/api/queries/{id}/duplicate"
+  },
+  "listPages": {
+    "method": "GET",
+    "path": "/api/pages"
+  },
+  "createPage": {
+    "method": "POST",
+    "path": "/api/pages"
+  },
+  "getPage": {
+    "method": "GET",
+    "path": "/api/pages/{id}"
+  },
+  "updatePage": {
+    "method": "PUT",
+    "path": "/api/pages/{id}"
+  },
+  "deletePage": {
+    "method": "DELETE",
+    "path": "/api/pages/{id}"
+  },
+  "getPageBySlug": {
+    "method": "GET",
+    "path": "/api/pages/by-slug/{slug}"
+  },
+  "duplicatePage": {
+    "method": "POST",
+    "path": "/api/pages/{id}/duplicate"
   }
 } as const satisfies Record<string, { method: string; path: string }>

@@ -34,6 +34,7 @@
   <ItemGroup>
     <EmbeddedResource Include="Read\Views\*.sql" LogicalName="Views.%(Filename).sql" />
     <EmbeddedResource Include="Graph\Queries\*.graphql" LogicalName="Queries.%(Filename).graphql" />
+    <EmbeddedResource Include="Pages\Definitions\*.json" LogicalName="Pages.%(Filename).json" />
   </ItemGroup>
 
 </Project>

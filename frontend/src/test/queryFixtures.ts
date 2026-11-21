@@ -1,4 +1,12 @@
+import type { StoredPage } from '../api/pages'
 import type { QueryDescription } from '../widgets/core/dataSources'
+import artefactDetailFile from '../../../backend/src/Artefacts.Infrastructure/Pages/Definitions/artefact-detail.json'
+import artefactListFile from '../../../backend/src/Artefacts.Infrastructure/Pages/Definitions/artefact-list.json'
+
+/** A system page as `/api/pages/by-slug/{slug}` returns it, built from the JSON the backend ships. */
+function systemPage(slug: string, file: { name: string; root: unknown }): StoredPage {
+  return { id: slug, slug, name: file.name, kind: 'system', showInNavigation: false, navigationLabel: null, definition: { root: file.root } as StoredPage['definition'], updatedAt: '2026-11-21T00:00:00Z' }
+}
 
 /** What `GET /api/queries/artefact-list/description` returns (the result paths of the system query and its variables). */
 export const artefactListDescription: QueryDescription = {
@@ -108,6 +116,7 @@ type Variables = Record<string, unknown>
  */
 export function artefactListRoutes(respond: (variables: Variables) => unknown) {
   return {
+    'GET /api/pages/by-slug/artefact-list': () => systemPage('artefact-list', artefactListFile),
     'GET /api/queries/artefact-list/description': () => artefactListDescription,
     'POST /graphql': (_url: URL, init?: RequestInit) => ({ data: respond((JSON.parse(String(init?.body)) as { variables: Variables }).variables) }),
   }
@@ -124,6 +133,7 @@ export function sentVariables(calls: { method: string; url: URL; body?: unknown 
  */
 export function artefactDetailRoutes(artefact: unknown, language = 'en') {
   return {
+    'GET /api/pages/by-slug/artefact-detail': () => systemPage('artefact-detail', artefactDetailFile),
     'GET /api/queries/artefact-detail/description': () => artefactDetailDescription,
     'POST /graphql': () => ({ data: { language, artefact } }),
   }

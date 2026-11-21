@@ -136,6 +136,26 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "stored_pages",
+                columns: table => new
+                {
+                    id = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    slug = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    normalized_name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    definition = table.Column<string>(type: "json", nullable: false),
+                    is_system = table.Column<bool>(type: "boolean", nullable: false),
+                    show_in_navigation = table.Column<bool>(type: "boolean", nullable: false),
+                    navigation_label = table.Column<string>(type: "character varying(60)", maxLength: 60, nullable: true),
+                    created_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    updated_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_stored_pages", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "import_jobs",
                 columns: table => new
                 {
@@ -661,6 +681,18 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                 column: "normalized_name",
                 unique: true);
 
+            migrationBuilder.CreateIndex(
+                name: "ux_stored_pages_normalized_name",
+                table: "stored_pages",
+                column: "normalized_name",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "ux_stored_pages_slug",
+                table: "stored_pages",
+                column: "slug",
+                unique: true);
+
             // The name-resolving functions and the read view.
             migrationBuilder.Sql(ViewSql.Load("localized_names"));
             migrationBuilder.Sql(ViewSql.Load("v_artefact"));
@@ -699,6 +731,9 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "region_names");
+
+            migrationBuilder.DropTable(
+                name: "stored_pages");
 
             migrationBuilder.DropTable(
                 name: "stored_queries");

@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
-import { Archive, FileUp, Map as MapIcon, Monitor, Moon, Sun } from 'lucide-react'
+import { Archive, FileText, FileUp, LayoutTemplate, Map as MapIcon, Monitor, Moon, Sun } from 'lucide-react'
 import { NavLink, Outlet, useLocation } from 'react-router'
 import { api } from '../api/client'
+import { useNavigationPages } from '../api/pages'
 import { useTheme, type ThemeChoice } from './theme'
 import './AppShell.css'
 
@@ -33,6 +34,7 @@ const THEMES: { value: ThemeChoice; label: string; Icon: typeof Sun }[] = [
 
 export function AppShell() {
   const counts = useCounts()
+  const pages = useNavigationPages().data ?? []
   const { pathname } = useLocation()
   const [theme, setTheme] = useTheme()
 
@@ -64,7 +66,25 @@ export function AppShell() {
               <span>Import</span>
             </NavLink>
           </li>
+          <li>
+            <NavLink to="/pages" end className={() => `rail__link${pathname === '/pages' || pathname.startsWith('/pages/') ? ' active' : ''}`}>
+              <LayoutTemplate aria-hidden="true" />
+              <span>Pages</span>
+            </NavLink>
+          </li>
         </ul>
+        {pages.length > 0 && (
+          <ul className="rail__nav rail__nav--pages" aria-label="Pages">
+            {pages.map((page) => (
+              <li key={page.id}>
+                <NavLink to={`/p/${page.slug}`} className="rail__link">
+                  <FileText aria-hidden="true" />
+                  <span>{page.navigationLabel ?? page.name}</span>
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+        )}
         <fieldset className="rail__theme">
           <legend className="visually-hidden">Theme</legend>
           {THEMES.map(({ value, label, Icon }) => (

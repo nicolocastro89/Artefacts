@@ -4,7 +4,6 @@ import { Route, Routes } from 'react-router'
 import { mockFetch } from '../test/fetchMock'
 import { artefactDetailRoutes } from '../test/queryFixtures'
 import { renderWithProviders } from '../test/render'
-import { artefactDetailPage } from './definitions/artefactDetail'
 import { PageRoute } from './PageRoute'
 
 const urls = (n: string) => ({ thumb: `/img/${n}/thumb`, web: `/img/${n}/web`, print: `/img/${n}/print` })
@@ -41,7 +40,7 @@ function renderDetail() {
   mockFetch(artefactDetailRoutes(artefact))
   return renderWithProviders(
     <Routes>
-      <Route path="/artefacts/:id" element={<PageRoute page={artefactDetailPage} />} />
+      <Route path="/artefacts/:id" element={<PageRoute slug="artefact-detail" />} />
     </Routes>,
     { route: '/artefacts/a1' },
   )
@@ -86,7 +85,7 @@ describe('artefact detail page', () => {
     mockFetch(artefactDetailRoutes({ ...artefact, primaryImage: image('m2', true, 'Verso'), images: [image('m1', false, 'Recto'), image('m2', true, 'Verso')] }))
     renderWithProviders(
       <Routes>
-        <Route path="/artefacts/:id" element={<PageRoute page={artefactDetailPage} />} />
+        <Route path="/artefacts/:id" element={<PageRoute slug="artefact-detail" />} />
       </Routes>,
       { route: '/artefacts/a1' },
     )
@@ -99,7 +98,7 @@ describe('artefact detail page', () => {
     mockFetch(artefactDetailRoutes(null))
     renderWithProviders(
       <Routes>
-        <Route path="/artefacts/:id" element={<PageRoute page={artefactDetailPage} />} />
+        <Route path="/artefacts/:id" element={<PageRoute slug="artefact-detail" />} />
       </Routes>,
       { route: '/artefacts/gone' },
     )

@@ -50,6 +50,7 @@ public static class DependencyInjection
         services.AddScoped<IReferenceEntryRepository, ReferenceEntryRepository>();
         services.AddScoped<IPartyRepository, PartyRepository>();
         services.AddScoped<IStoredQueryRepository, StoredQueryRepository>();
+        services.AddScoped<IStoredPageRepository, StoredPageRepository>();
         services.AddScoped<ILanguageRepository, LanguageRepository>();
         services.AddSingleton<IContentLanguages, ContentLanguages>();
         services.AddScoped<IMediaAssetRepository, MediaAssetRepository>();
@@ -62,6 +63,7 @@ public static class DependencyInjection
         services.AddSingleton<IStoredQueryDescriber, Graph.StoredQueryDescriber>();
         services.AddSingleton<IStoredQueryValidator>(sp => sp.GetRequiredService<Graph.StoredQueryValidator>());
         services.AddHostedService<Graph.SystemQuerySync>();
+        services.AddHostedService<Pages.SystemPageSync>();
         services.AddArtefactsGraph();
         services.AddScoped<IImportRepository, ImportRepository>();
         services.AddScoped<IImportTemplateRepository, ImportTemplateRepository>();

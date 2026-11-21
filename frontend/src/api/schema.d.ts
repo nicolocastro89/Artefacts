@@ -624,6 +624,75 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/pages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The stored pages: system pages first, then user pages by name. With navigation=true, only the pages shown in navigation. */
+        get: operations["listPages"];
+        put?: never;
+        /** Saves a user page. The definition must have the shape of a page and name only stored queries that exist. */
+        post: operations["createPage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/pages/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPage"];
+        /** Changes a user page; values left out are kept. System pages cannot be changed. */
+        put: operations["updatePage"];
+        post?: never;
+        delete: operations["deletePage"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/pages/by-slug/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A page by the slug in its address. */
+        get: operations["getPageBySlug"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/pages/{id}/duplicate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Copies any stored page, system pages included, into a new user page. */
+        post: operations["duplicatePage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -778,6 +847,13 @@ export interface components {
             storageLocationId?: null | string;
             valuation?: null | components["schemas"]["MoneyDto"];
         };
+        ChangeStoredPageRequest: {
+            name?: null | string;
+            slug?: null | string;
+            definition?: unknown;
+            showInNavigation?: null | boolean;
+            navigationLabel?: null | string;
+        };
         ChangeStoredQueryRequest: {
             name?: null | string;
             document?: null | string;
@@ -802,6 +878,14 @@ export interface components {
                 [key: string]: number;
             };
         };
+        CreateStoredPageRequest: {
+            name: null | string;
+            slug: null | string;
+            definition: null | components["schemas"]["JsonElement"];
+            /** @default false */
+            showInNavigation: boolean;
+            navigationLabel?: null | string;
+        };
         CreateStoredQueryRequest: {
             name: null | string;
             document: null | string;
@@ -812,6 +896,10 @@ export interface components {
             earliestYear: number;
             /** Format: int32 */
             latestYear: number;
+        };
+        DuplicateStoredPageRequest: {
+            name: null | string;
+            slug: null | string;
         };
         DuplicateStoredQueryRequest: {
             name: null | string;
@@ -1017,6 +1105,7 @@ export interface components {
             pattern: string;
             prefer?: null | components["schemas"]["ImportField"];
         };
+        JsonElement: unknown;
         LanguageDto: {
             code: string;
             name: string;
@@ -1265,6 +1354,29 @@ export interface components {
         };
         /** @enum {unknown} */
         SortDirection: "asc" | "desc";
+        StoredPageDto: {
+            id: string;
+            slug: string;
+            name: string;
+            kind: components["schemas"]["StoredPageKind"];
+            showInNavigation: boolean;
+            navigationLabel: null | string;
+            definition: components["schemas"]["JsonElement"];
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        /** @enum {unknown} */
+        StoredPageKind: "system" | "user";
+        StoredPageSummary: {
+            id: string;
+            slug: string;
+            name: string;
+            kind: components["schemas"]["StoredPageKind"];
+            showInNavigation: boolean;
+            navigationLabel: null | string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
         StoredQueryDto: {
             id: string;
             name: string;
@@ -3588,6 +3700,258 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StoredQueryDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    listPages: {
+        parameters: {
+            query?: {
+                navigation?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoredPageSummary"][];
+                };
+            };
+        };
+    };
+    createPage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateStoredPageRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoredPageDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+        };
+    };
+    getPage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoredPageDto"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    updatePage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangeStoredPageRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoredPageDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    deletePage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    getPageBySlug: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoredPageDto"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    duplicatePage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DuplicateStoredPageRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoredPageDto"];
                 };
             };
             /** @description Bad Request */
