@@ -7,7 +7,7 @@ Provides read-only views of collection data that are shaped for display and quer
 ## Requirements
 
 ### Requirement: Artefact read view
-The system SHALL provide a read-only, flattened artefact view. Each row contains the artefact's identifier, inventory number, title, maker, creation date (display text, earliest year, latest year), medium, dimensions, object type identifier, collection group, place of production (text and region identifier), dynasty, holder, storage location, acquisition method, date, source, lot and note, acquisition price amount and currency, valuation amount and currency, the number of exhibitions, the primary image reference, and the number of images. Names that exist per language (object type and region names) are not columns of the view: queries over the view resolve them in the request's language. The view SHALL reflect the current state of the catalogue.
+The system SHALL provide a read-only, flattened artefact view. Each row contains the artefact's identifier, inventory number, title, maker, creation date (display text, earliest year, latest year), medium, dimensions, object type identifier, collection group identifier, place of production (text and region identifier), dynasty identifier, holder identifier, storage location identifier, acquisition method, date, source identifier, lot and note, acquisition price amount and currency, valuation amount and currency, the number of exhibitions, the primary image reference, and the number of images. Names of linked records (object types, regions, collection groups, dynasties, storage locations and parties) are not columns of the view: queries over the view resolve them, in the request's language where they are translated. The view SHALL reflect the current state of the catalogue.
 
 #### Scenario: View reflects updates
 - **WHEN** a user changes an artefact's title and then reads the artefact read view
@@ -20,6 +20,10 @@ The system SHALL provide a read-only, flattened artefact view. Each row contains
 #### Scenario: Renamed object type
 - **WHEN** a user changes the English name of an artefact's object type and then lists artefacts in English
 - **THEN** the list item shows the new object type name
+
+#### Scenario: Renamed party
+- **WHEN** a user renames the party "Christies" to "Christie's" and then searches artefacts for "Christie's"
+- **THEN** the artefacts acquired from that party are found
 
 ### Requirement: Field catalog
 The system SHALL publish a field catalog. For each read view (an "entity") it lists every field's stable identifier, human-readable label, data type (text, number, date, historical-date, money, image, reference, or boolean), and whether the field can be filtered and sorted. The catalog SHALL describe exactly the fields that the read views expose: no missing fields and no extra ones.
