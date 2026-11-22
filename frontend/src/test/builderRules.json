@@ -1,0 +1,2555 @@
+{
+  "roots": [
+    {
+      "name": "language",
+      "type": "String",
+      "list": false,
+      "arguments": [],
+      "filter": null,
+      "sort": null
+    },
+    {
+      "name": "artefact",
+      "type": "Artefact",
+      "list": false,
+      "arguments": [
+        {
+          "name": "id",
+          "type": "UUID",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "default": null
+        }
+      ],
+      "filter": null,
+      "sort": null
+    },
+    {
+      "name": "artefacts",
+      "type": "ArtefactPage",
+      "list": false,
+      "arguments": [
+        {
+          "name": "search",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "sort",
+          "type": "ArtefactSort",
+          "kind": "enum",
+          "list": false,
+          "required": false,
+          "default": "INVENTORY_NUMBER"
+        },
+        {
+          "name": "direction",
+          "type": "SortDirection",
+          "kind": "enum",
+          "list": false,
+          "required": false,
+          "default": "ASC"
+        },
+        {
+          "name": "group",
+          "type": "ArtefactGrouping",
+          "kind": "enum",
+          "list": false,
+          "required": false,
+          "default": "NONE"
+        },
+        {
+          "name": "page",
+          "type": "Int",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "default": "1"
+        },
+        {
+          "name": "pageSize",
+          "type": "Int",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "default": "25"
+        },
+        {
+          "name": "where",
+          "type": "ArtefactFilterInput",
+          "kind": "input",
+          "list": false,
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "order",
+          "type": "ArtefactSortInput",
+          "kind": "input",
+          "list": true,
+          "required": false,
+          "default": null
+        }
+      ],
+      "filter": [
+        {
+          "name": "id",
+          "label": "Identifier",
+          "valueType": "reference",
+          "graphQlType": "UUID",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "gt",
+              "list": false
+            },
+            {
+              "name": "ngt",
+              "list": false
+            },
+            {
+              "name": "gte",
+              "list": false
+            },
+            {
+              "name": "ngte",
+              "list": false
+            },
+            {
+              "name": "lt",
+              "list": false
+            },
+            {
+              "name": "nlt",
+              "list": false
+            },
+            {
+              "name": "lte",
+              "list": false
+            },
+            {
+              "name": "nlte",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "inventoryNumber",
+          "label": "Inventory number",
+          "valueType": "text",
+          "graphQlType": "String",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "contains",
+              "list": false
+            },
+            {
+              "name": "ncontains",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "startsWith",
+              "list": false
+            },
+            {
+              "name": "nstartsWith",
+              "list": false
+            },
+            {
+              "name": "endsWith",
+              "list": false
+            },
+            {
+              "name": "nendsWith",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "title",
+          "label": "Title",
+          "valueType": "text",
+          "graphQlType": "String",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "contains",
+              "list": false
+            },
+            {
+              "name": "ncontains",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "startsWith",
+              "list": false
+            },
+            {
+              "name": "nstartsWith",
+              "list": false
+            },
+            {
+              "name": "endsWith",
+              "list": false
+            },
+            {
+              "name": "nendsWith",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "maker",
+          "label": "Maker",
+          "valueType": "text",
+          "graphQlType": "String",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "contains",
+              "list": false
+            },
+            {
+              "name": "ncontains",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "startsWith",
+              "list": false
+            },
+            {
+              "name": "nstartsWith",
+              "list": false
+            },
+            {
+              "name": "endsWith",
+              "list": false
+            },
+            {
+              "name": "nendsWith",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "creationDateDisplay",
+          "label": "Creation date (display)",
+          "valueType": "text",
+          "graphQlType": "String",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "contains",
+              "list": false
+            },
+            {
+              "name": "ncontains",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "startsWith",
+              "list": false
+            },
+            {
+              "name": "nstartsWith",
+              "list": false
+            },
+            {
+              "name": "endsWith",
+              "list": false
+            },
+            {
+              "name": "nendsWith",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "creationDateEarliestYear",
+          "label": "Creation date (earliest year)",
+          "valueType": "number",
+          "graphQlType": "Int",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "gt",
+              "list": false
+            },
+            {
+              "name": "ngt",
+              "list": false
+            },
+            {
+              "name": "gte",
+              "list": false
+            },
+            {
+              "name": "ngte",
+              "list": false
+            },
+            {
+              "name": "lt",
+              "list": false
+            },
+            {
+              "name": "nlt",
+              "list": false
+            },
+            {
+              "name": "lte",
+              "list": false
+            },
+            {
+              "name": "nlte",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "creationDateLatestYear",
+          "label": "Creation date (latest year)",
+          "valueType": "number",
+          "graphQlType": "Int",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "gt",
+              "list": false
+            },
+            {
+              "name": "ngt",
+              "list": false
+            },
+            {
+              "name": "gte",
+              "list": false
+            },
+            {
+              "name": "ngte",
+              "list": false
+            },
+            {
+              "name": "lt",
+              "list": false
+            },
+            {
+              "name": "nlt",
+              "list": false
+            },
+            {
+              "name": "lte",
+              "list": false
+            },
+            {
+              "name": "nlte",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "creationDatePrecision",
+          "label": "Creation date (precision)",
+          "valueType": "text",
+          "graphQlType": "String",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "contains",
+              "list": false
+            },
+            {
+              "name": "ncontains",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "startsWith",
+              "list": false
+            },
+            {
+              "name": "nstartsWith",
+              "list": false
+            },
+            {
+              "name": "endsWith",
+              "list": false
+            },
+            {
+              "name": "nendsWith",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "medium",
+          "label": "Medium",
+          "valueType": "text",
+          "graphQlType": "String",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "contains",
+              "list": false
+            },
+            {
+              "name": "ncontains",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "startsWith",
+              "list": false
+            },
+            {
+              "name": "nstartsWith",
+              "list": false
+            },
+            {
+              "name": "endsWith",
+              "list": false
+            },
+            {
+              "name": "nendsWith",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "dimensions",
+          "label": "Dimensions",
+          "valueType": "text",
+          "graphQlType": "String",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "contains",
+              "list": false
+            },
+            {
+              "name": "ncontains",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "startsWith",
+              "list": false
+            },
+            {
+              "name": "nstartsWith",
+              "list": false
+            },
+            {
+              "name": "endsWith",
+              "list": false
+            },
+            {
+              "name": "nendsWith",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "objectTypeId",
+          "label": "Object type",
+          "valueType": "reference",
+          "graphQlType": "UUID",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "gt",
+              "list": false
+            },
+            {
+              "name": "ngt",
+              "list": false
+            },
+            {
+              "name": "gte",
+              "list": false
+            },
+            {
+              "name": "ngte",
+              "list": false
+            },
+            {
+              "name": "lt",
+              "list": false
+            },
+            {
+              "name": "nlt",
+              "list": false
+            },
+            {
+              "name": "lte",
+              "list": false
+            },
+            {
+              "name": "nlte",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "collectionGroupId",
+          "label": "Collection group",
+          "valueType": "reference",
+          "graphQlType": "UUID",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "gt",
+              "list": false
+            },
+            {
+              "name": "ngt",
+              "list": false
+            },
+            {
+              "name": "gte",
+              "list": false
+            },
+            {
+              "name": "ngte",
+              "list": false
+            },
+            {
+              "name": "lt",
+              "list": false
+            },
+            {
+              "name": "nlt",
+              "list": false
+            },
+            {
+              "name": "lte",
+              "list": false
+            },
+            {
+              "name": "nlte",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "placeText",
+          "label": "Place of production",
+          "valueType": "text",
+          "graphQlType": "String",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "contains",
+              "list": false
+            },
+            {
+              "name": "ncontains",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "startsWith",
+              "list": false
+            },
+            {
+              "name": "nstartsWith",
+              "list": false
+            },
+            {
+              "name": "endsWith",
+              "list": false
+            },
+            {
+              "name": "nendsWith",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "placeRegionId",
+          "label": "Place of production (region)",
+          "valueType": "reference",
+          "graphQlType": "UUID",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "gt",
+              "list": false
+            },
+            {
+              "name": "ngt",
+              "list": false
+            },
+            {
+              "name": "gte",
+              "list": false
+            },
+            {
+              "name": "ngte",
+              "list": false
+            },
+            {
+              "name": "lt",
+              "list": false
+            },
+            {
+              "name": "nlt",
+              "list": false
+            },
+            {
+              "name": "lte",
+              "list": false
+            },
+            {
+              "name": "nlte",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "dynastyId",
+          "label": "Dynasty or period",
+          "valueType": "reference",
+          "graphQlType": "UUID",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "gt",
+              "list": false
+            },
+            {
+              "name": "ngt",
+              "list": false
+            },
+            {
+              "name": "gte",
+              "list": false
+            },
+            {
+              "name": "ngte",
+              "list": false
+            },
+            {
+              "name": "lt",
+              "list": false
+            },
+            {
+              "name": "nlt",
+              "list": false
+            },
+            {
+              "name": "lte",
+              "list": false
+            },
+            {
+              "name": "nlte",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "century",
+          "label": "Century",
+          "valueType": "number",
+          "graphQlType": "Int",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "gt",
+              "list": false
+            },
+            {
+              "name": "ngt",
+              "list": false
+            },
+            {
+              "name": "gte",
+              "list": false
+            },
+            {
+              "name": "ngte",
+              "list": false
+            },
+            {
+              "name": "lt",
+              "list": false
+            },
+            {
+              "name": "nlt",
+              "list": false
+            },
+            {
+              "name": "lte",
+              "list": false
+            },
+            {
+              "name": "nlte",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "holderId",
+          "label": "Holder",
+          "valueType": "reference",
+          "graphQlType": "UUID",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "gt",
+              "list": false
+            },
+            {
+              "name": "ngt",
+              "list": false
+            },
+            {
+              "name": "gte",
+              "list": false
+            },
+            {
+              "name": "ngte",
+              "list": false
+            },
+            {
+              "name": "lt",
+              "list": false
+            },
+            {
+              "name": "nlt",
+              "list": false
+            },
+            {
+              "name": "lte",
+              "list": false
+            },
+            {
+              "name": "nlte",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "storageLocationId",
+          "label": "Storage location",
+          "valueType": "reference",
+          "graphQlType": "UUID",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "gt",
+              "list": false
+            },
+            {
+              "name": "ngt",
+              "list": false
+            },
+            {
+              "name": "gte",
+              "list": false
+            },
+            {
+              "name": "ngte",
+              "list": false
+            },
+            {
+              "name": "lt",
+              "list": false
+            },
+            {
+              "name": "nlt",
+              "list": false
+            },
+            {
+              "name": "lte",
+              "list": false
+            },
+            {
+              "name": "nlte",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "acquisitionMethod",
+          "label": "Acquisition method",
+          "valueType": "text",
+          "graphQlType": "String",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "contains",
+              "list": false
+            },
+            {
+              "name": "ncontains",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "startsWith",
+              "list": false
+            },
+            {
+              "name": "nstartsWith",
+              "list": false
+            },
+            {
+              "name": "endsWith",
+              "list": false
+            },
+            {
+              "name": "nendsWith",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "acquisitionDate",
+          "label": "Acquisition date",
+          "valueType": "date",
+          "graphQlType": "LocalDate",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "gt",
+              "list": false
+            },
+            {
+              "name": "ngt",
+              "list": false
+            },
+            {
+              "name": "gte",
+              "list": false
+            },
+            {
+              "name": "ngte",
+              "list": false
+            },
+            {
+              "name": "lt",
+              "list": false
+            },
+            {
+              "name": "nlt",
+              "list": false
+            },
+            {
+              "name": "lte",
+              "list": false
+            },
+            {
+              "name": "nlte",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "acquisitionSourceId",
+          "label": "Acquisition source",
+          "valueType": "reference",
+          "graphQlType": "UUID",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "gt",
+              "list": false
+            },
+            {
+              "name": "ngt",
+              "list": false
+            },
+            {
+              "name": "gte",
+              "list": false
+            },
+            {
+              "name": "ngte",
+              "list": false
+            },
+            {
+              "name": "lt",
+              "list": false
+            },
+            {
+              "name": "nlt",
+              "list": false
+            },
+            {
+              "name": "lte",
+              "list": false
+            },
+            {
+              "name": "nlte",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "acquisitionLot",
+          "label": "Acquisition lot",
+          "valueType": "text",
+          "graphQlType": "String",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "contains",
+              "list": false
+            },
+            {
+              "name": "ncontains",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "startsWith",
+              "list": false
+            },
+            {
+              "name": "nstartsWith",
+              "list": false
+            },
+            {
+              "name": "endsWith",
+              "list": false
+            },
+            {
+              "name": "nendsWith",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "acquisitionNote",
+          "label": "Acquisition note",
+          "valueType": "text",
+          "graphQlType": "String",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "contains",
+              "list": false
+            },
+            {
+              "name": "ncontains",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "startsWith",
+              "list": false
+            },
+            {
+              "name": "nstartsWith",
+              "list": false
+            },
+            {
+              "name": "endsWith",
+              "list": false
+            },
+            {
+              "name": "nendsWith",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "acquisitionPriceAmount",
+          "label": "Acquisition price (amount)",
+          "valueType": "number",
+          "graphQlType": "Decimal",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "gt",
+              "list": false
+            },
+            {
+              "name": "ngt",
+              "list": false
+            },
+            {
+              "name": "gte",
+              "list": false
+            },
+            {
+              "name": "ngte",
+              "list": false
+            },
+            {
+              "name": "lt",
+              "list": false
+            },
+            {
+              "name": "nlt",
+              "list": false
+            },
+            {
+              "name": "lte",
+              "list": false
+            },
+            {
+              "name": "nlte",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "acquisitionPriceCurrency",
+          "label": "Acquisition price (currency)",
+          "valueType": "text",
+          "graphQlType": "String",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "contains",
+              "list": false
+            },
+            {
+              "name": "ncontains",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "startsWith",
+              "list": false
+            },
+            {
+              "name": "nstartsWith",
+              "list": false
+            },
+            {
+              "name": "endsWith",
+              "list": false
+            },
+            {
+              "name": "nendsWith",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "valuationAmount",
+          "label": "Valuation (amount)",
+          "valueType": "number",
+          "graphQlType": "Decimal",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "gt",
+              "list": false
+            },
+            {
+              "name": "ngt",
+              "list": false
+            },
+            {
+              "name": "gte",
+              "list": false
+            },
+            {
+              "name": "ngte",
+              "list": false
+            },
+            {
+              "name": "lt",
+              "list": false
+            },
+            {
+              "name": "nlt",
+              "list": false
+            },
+            {
+              "name": "lte",
+              "list": false
+            },
+            {
+              "name": "nlte",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "valuationCurrency",
+          "label": "Valuation (currency)",
+          "valueType": "text",
+          "graphQlType": "String",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "contains",
+              "list": false
+            },
+            {
+              "name": "ncontains",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "startsWith",
+              "list": false
+            },
+            {
+              "name": "nstartsWith",
+              "list": false
+            },
+            {
+              "name": "endsWith",
+              "list": false
+            },
+            {
+              "name": "nendsWith",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "exhibitionCount",
+          "label": "Number of exhibitions",
+          "valueType": "number",
+          "graphQlType": "Int",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "gt",
+              "list": false
+            },
+            {
+              "name": "ngt",
+              "list": false
+            },
+            {
+              "name": "gte",
+              "list": false
+            },
+            {
+              "name": "ngte",
+              "list": false
+            },
+            {
+              "name": "lt",
+              "list": false
+            },
+            {
+              "name": "nlt",
+              "list": false
+            },
+            {
+              "name": "lte",
+              "list": false
+            },
+            {
+              "name": "nlte",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "primaryImageKey",
+          "label": "Primary image",
+          "valueType": "text",
+          "graphQlType": "String",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "contains",
+              "list": false
+            },
+            {
+              "name": "ncontains",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "startsWith",
+              "list": false
+            },
+            {
+              "name": "nstartsWith",
+              "list": false
+            },
+            {
+              "name": "endsWith",
+              "list": false
+            },
+            {
+              "name": "nendsWith",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "imageCount",
+          "label": "Number of images",
+          "valueType": "number",
+          "graphQlType": "Int",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "gt",
+              "list": false
+            },
+            {
+              "name": "ngt",
+              "list": false
+            },
+            {
+              "name": "gte",
+              "list": false
+            },
+            {
+              "name": "ngte",
+              "list": false
+            },
+            {
+              "name": "lt",
+              "list": false
+            },
+            {
+              "name": "nlt",
+              "list": false
+            },
+            {
+              "name": "lte",
+              "list": false
+            },
+            {
+              "name": "nlte",
+              "list": false
+            }
+          ]
+        }
+      ],
+      "sort": [
+        {
+          "name": "id",
+          "label": "Identifier"
+        },
+        {
+          "name": "inventoryNumber",
+          "label": "Inventory number"
+        },
+        {
+          "name": "title",
+          "label": "Title"
+        },
+        {
+          "name": "maker",
+          "label": "Maker"
+        },
+        {
+          "name": "creationDateDisplay",
+          "label": "Creation date (display)"
+        },
+        {
+          "name": "creationDateEarliestYear",
+          "label": "Creation date (earliest year)"
+        },
+        {
+          "name": "creationDateLatestYear",
+          "label": "Creation date (latest year)"
+        },
+        {
+          "name": "creationDatePrecision",
+          "label": "Creation date (precision)"
+        },
+        {
+          "name": "medium",
+          "label": "Medium"
+        },
+        {
+          "name": "dimensions",
+          "label": "Dimensions"
+        },
+        {
+          "name": "objectTypeId",
+          "label": "Object type"
+        },
+        {
+          "name": "collectionGroupId",
+          "label": "Collection group"
+        },
+        {
+          "name": "placeText",
+          "label": "Place of production"
+        },
+        {
+          "name": "placeRegionId",
+          "label": "Place of production (region)"
+        },
+        {
+          "name": "dynastyId",
+          "label": "Dynasty or period"
+        },
+        {
+          "name": "century",
+          "label": "Century"
+        },
+        {
+          "name": "holderId",
+          "label": "Holder"
+        },
+        {
+          "name": "storageLocationId",
+          "label": "Storage location"
+        },
+        {
+          "name": "acquisitionMethod",
+          "label": "Acquisition method"
+        },
+        {
+          "name": "acquisitionDate",
+          "label": "Acquisition date"
+        },
+        {
+          "name": "acquisitionSourceId",
+          "label": "Acquisition source"
+        },
+        {
+          "name": "acquisitionLot",
+          "label": "Acquisition lot"
+        },
+        {
+          "name": "acquisitionNote",
+          "label": "Acquisition note"
+        },
+        {
+          "name": "acquisitionPriceAmount",
+          "label": "Acquisition price (amount)"
+        },
+        {
+          "name": "acquisitionPriceCurrency",
+          "label": "Acquisition price (currency)"
+        },
+        {
+          "name": "valuationAmount",
+          "label": "Valuation (amount)"
+        },
+        {
+          "name": "valuationCurrency",
+          "label": "Valuation (currency)"
+        },
+        {
+          "name": "exhibitionCount",
+          "label": "Number of exhibitions"
+        },
+        {
+          "name": "primaryImageKey",
+          "label": "Primary image"
+        },
+        {
+          "name": "imageCount",
+          "label": "Number of images"
+        }
+      ]
+    }
+  ],
+  "types": {
+    "Acquisition": {
+      "fields": [
+        {
+          "name": "source",
+          "type": "PartyRef",
+          "kind": "object",
+          "list": false,
+          "required": false,
+          "valueType": null,
+          "sensitivity": null
+        },
+        {
+          "name": "method",
+          "type": "AcquisitionMethod",
+          "kind": "enum",
+          "list": false,
+          "required": true,
+          "valueType": "text",
+          "sensitivity": null
+        },
+        {
+          "name": "date",
+          "type": "LocalDate",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "valueType": "date",
+          "sensitivity": null
+        },
+        {
+          "name": "lot",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "valueType": "text",
+          "sensitivity": null
+        },
+        {
+          "name": "note",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "valueType": "text",
+          "sensitivity": null
+        },
+        {
+          "name": "price",
+          "type": "Money",
+          "kind": "object",
+          "list": false,
+          "required": false,
+          "valueType": "money",
+          "sensitivity": "financial"
+        }
+      ]
+    },
+    "Artefact": {
+      "fields": [
+        {
+          "name": "primaryImage",
+          "type": "ArtefactImage",
+          "kind": "object",
+          "list": false,
+          "required": false,
+          "valueType": null,
+          "sensitivity": null
+        },
+        {
+          "name": "objectType",
+          "type": "NamedRef",
+          "kind": "object",
+          "list": false,
+          "required": false,
+          "valueType": null,
+          "sensitivity": null
+        },
+        {
+          "name": "collectionGroup",
+          "type": "NamedRef",
+          "kind": "object",
+          "list": false,
+          "required": false,
+          "valueType": null,
+          "sensitivity": null
+        },
+        {
+          "name": "dynasty",
+          "type": "NamedRef",
+          "kind": "object",
+          "list": false,
+          "required": false,
+          "valueType": null,
+          "sensitivity": null
+        },
+        {
+          "name": "storageLocation",
+          "type": "NamedRef",
+          "kind": "object",
+          "list": false,
+          "required": false,
+          "valueType": null,
+          "sensitivity": null
+        },
+        {
+          "name": "holder",
+          "type": "PartyRef",
+          "kind": "object",
+          "list": false,
+          "required": false,
+          "valueType": null,
+          "sensitivity": null
+        },
+        {
+          "name": "description",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "valueType": "text",
+          "sensitivity": null
+        },
+        {
+          "name": "descriptionLanguage",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "valueType": "text",
+          "sensitivity": null
+        },
+        {
+          "name": "descriptions",
+          "type": "Translation",
+          "kind": "object",
+          "list": true,
+          "required": true,
+          "valueType": null,
+          "sensitivity": null
+        },
+        {
+          "name": "exhibitions",
+          "type": "String",
+          "kind": "scalar",
+          "list": true,
+          "required": true,
+          "valueType": "text",
+          "sensitivity": null
+        },
+        {
+          "name": "provenance",
+          "type": "ProvenanceEntry",
+          "kind": "object",
+          "list": true,
+          "required": true,
+          "valueType": null,
+          "sensitivity": null
+        },
+        {
+          "name": "images",
+          "type": "ArtefactImage",
+          "kind": "object",
+          "list": true,
+          "required": true,
+          "valueType": null,
+          "sensitivity": null
+        },
+        {
+          "name": "catalogueEntry",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "valueType": "text",
+          "sensitivity": null
+        },
+        {
+          "name": "catalogueEntryLanguage",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "valueType": "text",
+          "sensitivity": null
+        },
+        {
+          "name": "catalogueEntries",
+          "type": "Translation",
+          "kind": "object",
+          "list": true,
+          "required": true,
+          "valueType": null,
+          "sensitivity": null
+        },
+        {
+          "name": "id",
+          "type": "UUID",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "valueType": "reference",
+          "sensitivity": null
+        },
+        {
+          "name": "inventoryNumber",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "valueType": "text",
+          "sensitivity": null
+        },
+        {
+          "name": "title",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "valueType": "text",
+          "sensitivity": null
+        },
+        {
+          "name": "maker",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "valueType": "text",
+          "sensitivity": null
+        },
+        {
+          "name": "creationDate",
+          "type": "HistoricalDate",
+          "kind": "object",
+          "list": false,
+          "required": false,
+          "valueType": "historical-date",
+          "sensitivity": null
+        },
+        {
+          "name": "medium",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "valueType": "text",
+          "sensitivity": null
+        },
+        {
+          "name": "dimensions",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "valueType": "text",
+          "sensitivity": null
+        },
+        {
+          "name": "century",
+          "type": "Int",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "valueType": "number",
+          "sensitivity": null
+        },
+        {
+          "name": "exhibitionCount",
+          "type": "Int",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "valueType": "number",
+          "sensitivity": null
+        },
+        {
+          "name": "imageCount",
+          "type": "Int",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "valueType": "number",
+          "sensitivity": null
+        },
+        {
+          "name": "groupKey",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "valueType": "text",
+          "sensitivity": null
+        },
+        {
+          "name": "groupLabel",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "valueType": "text",
+          "sensitivity": null
+        },
+        {
+          "name": "placeOfProduction",
+          "type": "PlaceOfProduction",
+          "kind": "object",
+          "list": false,
+          "required": false,
+          "valueType": null,
+          "sensitivity": null
+        },
+        {
+          "name": "acquisition",
+          "type": "Acquisition",
+          "kind": "object",
+          "list": false,
+          "required": false,
+          "valueType": null,
+          "sensitivity": null
+        },
+        {
+          "name": "valuation",
+          "type": "Money",
+          "kind": "object",
+          "list": false,
+          "required": false,
+          "valueType": "money",
+          "sensitivity": "financial"
+        }
+      ]
+    },
+    "ArtefactGroup": {
+      "fields": [
+        {
+          "name": "key",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "valueType": "text",
+          "sensitivity": null
+        },
+        {
+          "name": "label",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "valueType": "text",
+          "sensitivity": null
+        },
+        {
+          "name": "count",
+          "type": "Int",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "valueType": "number",
+          "sensitivity": null
+        }
+      ]
+    },
+    "ArtefactImage": {
+      "fields": [
+        {
+          "name": "urls",
+          "type": "ImageUrls",
+          "kind": "object",
+          "list": false,
+          "required": true,
+          "valueType": "image",
+          "sensitivity": null
+        },
+        {
+          "name": "mediaAssetId",
+          "type": "UUID",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "valueType": "reference",
+          "sensitivity": null
+        },
+        {
+          "name": "originalFileName",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "valueType": "text",
+          "sensitivity": null
+        },
+        {
+          "name": "format",
+          "type": "ImageFormat",
+          "kind": "enum",
+          "list": false,
+          "required": true,
+          "valueType": "text",
+          "sensitivity": null
+        },
+        {
+          "name": "sizeBytes",
+          "type": "Long",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "valueType": "number",
+          "sensitivity": null
+        },
+        {
+          "name": "uploadedAt",
+          "type": "DateTime",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "valueType": "date",
+          "sensitivity": null
+        },
+        {
+          "name": "caption",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "valueType": "text",
+          "sensitivity": null
+        },
+        {
+          "name": "isPrimary",
+          "type": "Boolean",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "valueType": "boolean",
+          "sensitivity": null
+        }
+      ]
+    },
+    "ArtefactPage": {
+      "fields": [
+        {
+          "name": "items",
+          "type": "Artefact",
+          "kind": "object",
+          "list": true,
+          "required": true,
+          "valueType": null,
+          "sensitivity": null
+        },
+        {
+          "name": "total",
+          "type": "Int",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "valueType": "number",
+          "sensitivity": null
+        },
+        {
+          "name": "page",
+          "type": "Int",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "valueType": "number",
+          "sensitivity": null
+        },
+        {
+          "name": "pageSize",
+          "type": "Int",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "valueType": "number",
+          "sensitivity": null
+        },
+        {
+          "name": "groups",
+          "type": "ArtefactGroup",
+          "kind": "object",
+          "list": true,
+          "required": true,
+          "valueType": null,
+          "sensitivity": null
+        }
+      ]
+    },
+    "HistoricalDate": {
+      "fields": [
+        {
+          "name": "display",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "valueType": "text",
+          "sensitivity": null
+        },
+        {
+          "name": "earliestYear",
+          "type": "Int",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "valueType": "number",
+          "sensitivity": null
+        },
+        {
+          "name": "latestYear",
+          "type": "Int",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "valueType": "number",
+          "sensitivity": null
+        },
+        {
+          "name": "precision",
+          "type": "HistoricalDatePrecision",
+          "kind": "enum",
+          "list": false,
+          "required": true,
+          "valueType": "text",
+          "sensitivity": null
+        }
+      ]
+    },
+    "ImageUrls": {
+      "fields": [
+        {
+          "name": "thumb",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "valueType": "text",
+          "sensitivity": null
+        },
+        {
+          "name": "web",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "valueType": "text",
+          "sensitivity": null
+        },
+        {
+          "name": "print",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "valueType": "text",
+          "sensitivity": null
+        }
+      ]
+    },
+    "Money": {
+      "fields": [
+        {
+          "name": "amount",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "valueType": "number",
+          "sensitivity": null
+        },
+        {
+          "name": "currency",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "valueType": "text",
+          "sensitivity": null
+        }
+      ]
+    },
+    "NamedRef": {
+      "fields": [
+        {
+          "name": "id",
+          "type": "UUID",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "valueType": "reference",
+          "sensitivity": null
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "valueType": "text",
+          "sensitivity": null
+        }
+      ]
+    },
+    "PartyRef": {
+      "fields": [
+        {
+          "name": "id",
+          "type": "UUID",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "valueType": "reference",
+          "sensitivity": null
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "valueType": "text",
+          "sensitivity": null
+        },
+        {
+          "name": "kind",
+          "type": "PartyKind",
+          "kind": "enum",
+          "list": false,
+          "required": true,
+          "valueType": "text",
+          "sensitivity": null
+        }
+      ]
+    },
+    "PlaceOfProduction": {
+      "fields": [
+        {
+          "name": "region",
+          "type": "NamedRef",
+          "kind": "object",
+          "list": false,
+          "required": false,
+          "valueType": null,
+          "sensitivity": null
+        },
+        {
+          "name": "text",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "valueType": "text",
+          "sensitivity": null
+        }
+      ]
+    },
+    "ProvenanceEntry": {
+      "fields": [
+        {
+          "name": "region",
+          "type": "NamedRef",
+          "kind": "object",
+          "list": false,
+          "required": false,
+          "valueType": null,
+          "sensitivity": null
+        },
+        {
+          "name": "period",
+          "type": "HistoricalDate",
+          "kind": "object",
+          "list": false,
+          "required": true,
+          "valueType": "historical-date",
+          "sensitivity": null
+        },
+        {
+          "name": "note",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": false,
+          "valueType": "text",
+          "sensitivity": null
+        }
+      ]
+    },
+    "Translation": {
+      "fields": [
+        {
+          "name": "language",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "valueType": "text",
+          "sensitivity": null
+        },
+        {
+          "name": "text",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "valueType": "text",
+          "sensitivity": null
+        }
+      ]
+    }
+  },
+  "enums": {
+    "AcquisitionMethod": [
+      "PURCHASE",
+      "GIFT",
+      "BEQUEST",
+      "TRANSFER",
+      "OTHER"
+    ],
+    "ArtefactGrouping": [
+      "NONE",
+      "OBJECT_TYPE",
+      "COLLECTION_GROUP",
+      "ORIGIN",
+      "CENTURY",
+      "DYNASTY"
+    ],
+    "ArtefactSort": [
+      "INVENTORY_NUMBER",
+      "TITLE",
+      "CREATION_DATE"
+    ],
+    "HistoricalDatePrecision": [
+      "YEAR",
+      "DECADE",
+      "CENTURY",
+      "APPROXIMATE"
+    ],
+    "ImageFormat": [
+      "JPEG",
+      "PNG",
+      "TIFF",
+      "WEB_P"
+    ],
+    "PartyKind": [
+      "PERSON",
+      "ORGANISATION"
+    ],
+    "SortDirection": [
+      "ASC",
+      "DESC"
+    ],
+    "SortEnumType": [
+      "ASC",
+      "DESC"
+    ]
+  },
+  "limits": {
+    "maxPageSize": 100,
+    "maxDepth": 8,
+    "maxFieldCost": 5000,
+    "maxTypeCost": 5000
+  }
+}

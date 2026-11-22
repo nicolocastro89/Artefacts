@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { Archive, FileText, FileUp, LayoutTemplate, Map as MapIcon, Monitor, Moon, Sun } from 'lucide-react'
+import { Archive, Braces, FileText, FileUp, LayoutTemplate, Map as MapIcon, Monitor, Moon, Sun } from 'lucide-react'
 import { NavLink, Outlet, useLocation } from 'react-router'
 import { api } from '../api/client'
 import { useNavigationPages } from '../api/pages'
@@ -66,6 +66,12 @@ export function AppShell() {
             <NavLink to="/imports" className="rail__link">
               <FileUp aria-hidden="true" />
               <span>Import</span>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/queries" className={() => `rail__link${pathname === '/queries' || pathname.startsWith('/queries/') ? ' active' : ''}`}>
+              <Braces aria-hidden="true" />
+              <span>Queries</span>
             </NavLink>
           </li>
           <li>

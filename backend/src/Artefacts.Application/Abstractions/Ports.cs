@@ -202,6 +202,12 @@ public interface IStoredQueryDescriber
     Task<QueryDescriptionDto> DescribeAsync(string document, CancellationToken cancellationToken);
 }
 
+/// <summary>The rules a query builder offers, read from the running schema.</summary>
+public interface IBuilderRulesProvider
+{
+    Task<BuilderRulesDto> GetAsync(CancellationToken cancellationToken);
+}
+
 public interface IStoredQueryRepository
 {
     Task<StoredQuery?> GetAsync(string id, CancellationToken ct);

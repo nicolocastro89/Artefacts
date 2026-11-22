@@ -6,7 +6,7 @@ using Artefacts.Domain.Queries;
 namespace Artefacts.Application.Queries;
 
 /// <summary>Stored GraphQL queries: the system queries (read-only) and the user queries people save.</summary>
-public sealed class StoredQueryHandler(IStoredQueryRepository queries, IStoredQueryValidator validator, IStoredQueryDescriber describer, IUnitOfWork unitOfWork, TimeProvider clock)
+public sealed class StoredQueryHandler(IStoredQueryRepository queries, IStoredQueryValidator validator, IStoredQueryDescriber describer, IBuilderRulesProvider builderRules, IUnitOfWork unitOfWork, TimeProvider clock)
 {
     public async Task<IReadOnlyList<StoredQuerySummary>> ListAsync(CancellationToken ct) =>
         (await queries.ListAsync(ct)).Select(q => new StoredQuerySummary(q.Id, q.Name, Kind(q), q.UpdatedAt)).ToList();
@@ -15,6 +15,18 @@ public sealed class StoredQueryHandler(IStoredQueryRepository queries, IStoredQu
 
     public async Task<QueryDescriptionDto> DescribeAsync(string id, CancellationToken ct) =>
         await describer.DescribeAsync((await LoadAsync(id, ct)).Document, ct);
+
+    /// <summary>What a query builder may offer, read from the running schema.</summary>
+    public Task<BuilderRulesDto> BuilderRulesAsync(CancellationToken ct) => builderRules.GetAsync(ct);
+
+    /// <summary>Describes a document without storing it: its description when valid, else its problems with positions.</summary>
+    public async Task<DocumentDescriptionDto> DescribeDocumentAsync(DescribeDocumentRequest request, CancellationToken ct)
+    {
+        var problems = await validator.ValidateAsync(request.Document, ct);
+        return problems.Count > 0
+            ? new DocumentDescriptionDto(null, [.. problems.Select(p => new QueryProblemDto(p.Message, p.Line, p.Column))])
+            : new DocumentDescriptionDto(await describer.DescribeAsync(request.Document!, ct), []);
+    }
 
     public async Task<StoredQueryDto> CreateAsync(CreateStoredQueryRequest request, CancellationToken ct)
     {

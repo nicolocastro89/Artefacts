@@ -1008,6 +1008,29 @@ export const responseFieldTypes = {
     "name": "text",
     "updatedAt": "date"
   },
+  "getQueryBuilderRules": {
+    "enums": "map",
+    "limits.maxDepth": "number",
+    "limits.maxFieldCost": "number",
+    "limits.maxPageSize": "number",
+    "limits.maxTypeCost": "number",
+    "roots[]": "list",
+    "roots[].arguments[]": "list",
+    "roots[].filter[]": "list",
+    "roots[].list": "boolean",
+    "roots[].name": "text",
+    "roots[].sort[]": "list",
+    "roots[].type": "text",
+    "types": "map"
+  },
+  "describeDocument": {
+    "description.fields": "map",
+    "description.variables": "map",
+    "problems[]": "list",
+    "problems[].column": "number",
+    "problems[].line": "number",
+    "problems[].message": "text"
+  },
   "getQuery": {
     "document": "text",
     "id": "text",
@@ -1325,6 +1348,14 @@ export const operations = {
   "createQuery": {
     "method": "POST",
     "path": "/api/queries"
+  },
+  "getQueryBuilderRules": {
+    "method": "GET",
+    "path": "/api/queries/builder-schema"
+  },
+  "describeDocument": {
+    "method": "POST",
+    "path": "/api/queries/description"
   },
   "getQuery": {
     "method": "GET",

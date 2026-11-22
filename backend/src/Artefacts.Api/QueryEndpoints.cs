@@ -13,6 +13,15 @@ internal static class QueryEndpoints
             .WithName("listQueries")
             .WithSummary("The stored queries: system queries first, then user queries by name.");
 
+        g.MapGet("/builder-schema", async (StoredQueryHandler h, CancellationToken ct) => TypedResults.Ok(await h.BuilderRulesAsync(ct)))
+            .WithName("getQueryBuilderRules")
+            .WithSummary("What a query builder may offer: the roots, the fields of every type, the fields a list can be filtered and ordered on with their operators, the enums and the limits, read from the running schema.");
+
+        g.MapPost("/description", async (DescribeDocumentRequest request, StoredQueryHandler h, CancellationToken ct) =>
+                TypedResults.Ok(await h.DescribeDocumentAsync(request, ct)))
+            .WithName("describeDocument")
+            .WithSummary("Describes a document without storing it: the type of every value it returns and of its variables, or its problems with line and column.");
+
         g.MapGet("/{id}", async (string id, StoredQueryHandler h, CancellationToken ct) => TypedResults.Ok(await h.GetAsync(id, ct)))
             .WithName("getQuery")
             .ProducesProblem(StatusCodes.Status404NotFound);

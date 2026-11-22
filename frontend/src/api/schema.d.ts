@@ -573,6 +573,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/queries/builder-schema": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What a query builder may offer: the roots, the fields of every type, the fields a list can be filtered and ordered on with their operators, the enums and the limits, read from the running schema. */
+        get: operations["getQueryBuilderRules"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/queries/description": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Describes a document without storing it: the type of every value it returns and of its variables, or its problems with line and column. */
+        post: operations["describeDocument"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/queries/{id}": {
         parameters: {
             query?: never;
@@ -809,6 +843,69 @@ export interface components {
             storageLocationId?: null | string;
             valuation?: null | components["schemas"]["MoneyDto"];
         };
+        BuilderArgumentDto: {
+            name: string;
+            type: string;
+            kind: string;
+            list: boolean;
+            required: boolean;
+            default: null | string;
+        };
+        BuilderFieldDto: {
+            name: string;
+            type: string;
+            kind: string;
+            list: boolean;
+            required: boolean;
+            valueType: null | string;
+            sensitivity: null | string;
+        };
+        BuilderFilterFieldDto: {
+            name: string;
+            label: string;
+            valueType: string;
+            graphQlType: string;
+            operators: components["schemas"]["BuilderOperatorDto"][];
+        };
+        BuilderLimitsDto: {
+            /** Format: int32 */
+            maxPageSize: number;
+            /** Format: int32 */
+            maxDepth: number;
+            /** Format: double */
+            maxFieldCost: number;
+            /** Format: double */
+            maxTypeCost: number;
+        };
+        BuilderOperatorDto: {
+            name: string;
+            list: boolean;
+        };
+        BuilderRootDto: {
+            name: string;
+            type: string;
+            list: boolean;
+            arguments: components["schemas"]["BuilderArgumentDto"][];
+            filter: null | components["schemas"]["BuilderFilterFieldDto"][];
+            sort: null | components["schemas"]["BuilderSortFieldDto"][];
+        };
+        BuilderRulesDto: {
+            roots: components["schemas"]["BuilderRootDto"][];
+            types: {
+                [key: string]: components["schemas"]["BuilderTypeDto"];
+            };
+            enums: {
+                [key: string]: string[];
+            };
+            limits: components["schemas"]["BuilderLimitsDto"];
+        };
+        BuilderSortFieldDto: {
+            name: string;
+            label: string;
+        };
+        BuilderTypeDto: {
+            fields: components["schemas"]["BuilderFieldDto"][];
+        };
         ChangeStoredPageRequest: {
             name?: null | string;
             slug?: null | string;
@@ -858,6 +955,13 @@ export interface components {
             earliestYear: number;
             /** Format: int32 */
             latestYear: number;
+        };
+        DescribeDocumentRequest: {
+            document: null | string;
+        };
+        DocumentDescriptionDto: {
+            description: null | components["schemas"]["QueryDescriptionDto"];
+            problems: components["schemas"]["QueryProblemDto"][];
         };
         DuplicateStoredPageRequest: {
             name: null | string;
@@ -1218,6 +1322,13 @@ export interface components {
             variables: {
                 [key: string]: components["schemas"]["QueryVariableDto"];
             };
+        };
+        QueryProblemDto: {
+            message: string;
+            /** Format: int32 */
+            line: null | number;
+            /** Format: int32 */
+            column: null | number;
         };
         QueryVariableDto: {
             type: string;
@@ -3445,6 +3556,50 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+        };
+    };
+    getQueryBuilderRules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BuilderRulesDto"];
+                };
+            };
+        };
+    };
+    describeDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DescribeDocumentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentDescriptionDto"];
                 };
             };
         };

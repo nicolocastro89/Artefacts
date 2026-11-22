@@ -1,8 +1,10 @@
 # graphql-queries Specification
 
 ## Purpose
-TBD - created by archiving change graphql-query-layer. Update Purpose after archive.
+Defines the read-only GraphQL endpoint over the read views: artefact fields and their linked records, nested lists, listing with search, filters, ordering, grouping and paging, and the language of a query.
+
 ## Requirements
+
 ### Requirement: Read-only GraphQL endpoint
 The system SHALL accept GraphQL query operations at `/graphql` and answer them from the read views. The schema SHALL contain no mutations: the catalogue is changed only through the existing REST operations. The schema SHALL be published so clients can discover it.
 
@@ -53,11 +55,11 @@ An artefact SHALL expose its provenance entries in order (region with its resolv
 - **THEN** the resolved catalogue entry is the English one and its language is "en"
 
 ### Requirement: Listing artefacts
-The system SHALL list artefacts with the free-text search, sorting, grouping and paging of the artefact list (same matching rules, same group-first order, every group's label and count for the whole search). A client SHALL also be able to filter on any field the field catalog marks as filterable and sort on any field marked sortable, combined with the search. The page size MUST NOT exceed 100.
+The system SHALL list artefacts with free-text search, sorting, grouping and paging, with the same matching rules and group-first order as the artefact list page (the `artefact-list` system query): every group's label and count for the whole search. A client SHALL also be able to filter on any field the field catalog marks as filterable and sort on any field marked sortable, combined with the search. The page size MUST NOT exceed 100.
 
 #### Scenario: Same results as the list
-- **WHEN** a client lists artefacts with the search "lemons", grouped by object type, sorted by title, page 2 of 25
-- **THEN** the items, total and groups are the same as those of the artefact list with the same parameters
+- **WHEN** a client lists artefacts with the search "lemons", grouped by object type, sorted by title, page 2 of 25, once with its own document and once by running the system query `artefact-list` with the same variables
+- **THEN** the items, total and groups are the same
 
 #### Scenario: Filter on a catalog field
 - **WHEN** a client lists artefacts whose acquisition method is "gift" and whose image count is greater than 0
@@ -91,4 +93,3 @@ Every GraphQL field that exposes a field the catalog tags as sensitive SHALL car
 #### Scenario: Acquisition price is tagged
 - **WHEN** a client reads the published schema
 - **THEN** the acquisition price and valuation fields carry the sensitivity tag `financial`
-

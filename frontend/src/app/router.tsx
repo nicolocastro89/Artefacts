@@ -26,6 +26,10 @@ export const routes = [
       { path: 'artefacts/:id', element: <PageRoute key="detail" slug="artefact-detail" /> },
       { path: 'artefacts/:id/edit', element: <PageRoute key="edit" page={artefactEditPage} /> },
       { path: 'p/:slug', element: <CustomPageRoute /> },
+      // The query builder loads on demand: it brings the GraphQL parser with it.
+      { path: 'queries', lazy: async () => ({ Component: (await import('../queries/QueriesPage')).QueriesPage }) },
+      { path: 'queries/new', lazy: async () => ({ Component: (await import('../queries/QueryEditor')).QueryEditor }) },
+      { path: 'queries/:id', lazy: async () => ({ Component: (await import('../queries/QueryEditor')).QueryEditor }) },
       { path: 'pages', element: <PagesPage /> },
       { path: 'pages/new', element: <PageEditor /> },
       { path: 'pages/:id', element: <PageEditor /> },

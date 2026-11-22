@@ -10,13 +10,11 @@ namespace Artefacts.Infrastructure.Graph;
 /// The rules are those of <c>frontend/scripts/generate-field-types.mjs</c> for REST responses; the shared cases are in
 /// <c>backend/openapi/field-type-rules.json</c>.
 /// </summary>
-public sealed class StoredQueryDescriber(IRequestExecutorProvider executors) : IStoredQueryDescriber
+internal sealed class StoredQueryDescriber(SchemaIndexProvider schemas) : IStoredQueryDescriber
 {
-    private SchemaIndex? _schema;
-
     public async Task<QueryDescriptionDto> DescribeAsync(string document, CancellationToken cancellationToken)
     {
-        var schema = _schema ??= SchemaIndex.From((await executors.GetExecutorAsync(cancellationToken: cancellationToken)).Schema.ToString());
+        var schema = await schemas.GetAsync(cancellationToken);
         var parsed = Utf8GraphQLParser.Parse(document);
         var operation = parsed.Definitions.OfType<OperationDefinitionNode>().Single();
         var fragments = parsed.Definitions.OfType<FragmentDefinitionNode>().ToDictionary(f => f.Name.Value);
@@ -72,53 +70,6 @@ public sealed class StoredQueryDescriber(IRequestExecutorProvider executors) : I
                     break;
             }
         }
-    }
-
-    /// <summary>The object types, enums and fields of the schema, read from its SDL.</summary>
-    private sealed class SchemaIndex
-    {
-        private readonly Dictionary<string, ObjectTypeDefinitionNode> _objects = [];
-        private readonly HashSet<string> _inputs = [];
-        private readonly HashSet<string> _enums = [];
-
-        public string QueryType { get; private init; } = "Query";
-
-        public static SchemaIndex From(string sdl)
-        {
-            var document = Utf8GraphQLParser.Parse(sdl);
-            var index = new SchemaIndex
-            {
-                QueryType = document.Definitions.OfType<SchemaDefinitionNode>().SingleOrDefault()?.OperationTypes
-                    .FirstOrDefault(o => o.Operation == OperationType.Query)?.Type.Name.Value ?? "Query",
-            };
-            foreach (var definition in document.Definitions)
-            {
-                switch (definition)
-                {
-                    case ObjectTypeDefinitionNode o: index._objects[o.Name.Value] = o; break;
-                    case InputObjectTypeDefinitionNode i: index._inputs.Add(i.Name.Value); break;
-                    case EnumTypeDefinitionNode e: index._enums.Add(e.Name.Value); break;
-                }
-            }
-
-            return index;
-        }
-
-        public bool IsObject(string name) => _objects.ContainsKey(name);
-
-        public FieldDefinitionNode Field(string type, string field) =>
-            _objects[type].Fields.First(f => f.Name.Value == field);
-
-        /// <summary>The type of a variable: enums are text, input objects a map, lists a list.</summary>
-        public string InputType(ITypeNode type) => type switch
-        {
-            NonNullTypeNode nonNull => InputType(nonNull.Type),
-            ListTypeNode => "list",
-            NamedTypeNode named when _inputs.Contains(named.Name.Value) => "map",
-            NamedTypeNode named when _enums.Contains(named.Name.Value) => "text",
-            NamedTypeNode named => FieldTypeRules.Scalar(named.Name.Value),
-            _ => "text",
-        };
     }
 }
 

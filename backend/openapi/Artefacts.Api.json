@@ -2785,6 +2785,58 @@
         }
       }
     },
+    "/api/queries/builder-schema": {
+      "get": {
+        "tags": [
+          "Queries"
+        ],
+        "summary": "What a query builder may offer: the roots, the fields of every type, the fields a list can be filtered and ordered on with their operators, the enums and the limits, read from the running schema.",
+        "operationId": "getQueryBuilderRules",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BuilderRulesDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/queries/description": {
+      "post": {
+        "tags": [
+          "Queries"
+        ],
+        "summary": "Describes a document without storing it: the type of every value it returns and of its variables, or its problems with line and column.",
+        "operationId": "describeDocument",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DescribeDocumentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentDescriptionDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/queries/{id}": {
       "get": {
         "tags": [
@@ -3951,6 +4003,263 @@
           }
         }
       },
+      "BuilderArgumentDto": {
+        "required": [
+          "name",
+          "type",
+          "kind",
+          "list",
+          "required",
+          "default"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "list": {
+            "type": "boolean"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "default": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "BuilderFieldDto": {
+        "required": [
+          "name",
+          "type",
+          "kind",
+          "list",
+          "required",
+          "valueType",
+          "sensitivity"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "list": {
+            "type": "boolean"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "valueType": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sensitivity": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "BuilderFilterFieldDto": {
+        "required": [
+          "name",
+          "label",
+          "valueType",
+          "graphQlType",
+          "operators"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "valueType": {
+            "type": "string"
+          },
+          "graphQlType": {
+            "type": "string"
+          },
+          "operators": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BuilderOperatorDto"
+            }
+          }
+        }
+      },
+      "BuilderLimitsDto": {
+        "required": [
+          "maxPageSize",
+          "maxDepth",
+          "maxFieldCost",
+          "maxTypeCost"
+        ],
+        "type": "object",
+        "properties": {
+          "maxPageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxDepth": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxFieldCost": {
+            "type": "number",
+            "format": "double"
+          },
+          "maxTypeCost": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "BuilderOperatorDto": {
+        "required": [
+          "name",
+          "list"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "list": {
+            "type": "boolean"
+          }
+        }
+      },
+      "BuilderRootDto": {
+        "required": [
+          "name",
+          "type",
+          "list",
+          "arguments",
+          "filter",
+          "sort"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "list": {
+            "type": "boolean"
+          },
+          "arguments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BuilderArgumentDto"
+            }
+          },
+          "filter": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/BuilderFilterFieldDto"
+            }
+          },
+          "sort": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/BuilderSortFieldDto"
+            }
+          }
+        }
+      },
+      "BuilderRulesDto": {
+        "required": [
+          "roots",
+          "types",
+          "enums",
+          "limits"
+        ],
+        "type": "object",
+        "properties": {
+          "roots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BuilderRootDto"
+            }
+          },
+          "types": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/BuilderTypeDto"
+            }
+          },
+          "enums": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "limits": {
+            "$ref": "#/components/schemas/BuilderLimitsDto"
+          }
+        }
+      },
+      "BuilderSortFieldDto": {
+        "required": [
+          "name",
+          "label"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          }
+        }
+      },
+      "BuilderTypeDto": {
+        "required": [
+          "fields"
+        ],
+        "type": "object",
+        "properties": {
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BuilderFieldDto"
+            }
+          }
+        }
+      },
       "ChangeStoredPageRequest": {
         "type": "object",
         "properties": {
@@ -4169,6 +4478,45 @@
           "latestYear": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "DescribeDocumentRequest": {
+        "required": [
+          "document"
+        ],
+        "type": "object",
+        "properties": {
+          "document": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "DocumentDescriptionDto": {
+        "required": [
+          "description",
+          "problems"
+        ],
+        "type": "object",
+        "properties": {
+          "description": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QueryDescriptionDto"
+              }
+            ]
+          },
+          "problems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QueryProblemDto"
+            }
           }
         }
       },
@@ -5634,6 +5982,33 @@
             "additionalProperties": {
               "$ref": "#/components/schemas/QueryVariableDto"
             }
+          }
+        }
+      },
+      "QueryProblemDto": {
+        "required": [
+          "message",
+          "line",
+          "column"
+        ],
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "line": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "column": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
           }
         }
       },

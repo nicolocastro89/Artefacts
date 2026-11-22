@@ -59,7 +59,9 @@ public static class DependencyInjection
         services.AddSingleton<Graph.IStoredQueryDocuments, Graph.DatabaseStoredQueryDocuments>();
         services.AddOptions<GraphOptions>().Bind(configuration.GetSection(GraphOptions.Section));
         services.AddSingleton<Graph.StoredQueryValidator>();
+        services.AddSingleton<Graph.SchemaIndexProvider>();
         services.AddSingleton<IStoredQueryDescriber, Graph.StoredQueryDescriber>();
+        services.AddSingleton<IBuilderRulesProvider, Graph.BuilderRulesBuilder>();
         services.AddSingleton<IStoredQueryValidator>(sp => sp.GetRequiredService<Graph.StoredQueryValidator>());
         services.AddHostedService<Graph.SystemQuerySync>();
         services.AddHostedService<Pages.SystemPageSync>();

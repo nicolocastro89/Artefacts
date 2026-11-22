@@ -1,0 +1,189 @@
+.blocks {
+  display: grid;
+  gap: var(--s4);
+}
+
+.blocks__section {
+  display: grid;
+  gap: var(--s4);
+  padding: var(--s4);
+}
+
+.blocks__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+}
+
+.blocks__head h3,
+.blocks__section h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  font-size: var(--text-lg);
+}
+
+.blocks__block {
+  display: grid;
+  gap: var(--s2);
+}
+
+.blocks__block h4 {
+  font-size: var(--text-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-muted, inherit);
+}
+
+.blocks__options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: var(--s3);
+}
+
+.blocks__argument,
+.blocks__value,
+.blocks__condition {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2);
+}
+
+/* Controls sit side by side in a row instead of each taking the full width. */
+.blocks .input {
+  width: auto;
+  min-width: 7rem;
+  max-width: 100%;
+}
+
+.blocks__value {
+  flex-wrap: nowrap;
+}
+
+.blocks__value .input {
+  min-width: 9rem;
+}
+
+.blocks__items {
+  display: grid;
+  gap: var(--s2);
+  list-style: none;
+  padding: 0;
+}
+
+.blocks__group {
+  display: grid;
+  gap: var(--s2);
+  padding: var(--s3);
+  border: 1px solid var(--line, currentColor);
+  border-radius: var(--radius-sm);
+}
+
+.blocks__group[data-depth='0'] {
+  border-style: dashed;
+}
+
+.blocks__group-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.blocks__tree {
+  display: grid;
+  gap: 2px;
+  list-style: none;
+  padding: 0 0 0 var(--s4);
+}
+
+.blocks__tree:first-child {
+  padding-left: 0;
+}
+
+.blocks__tree summary {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  cursor: pointer;
+  padding: 2px 0;
+  list-style: none;
+}
+
+.blocks__tree summary::-webkit-details-marker {
+  display: none;
+}
+
+/* A marker where a leaf has its checkbox, so a branch reads as something that opens. */
+.blocks__tree summary::before {
+  content: '';
+  flex: none;
+  width: 0.45rem;
+  height: 0.45rem;
+  margin: 0 0.3rem 0 0.15rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg);
+  opacity: 0.6;
+}
+
+.blocks__tree details[open] > summary::before {
+  transform: rotate(45deg);
+}
+
+.blocks__leaf {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  padding: 2px 0;
+}
+
+.blocks__tag,
+.blocks__count {
+  font-size: var(--text-sm);
+  color: var(--ink-muted, inherit);
+}
+
+.blocks__tag {
+  padding: 0 var(--s2);
+  border: 1px solid var(--line, currentColor);
+  border-radius: var(--radius-sm);
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+}
+
+.blocks__tag--sensitive {
+  color: var(--danger, inherit);
+}
+
+.blocks__sigil {
+  font-weight: 650;
+}
+
+.blocks__add-root {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.editor__views {
+  display: flex;
+  gap: var(--s2);
+}
+
+.editor__run {
+  display: grid;
+  gap: var(--s3);
+}
+
+.editor__result {
+  max-height: 28rem;
+  overflow: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: var(--text-sm);
+  white-space: pre;
+}
