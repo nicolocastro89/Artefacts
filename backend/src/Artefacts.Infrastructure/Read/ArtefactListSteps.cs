@@ -6,66 +6,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Artefacts.Infrastructure.Read;
 
-internal sealed class ArtefactListQuery(ReadDbContext db, IImageUrlBuilder imageUrls, ILanguagePreferences preferences) : IArtefactListQuery
-{
-    public async Task<ArtefactListPage> ListAsync(ArtefactListRequest request, CancellationToken ct)
-    {
-        var page = Math.Max(1, request.Page);
-        var pageSize = Math.Clamp(request.PageSize, 1, ArtefactListSteps.MaxPageSize);
-
-        var query = ArtefactListSteps.Search(db.Artefacts, request.Search);
-
-        // Names of object types, regions and list entries resolve in the reader's languages, in SQL, so that ordering and
-        // grouping by them are right across pages.
-        var languages = preferences.Current.ToArray();
-        var total = await query.CountAsync(ct);
-        var groups = await ArtefactListSteps.GroupsAsync(query, request.Group, languages, ct);
-
-        var ordered = ArtefactListSteps.ThenSort(ArtefactListSteps.OrderByGroup(query, request.Group, languages), request.Sort,
-            request.Direction == SortDirection.Desc);
-        var pageRows = await ArtefactListSteps.Page(ordered, page, pageSize)
-            .Select(r => new
-            {
-                Row = r,
-                ObjectTypeName = LocalizedSql.ObjectTypeName(r.ObjectTypeId, languages),
-                CollectionGroupName = LocalizedSql.ReferenceEntryName(r.CollectionGroupId, languages),
-                DynastyName = LocalizedSql.ReferenceEntryName(r.DynastyId, languages),
-            })
-            .ToListAsync(ct);
-
-        var labels = groups.ToDictionary(g => g.Key ?? "", g => g.Label);
-        var items = pageRows.Select(x =>
-        {
-            var r = x.Row;
-            var key = request.Group == ArtefactGrouping.None ? null : ArtefactListSteps.GroupKeyOf(r, request.Group);
-            return new ArtefactListItem(
-                r.Id,
-                r.InventoryNumber,
-                r.Title,
-                r.Maker,
-                r.CreationDateDisplay is null
-                    ? null
-                    : new HistoricalDateDto(r.CreationDateDisplay, r.CreationDateEarliestYear, r.CreationDateLatestYear,
-                        Enum.TryParse<HistoricalDatePrecision>(r.CreationDatePrecision, out var p) ? p : HistoricalDatePrecision.Approximate),
-                r.Medium,
-                r.PrimaryImageKey is null ? null : imageUrls.Build(r.PrimaryImageKey),
-                r.ImageCount,
-                x.ObjectTypeName,
-                x.CollectionGroupName,
-                r.PlaceText,
-                x.DynastyName,
-                key,
-                request.Group == ArtefactGrouping.None ? null : labels.GetValueOrDefault(key ?? ""));
-        }).ToList();
-
-        return new ArtefactListPage(items, total, page, pageSize, groups);
-    }
-}
-
 /// <summary>
 /// The artefact list's steps, composable over any <see cref="ArtefactRow"/> query: free-text search, group-first
-/// ordering with a sort, every group's label and count, and paging. The REST list and the GraphQL list share them, so
-/// both find, order and group alike.
+/// ordering with a sort, every group's label and count, and paging. The GraphQL list resolver builds on them.
 /// </summary>
 internal static class ArtefactListSteps
 {

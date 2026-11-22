@@ -157,12 +157,6 @@ public interface IImageUrlBuilder
     ImageUrls Build(string storageKey);
 }
 
-/// <summary>Read-side artefact listing (search, sort, grouping, paging) over the read model.</summary>
-public interface IArtefactListQuery
-{
-    Task<ArtefactListPage> ListAsync(ArtefactListRequest request, CancellationToken ct);
-}
-
 /// <summary>The field catalog describing the read model.</summary>
 public interface IFieldCatalog
 {

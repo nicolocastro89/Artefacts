@@ -219,8 +219,8 @@ public class TranslationApiTests(ApiFactory factory)
         await _client.CreateArtefactAsync(new ArtefactWriteRequest(HttpExtensions.Unique("INV"), $"One {token}", ObjectTypeId: first.Id));
         await _client.CreateArtefactAsync(new ArtefactWriteRequest(HttpExtensions.Unique("INV"), $"Two {token}", ObjectTypeId: second.Id));
 
-        var en = await GetAsync<ArtefactListPage>($"/api/artefacts?search={token}&group=objectType&lang=en");
-        var it = await GetAsync<ArtefactListPage>($"/api/artefacts?search={token}&group=objectType&lang=it");
+        var en = await _client.ListArtefactsAsync(search: token, group: "objectType", lang: "en");
+        var it = await _client.ListArtefactsAsync(search: token, group: "objectType", lang: "it");
 
         Assert.Equal([$"Alpha {token}", $"Omega {token}"], en.Groups.Select(g => g.Label));
         Assert.Equal([$"Alfa {token}", $"Zeta {token}"], it.Groups.Select(g => g.Label));

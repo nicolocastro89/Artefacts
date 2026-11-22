@@ -23,23 +23,6 @@ internal static class Endpoints
     {
         var g = app.MapGroup("/api/artefacts").WithTags("Artefacts");
 
-        g.MapGet("/", async Task<Results<Ok<ArtefactListPage>, ValidationProblem>> (
-                [AsParameters] ListArtefactsParameters p, IArtefactListQuery query, CancellationToken ct) =>
-            {
-                var errors = new Dictionary<string, string[]>();
-                if (!QueryEnum.TryParse(p.Sort, ArtefactSort.InventoryNumber, out var sort))
-                    errors["sort"] = [$"Must be one of: {string.Join(", ", QueryEnum.AllowedValues<ArtefactSort>())}."];
-                if (!QueryEnum.TryParse(p.Direction, SortDirection.Asc, out var direction))
-                    errors["direction"] = [$"Must be one of: {string.Join(", ", QueryEnum.AllowedValues<SortDirection>())}."];
-                if (!QueryEnum.TryParse(p.Group, ArtefactGrouping.None, out var group))
-                    errors["group"] = [$"Must be one of: {string.Join(", ", QueryEnum.AllowedValues<ArtefactGrouping>())}."];
-                if (errors.Count > 0) return TypedResults.ValidationProblem(errors);
-
-                return TypedResults.Ok(await query.ListAsync(
-                    new ArtefactListRequest(p.Search, sort, direction, p.Page ?? 1, p.PageSize ?? 25, group), ct));
-            })
-            .WithName("listArtefacts");
-
         g.MapGet("/{id:guid}", async (Guid id, ArtefactDetailQueryHandler h, CancellationToken ct) =>
                 TypedResults.Ok(await h.GetAsync(id, ct)))
             .WithName("getArtefact")
@@ -319,11 +302,3 @@ internal static class Endpoints
             .ExcludeFromDescription();
     }
 }
-
-internal sealed record ListArtefactsParameters(
-    [FromQuery(Name = "search")] string? Search,
-    [FromQuery(Name = "sort"), QueryEnum(typeof(ArtefactSort))] string? Sort,
-    [FromQuery(Name = "direction"), QueryEnum(typeof(SortDirection))] string? Direction,
-    [FromQuery(Name = "page")] int? Page,
-    [FromQuery(Name = "pageSize")] int? PageSize,
-    [FromQuery(Name = "group"), QueryEnum(typeof(ArtefactGrouping))] string? Group);

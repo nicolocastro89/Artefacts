@@ -3,13 +3,15 @@ import { Archive, FileText, FileUp, LayoutTemplate, Map as MapIcon, Monitor, Moo
 import { NavLink, Outlet, useLocation } from 'react-router'
 import { api } from '../api/client'
 import { useNavigationPages } from '../api/pages'
+import { runStoredQuery } from '../widgets/core/dataSources'
 import { useTheme, type ThemeChoice } from './theme'
 import './AppShell.css'
 
 function useCounts() {
   const artefacts = useQuery({
     queryKey: ['count', 'artefacts'],
-    queryFn: async () => (await api.GET('/api/artefacts', { params: { query: { pageSize: 1 } } })).data?.total ?? null,
+    // The total of the artefact list query, asking for a single item.
+    queryFn: async () => ((await runStoredQuery('artefact-list', { pageSize: 1 })) as { artefacts?: { total?: number } }).artefacts?.total ?? null,
     staleTime: 30_000,
   })
   const regions = useQuery({

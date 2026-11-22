@@ -36,22 +36,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/artefacts": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["listArtefacts"];
-        put?: never;
-        post: operations["createArtefact"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/artefacts/{id}": {
         parameters: {
             query?: never;
@@ -62,6 +46,22 @@ export interface paths {
         get: operations["getArtefact"];
         put: operations["updateArtefact"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/artefacts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["createArtefact"];
         delete?: never;
         options?: never;
         head?: never;
@@ -767,14 +767,6 @@ export interface components {
             storageLocation: null | components["schemas"]["NamedRefDto"];
             valuation: null | components["schemas"]["MoneyDto"];
         };
-        ArtefactGroupDto: {
-            key: null | string;
-            label: null | string;
-            /** Format: int32 */
-            count: number;
-        };
-        /** @enum {unknown} */
-        ArtefactGrouping: "none" | "objectType" | "collectionGroup" | "origin" | "century" | "dynasty";
         ArtefactImageDto: {
             /** Format: uuid */
             mediaAssetId: string;
@@ -788,36 +780,6 @@ export interface components {
             isPrimary: boolean;
             urls: components["schemas"]["ImageUrls"];
         };
-        ArtefactListItem: {
-            /** Format: uuid */
-            id: string;
-            inventoryNumber: string;
-            title: string;
-            maker: null | string;
-            creationDate: null | components["schemas"]["HistoricalDateDto"];
-            medium: null | string;
-            primaryImage: null | components["schemas"]["ImageUrls"];
-            /** Format: int32 */
-            imageCount: number;
-            objectType: null | string;
-            collectionGroup: null | string;
-            placeOfProduction: null | string;
-            dynasty: null | string;
-            groupKey: null | string;
-            groupLabel: null | string;
-        };
-        ArtefactListPage: {
-            items: components["schemas"]["ArtefactListItem"][];
-            /** Format: int32 */
-            total: number;
-            /** Format: int32 */
-            page: number;
-            /** Format: int32 */
-            pageSize: number;
-            groups: components["schemas"]["ArtefactGroupDto"][];
-        };
-        /** @enum {unknown} */
-        ArtefactSort: "inventoryNumber" | "title" | "creationDate";
         ArtefactWriteRequest: {
             inventoryNumber: null | string;
             title: null | string;
@@ -1352,8 +1314,6 @@ export interface components {
             /** Format: uuid */
             parentId: null | string;
         };
-        /** @enum {unknown} */
-        SortDirection: "asc" | "desc";
         StoredPageDto: {
             id: string;
             slug: string;
@@ -1456,75 +1416,6 @@ export interface operations {
             };
         };
     };
-    listArtefacts: {
-        parameters: {
-            query?: {
-                search?: string;
-                sort?: components["schemas"]["ArtefactSort"];
-                direction?: components["schemas"]["SortDirection"];
-                page?: number;
-                pageSize?: number;
-                group?: components["schemas"]["ArtefactGrouping"];
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ArtefactListPage"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
-                };
-            };
-        };
-    };
-    createArtefact: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ArtefactWriteRequest"];
-            };
-        };
-        responses: {
-            /** @description Created */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ArtefactDetail"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
-                };
-            };
-        };
-    };
     getArtefact: {
         parameters: {
             query?: never;
@@ -1596,6 +1487,39 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    createArtefact: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ArtefactWriteRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArtefactDetail"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
                 };
             };
         };

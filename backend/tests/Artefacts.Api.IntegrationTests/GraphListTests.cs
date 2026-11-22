@@ -31,10 +31,10 @@ public class GraphListTests(ApiFactory factory)
         string.Join("|", page.GetProperty("items").EnumerateArray().Select(i => i.GetProperty(field).GetString()));
 
     [Fact]
-    public async Task List_matches_the_rest_list_for_search_group_sort_and_page()
+    public async Task An_ad_hoc_list_matches_the_artefact_list_system_query_for_search_group_sort_and_page()
     {
         var token = await SeedAsync();
-        var rest = await (await _client.GetAsync($"/api/artefacts?search={token}&group=objectType&sort=title&pageSize=3&page=2")).ReadAsync<ArtefactListPage>();
+        var stored = await _client.ListArtefactsAsync(search: token, group: "objectType", sort: "title", pageSize: 3, page: 2);
 
         var page = (await _client.QueryAsync("""
             query($search: String) {
@@ -46,13 +46,13 @@ public class GraphListTests(ApiFactory factory)
             }
             """, new { search = token })).Data().GetProperty("artefacts");
 
-        Assert.Equal(rest.Total, page.GetProperty("total").GetInt32());
+        Assert.Equal(stored.Total, page.GetProperty("total").GetInt32());
         Assert.Equal(2, page.GetProperty("page").GetInt32());
-        Assert.Equal(string.Join("|", rest.Items.Select(i => i.Id)), Items(page, "id"));
-        Assert.Equal(string.Join("|", rest.Items.Select(i => i.GroupKey)), Items(page, "groupKey"));
-        Assert.Equal(string.Join("|", rest.Items.Select(i => i.GroupLabel)), Items(page, "groupLabel"));
+        Assert.Equal(string.Join("|", stored.Items.Select(i => i.Id)), Items(page, "id"));
+        Assert.Equal(string.Join("|", stored.Items.Select(i => i.GroupKey)), Items(page, "groupKey"));
+        Assert.Equal(string.Join("|", stored.Items.Select(i => i.GroupLabel)), Items(page, "groupLabel"));
         Assert.Equal(
-            rest.Groups.Select(g => (g.Key, g.Label, g.Count)),
+            stored.Groups.Select(g => (g.Key, g.Label, g.Count)),
             page.GetProperty("groups").EnumerateArray().Select(g => (
                 g.GetProperty("key").GetString(), g.GetProperty("label").GetString(), g.GetProperty("count").GetInt32())));
     }

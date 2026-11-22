@@ -22,8 +22,6 @@ public sealed record HistoricalDateInput(string? Text, int? EarliestYear = null,
 
 public sealed record MoneyDto(decimal Amount, string Currency);
 
-public sealed record PagedResult<T>(IReadOnlyList<T> Items, int Total, int Page, int PageSize);
-
 // ---------- Artefacts ----------
 
 public sealed record AcquisitionDto(
@@ -78,22 +76,6 @@ public sealed record ArtefactDetail(
     NamedRefDto? StorageLocation,
     MoneyDto? Valuation);
 
-public sealed record ArtefactListItem(
-    Guid Id,
-    string InventoryNumber,
-    string Title,
-    string? Maker,
-    HistoricalDateDto? CreationDate,
-    string? Medium,
-    ImageUrls? PrimaryImage,
-    int ImageCount,
-    string? ObjectType,
-    string? CollectionGroup,
-    string? PlaceOfProduction,
-    string? Dynasty,
-    string? GroupKey,
-    string? GroupLabel);
-
 /// <summary>Grouping of the artefact list. <see cref="None"/> keeps the plain sorted list.</summary>
 public enum ArtefactGrouping
 {
@@ -111,10 +93,6 @@ public enum ArtefactGrouping
 /// </summary>
 public sealed record ArtefactGroupDto(string? Key, string? Label, int Count);
 
-/// <summary>A page of the artefact list, with every group of the whole search when the list is grouped.</summary>
-public sealed record ArtefactListPage(
-    IReadOnlyList<ArtefactListItem> Items, int Total, int Page, int PageSize, IReadOnlyList<ArtefactGroupDto> Groups);
-
 public enum ArtefactSort
 {
     InventoryNumber = 0,
@@ -127,14 +105,6 @@ public enum SortDirection
     Asc = 0,
     Desc = 1,
 }
-
-public sealed record ArtefactListRequest(
-    string? Search = null,
-    ArtefactSort Sort = ArtefactSort.InventoryNumber,
-    SortDirection Direction = SortDirection.Asc,
-    int Page = 1,
-    int PageSize = 25,
-    ArtefactGrouping Group = ArtefactGrouping.None);
 
 public sealed record AcquisitionInput(
     AcquisitionMethod Method, DateOnly? Date, Guid? SourceId, MoneyDto? Price, string? Lot = null, string? Note = null);

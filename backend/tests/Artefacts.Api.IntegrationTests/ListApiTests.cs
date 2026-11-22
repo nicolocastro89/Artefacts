@@ -211,7 +211,7 @@ public class PartyApiTests(ApiFactory factory)
             new PartyRequest($"Christie's {token}", Domain.Parties.PartyKind.Organisation))).ReadAsync<PartyDto>();
 
         Assert.Equal(($"Christie's {token}", Domain.Parties.PartyKind.Organisation), (updated.Name, updated.Kind));
-        var found = await (await _client.GetAsync($"/api/artefacts?search={Uri.EscapeDataString($"Christie's {token}")}")).ReadAsync<ArtefactListPage>();
+        var found = await _client.ListArtefactsAsync(search: $"Christie's {token}");
         Assert.Equal(artefact.Id, Assert.Single(found.Items).Id);
     }
 

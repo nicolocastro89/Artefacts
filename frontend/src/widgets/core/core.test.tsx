@@ -94,7 +94,8 @@ describe('PageRenderer', () => {
         {
           type: 'container',
           id: 'list',
-          dataSource: { kind: 'static', data: list, typedAs: 'listArtefacts' },
+          // A list row from a query result: untyped data, since no endpoint returns it any more.
+          dataSource: { kind: 'static', data: list },
           children: [
             {
               type: 'repeat',

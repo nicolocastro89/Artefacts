@@ -55,7 +55,6 @@ public static class DependencyInjection
         services.AddSingleton<IContentLanguages, ContentLanguages>();
         services.AddScoped<IMediaAssetRepository, MediaAssetRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
-        services.AddScoped<IArtefactListQuery, ArtefactListQuery>();
         services.AddSingleton<IFieldCatalog, FieldCatalog>();
         services.AddSingleton<Graph.IStoredQueryDocuments, Graph.DatabaseStoredQueryDocuments>();
         services.AddOptions<GraphOptions>().Bind(configuration.GetSection(GraphOptions.Section));

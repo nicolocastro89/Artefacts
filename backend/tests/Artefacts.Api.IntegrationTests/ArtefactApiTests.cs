@@ -41,7 +41,7 @@ public class ArtefactApiTests(ApiFactory factory)
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Contains("inventoryNumber", (await response.ValidationErrorsAsync()).Keys);
-        var list = await (await _client.GetAsync($"/api/artefacts?search={inv}")).ReadAsync<PagedResult<ArtefactListItem>>();
+        var list = await _client.ListArtefactsAsync(search: inv);
         Assert.Equal(1, list.Total);
     }
 

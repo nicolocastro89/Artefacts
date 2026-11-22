@@ -478,7 +478,7 @@ public class ImportApiTests(ApiFactory factory)
 
         Assert.Equal(ImportJobState.Discarded, discarded.State);
         Assert.False(Directory.Exists(StagingDirectory(job.Id)));
-        var list = await (await _client.GetAsync($"/api/artefacts?search={prefix}")).ReadAsync<ArtefactListPage>();
+        var list = await _client.ListArtefactsAsync(search: prefix);
         Assert.Equal(0, list.Total);
     }
 

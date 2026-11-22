@@ -21,8 +21,7 @@ public class ReadSideTests(ApiFactory factory)
         for (var i = 0; i < 30; i++)
             await _client.CreateArtefactAsync(new ArtefactWriteRequest($"{token}-{i:00}", $"Item {i}"));
 
-        var page2 = await (await _client.GetAsync($"/api/artefacts?search={token}&page=2&pageSize=25"))
-            .ReadAsync<PagedResult<ArtefactListItem>>();
+        var page2 = await _client.ListArtefactsAsync(search: token, page: 2, pageSize: 25);
 
         Assert.Equal(30, page2.Total);
         Assert.Equal(5, page2.Items.Count);
@@ -38,7 +37,7 @@ public class ReadSideTests(ApiFactory factory)
         var byInv = await _client.CreateArtefactAsync(new ArtefactWriteRequest($"{token}-INV", "Third"));
         await _client.CreateArtefactAsync(new ArtefactWriteRequest(HttpExtensions.Unique("INV"), "Unrelated"));
 
-        var result = await (await _client.GetAsync($"/api/artefacts?search={token}")).ReadAsync<PagedResult<ArtefactListItem>>();
+        var result = await _client.ListArtefactsAsync(search: token);
 
         Assert.Equal(3, result.Total);
         Assert.Equivalent(new[] { byTitle.Id, byMaker.Id, byInv.Id }, result.Items.Select(i => i.Id));
@@ -53,10 +52,8 @@ public class ReadSideTests(ApiFactory factory)
         await _client.CreateArtefactAsync(new ArtefactWriteRequest($"{token}-c", "Early", CreationDate: new HistoricalDateInput("17th century")));
         await _client.CreateArtefactAsync(new ArtefactWriteRequest($"{token}-d", "Before", CreationDate: new HistoricalDateInput("before 1700")));
 
-        var asc = await (await _client.GetAsync($"/api/artefacts?search={token}&sort=creationDate&direction=asc"))
-            .ReadAsync<PagedResult<ArtefactListItem>>();
-        var desc = await (await _client.GetAsync($"/api/artefacts?search={token}&sort=creationDate&direction=desc"))
-            .ReadAsync<PagedResult<ArtefactListItem>>();
+        var asc = await _client.ListArtefactsAsync(search: token, sort: "creationDate", direction: "asc");
+        var desc = await _client.ListArtefactsAsync(search: token, sort: "creationDate", direction: "desc");
 
         Assert.Equal(["Early", "Before", "Late", "Undated"], asc.Items.Select(i => i.Title));
         Assert.Equal(["Late", "Before", "Early", "Undated"], desc.Items.Select(i => i.Title));
@@ -65,12 +62,12 @@ public class ReadSideTests(ApiFactory factory)
     [Fact]
     public async Task Unknown_sort_value_is_a_validation_error_on_the_field()
     {
-        var response = await _client.GetAsync("/api/artefacts?sort=colour&direction=sideways");
+        // GraphQL reports the first variable that does not fit, so each is checked on its own.
+        var sort = (await _client.RunStoredAsync("artefact-list", new { sort = "COLOUR" })).Errors();
+        var direction = (await _client.RunStoredAsync("artefact-list", new { direction = "SIDEWAYS" })).Errors();
 
-        Assert.Equal(System.Net.HttpStatusCode.BadRequest, response.StatusCode);
-        var errors = await response.ValidationErrorsAsync();
-        Assert.Contains("sort", errors.Keys);
-        Assert.Contains("direction", errors.Keys);
+        Assert.Contains(sort, e => e.Contains("'sort'"));
+        Assert.Contains(direction, e => e.Contains("'direction'"));
     }
 
     [Fact]
@@ -81,7 +78,7 @@ public class ReadSideTests(ApiFactory factory)
         var noImage = await _client.CreateArtefactAsync(new ArtefactWriteRequest($"{token}-none", "Plain"));
         await _client.UploadAsync(artefact.Id, ("a.jpg", TestData.Jpeg()), ("b.jpg", TestData.Jpeg()));
 
-        var result = await (await _client.GetAsync($"/api/artefacts?search={token}")).ReadAsync<PagedResult<ArtefactListItem>>();
+        var result = await _client.ListArtefactsAsync(search: token);
 
         var withImage = result.Items.Single(i => i.Id == artefact.Id);
         Assert.Equal(2, withImage.ImageCount);

@@ -82,7 +82,7 @@ describe('custom pages', () => {
 describe('navigation', () => {
   it('lists the pages shown in navigation with their labels', async () => {
     mockFetch({
-      'GET /api/artefacts': () => ({ total: 3, items: [], page: 1, pageSize: 1 }),
+      'POST /graphql': () => ({ data: { artefacts: { total: 3 } } }),
       'GET /api/regions': () => [],
       'GET /api/object-types': () => [],
       'GET /api/pages': () => [{ id: 'p-gifts', slug: 'gifts', name: 'Gifts page', kind: 'user', showInNavigation: true, navigationLabel: 'Gifts', updatedAt: '2026-11-21T00:00:00Z' }],

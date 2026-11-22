@@ -89,7 +89,7 @@ public sealed class ImportRestartTests : IAsyncLifetime
 
         Assert.Equal(ImportJobState.Finished, finished.State);
         Assert.Equal((rows, 0, 0), (finished.ImportedRows, finished.SkippedRows, finished.ProblemRows));
-        var list = await (await resumed.GetAsync("/api/artefacts?search=CER-01-&pageSize=100")).ReadAsync<ArtefactListPage>();
+        var list = await resumed.ListArtefactsAsync(search: "CER-01-", pageSize: 100);
         Assert.Equal(rows, list.Total);
         Assert.Equal(rows, list.Items.Select(a => a.InventoryNumber).Distinct().Count());
         Assert.All(list.Items, a => Assert.Equal(1, a.ImageCount));

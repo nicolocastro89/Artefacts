@@ -99,9 +99,9 @@ async function seedLists() {
 }
 
 async function exists(inventoryNumber) {
-  const query = new URLSearchParams({ search: inventoryNumber, pageSize: '100' })
-  const { body } = await call('GET', `/api/artefacts?${query}`)
-  return body.items.some((i) => i.inventoryNumber === inventoryNumber)
+  // The artefact-list system query, as the list page runs it.
+  const { body } = await call('POST', '/graphql', { json: { id: 'artefact-list', variables: { search: inventoryNumber, pageSize: 100 } } })
+  return body.data.artefacts.items.some((i) => i.inventoryNumber === inventoryNumber)
 }
 
 /** Classification, origin and holding from data-catalogue.mjs, as request fields. */

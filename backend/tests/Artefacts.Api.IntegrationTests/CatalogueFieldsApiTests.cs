@@ -142,7 +142,7 @@ public class CatalogueFieldsApiTests(ApiFactory factory)
             Acquisition: new AcquisitionInput(AcquisitionMethod.Purchase, null, source.Id, null)));
         var byHolder = await _client.CreateArtefactAsync(new ArtefactWriteRequest(HttpExtensions.Unique("INV"), "E", HolderId: holder.Id));
 
-        var result = await (await _client.GetAsync($"/api/artefacts?search={token.ToUpperInvariant()}&lang=en")).ReadAsync<ArtefactListPage>();
+        var result = await _client.ListArtefactsAsync(search: token.ToUpperInvariant(), lang: "en");
 
         Assert.Equal(new[] { byLocation.Id, byDynasty.Id, byPlace.Id, bySource.Id, byHolder.Id }.Order(), result.Items.Select(i => i.Id).Order());
     }
@@ -156,8 +156,8 @@ public class CatalogueFieldsApiTests(ApiFactory factory)
         foreach (var (title, type) in new[] { ("Zeta", carpets), ("Alpha", bowls), ("Gamma", (ObjectTypeDto?)null), ("Beta", carpets), ("Delta", bowls) })
             await _client.CreateArtefactAsync(new ArtefactWriteRequest(HttpExtensions.Unique("INV"), $"{title} {token}", ObjectTypeId: type?.Id));
 
-        var page1 = await (await _client.GetAsync($"/api/artefacts?search={token}&group=objectType&sort=title&pageSize=3")).ReadAsync<ArtefactListPage>();
-        var page2 = await (await _client.GetAsync($"/api/artefacts?search={token}&group=objectType&sort=title&pageSize=3&page=2")).ReadAsync<ArtefactListPage>();
+        var page1 = await _client.ListArtefactsAsync(search: token, group: "objectType", sort: "title", pageSize: 3);
+        var page2 = await _client.ListArtefactsAsync(search: token, group: "objectType", sort: "title", pageSize: 3, page: 2);
 
         Assert.Equal(new[] { "Alpha", "Delta", "Beta" }, page1.Items.Select(i => i.Title.Split(' ')[0]));
         Assert.Equal(new[] { "Zeta", "Gamma" }, page2.Items.Select(i => i.Title.Split(' ')[0]));
@@ -178,7 +178,7 @@ public class CatalogueFieldsApiTests(ApiFactory factory)
         await _client.CreateArtefactAsync(new ArtefactWriteRequest(HttpExtensions.Unique("INV"), $"Early {token}",
             CreationDate: new HistoricalDateInput("1520")));
 
-        var result = await (await _client.GetAsync($"/api/artefacts?search={token}&group=century")).ReadAsync<ArtefactListPage>();
+        var result = await _client.ListArtefactsAsync(search: token, group: "century");
 
         Assert.Equal(new[] { "Early", "Late", "Undated" }, result.Items.Select(i => i.Title.Split(' ')[0]));
         Assert.Equal([("16", "16th century", 1), ("17", "17th century", 1), ((string?)null, (string?)null, 1)],
@@ -196,7 +196,7 @@ public class CatalogueFieldsApiTests(ApiFactory factory)
         await _client.CreateArtefactAsync(new ArtefactWriteRequest(HttpExtensions.Unique("INV"), $"Three {token}", CollectionGroupId: cina.Id));
         await _client.CreateArtefactAsync(new ArtefactWriteRequest(HttpExtensions.Unique("INV"), $"Four {token}"));
 
-        var result = await (await _client.GetAsync($"/api/artefacts?search={token}&group=collectionGroup")).ReadAsync<ArtefactListPage>();
+        var result = await _client.ListArtefactsAsync(search: token, group: "collectionGroup");
 
         Assert.Equal([(cina.Id.ToString(), cina.Name, 2), (turchia.Id.ToString(), turchia.Name, 1), ((string?)null, (string?)null, 1)],
             result.Groups.Select(g => (g.Key, g.Label, g.Count)));
@@ -215,7 +215,7 @@ public class CatalogueFieldsApiTests(ApiFactory factory)
         await _client.CreateArtefactAsync(new ArtefactWriteRequest(HttpExtensions.Unique("INV"), $"One {token}", DynastyId: dynasty.Id));
         await _client.CreateArtefactAsync(new ArtefactWriteRequest(HttpExtensions.Unique("INV"), $"Two {token}", DynastyId: dynasty.Id));
 
-        var result = await (await _client.GetAsync($"/api/artefacts?search={token}&group=dynasty&lang={lang}")).ReadAsync<ArtefactListPage>();
+        var result = await _client.ListArtefactsAsync(search: token, group: "dynasty", lang: lang);
 
         var group = Assert.Single(result.Groups);
         Assert.Equal((dynasty.Id.ToString(), $"{label} {token}", 2), (group.Key, group.Label, group.Count));
@@ -225,10 +225,9 @@ public class CatalogueFieldsApiTests(ApiFactory factory)
     [Fact]
     public async Task Unknown_group_value_is_a_validation_error_on_the_field()
     {
-        var response = await _client.GetAsync("/api/artefacts?group=colour");
+        var errors = (await _client.RunStoredAsync("artefact-list", new { group = "COLOUR" })).Errors();
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        Assert.True((await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("errors").TryGetProperty("group", out _));
+        Assert.Contains(errors, e => e.Contains("group"));
     }
 
     [Fact]
