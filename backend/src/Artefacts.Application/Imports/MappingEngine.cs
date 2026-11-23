@@ -3,7 +3,8 @@ namespace Artefacts.Application.Imports;
 /// <summary>
 /// Applies a mapping to the cells of one record row. Every non-empty line of a mapped column ends up in exactly one
 /// field: the first line rule that accepts it, the field of a continuing rule above it, or the column's rest field.
-/// Lines are only dropped when a column has line rules but no rest field (reported in <see cref="MappedRecord.Dropped"/>).
+/// Lines are only dropped when a column has line rules but no rest field (reported in <see cref="MappedRecord.Dropped"/>),
+/// or when a discarding rule matches them (reported in <see cref="MappedRecord.Discarded"/>).
 /// </summary>
 public static class MappingEngine
 {
@@ -47,16 +48,17 @@ public static class MappingEngine
     {
         var values = new List<MappedValue>();
         var dropped = new List<string>();
+        var discarded = new List<string>();
         foreach (var (column, rule) in Resolve(mapping, headings))
         {
             if (rule.Ignored || !cells.TryGetValue(column, out var text) || string.IsNullOrWhiteSpace(text)) continue;
             if (rule.UsesLines)
-                new LineAssigner(column, rule, mapping, values, dropped, headings.GetValueOrDefault(column)).Assign(text);
+                new LineAssigner(column, rule, mapping, values, dropped, discarded, headings.GetValueOrDefault(column)).Assign(text);
             else
                 MapWholeCell(column, rule.Target!.Value, text, mapping, values);
         }
 
-        return new MappedRecord(values, dropped);
+        return new MappedRecord(values, dropped, discarded);
     }
 
     /// <summary>The non-empty lines of a cell with their paragraph number (blank lines separate paragraphs).</summary>
@@ -116,7 +118,8 @@ public static class MappingEngine
     }
 
     private sealed class LineAssigner(
-        int column, ColumnRule rule, ImportMapping mapping, List<MappedValue> values, List<string> dropped, string? heading)
+        int column, ColumnRule rule, ImportMapping mapping, List<MappedValue> values, List<string> dropped, List<string> discarded,
+        string? heading)
     {
         private readonly int _firstValue = values.Count;
 
@@ -156,11 +159,11 @@ public static class MappingEngine
         }
 
         /// <summary>Tries the rules on a line; returns the rule that took it (null when none did).</summary>
-        private ((ImportField Target, bool Continues)? Rule, bool ConsumedNext) TryRules(string text, int position, string? next, int depth = 0)
+        private ((ImportField? Target, bool Continues)? Rule, bool ConsumedNext) TryRules(string text, int position, string? next, int depth = 0)
         {
             foreach (var lineRule in rule.Lines!)
             {
-                if (Filled(lineRule.Target)) continue;
+                if (lineRule.Target is { } target && Filled(target)) continue;
 
                 if (lineRule.Detector is { } detector)
                 {
@@ -178,9 +181,16 @@ public static class MappingEngine
                         consumedNext = true;
                     }
 
-                    Add(lineRule.Target, detection.Text, position, detection.Parsed, detection.Guessed);
-                    if (detection.ItemNumber is { } item && !Filled(ImportField.ItemNumber))
-                        Add(ImportField.ItemNumber, item, position);
+                    if (lineRule.Target is { } field)
+                    {
+                        Add(field, detection.Text, position, detection.Parsed, detection.Guessed);
+                        if (detection.ItemNumber is { } item && !Filled(ImportField.ItemNumber))
+                            Add(ImportField.ItemNumber, item, position);
+                    }
+                    else
+                    {
+                        Discard(detection.Text);
+                    }
                     if (detection.Remainder is { } remainder && depth < 4)
                     {
                         var (rest, _) = TryRules(remainder, position, null, depth + 1);
@@ -188,13 +198,14 @@ public static class MappingEngine
                         else return (rest, consumedNext);
                     }
 
-                    return ((lineRule.Target, lineRule.Continues), consumedNext);
+                    return ((lineRule.Target, lineRule.Continues && !lineRule.Discards), consumedNext);
                 }
 
                 if (lineRule.Position == position)
                 {
-                    Add(lineRule.Target, text, position);
-                    return ((lineRule.Target, lineRule.Continues), false);
+                    if (lineRule.Target is { } field) Add(field, text, position);
+                    else Discard(text);
+                    return ((lineRule.Target, lineRule.Continues && !lineRule.Discards), false);
                 }
             }
 
@@ -225,6 +236,8 @@ public static class MappingEngine
 
         private void Add(ImportField field, string text, int line, object? parsed = null, bool guessed = false) =>
             values.Add(new MappedValue(field, text, column, line, parsed, guessed));
+
+        private void Discard(string text) => discarded.Add($"{heading ?? $"Column {column}"}: \"{text}\"");
 
         private void ToRest(string text, int line)
         {

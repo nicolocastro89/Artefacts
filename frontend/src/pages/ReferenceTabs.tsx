@@ -8,6 +8,7 @@ const TABS = [
   { to: '/reference/collection-groups', label: 'Collection groups' },
   { to: '/reference/storage-locations', label: 'Storage locations' },
   { to: '/reference/parties', label: 'Parties' },
+  { to: '/reference/units', label: 'Units' },
   { to: '/reference/languages', label: 'Languages' },
 ]
 

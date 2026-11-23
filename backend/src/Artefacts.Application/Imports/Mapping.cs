@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Artefacts.Application.Contracts;
 using Artefacts.Domain.Catalogue;
 using Artefacts.Domain.Parties;
 
@@ -36,10 +37,14 @@ public enum ImportField
 
 /// <summary>
 /// One line rule of a column: lines recognised by <see cref="Detector"/>, or the line at <see cref="Position"/>
-/// (0-based among the cell's non-empty lines), go to <see cref="Target"/>. With <see cref="Continues"/>, unmatched
-/// lines that directly follow go to the same field (a title or a place written over several lines).
+/// (0-based among the cell's non-empty lines), go to <see cref="Target"/>. A rule without a target discards the lines
+/// it matches: they are imported nowhere. With <see cref="Continues"/>, unmatched lines that directly follow go to the
+/// same field (a title or a place written over several lines); a discarding rule cannot continue.
 /// </summary>
-public sealed record LineRule(ImportField Target, LineDetector? Detector = null, int? Position = null, bool Continues = false);
+public sealed record LineRule(ImportField? Target, LineDetector? Detector = null, int? Position = null, bool Continues = false)
+{
+    [JsonIgnore] public bool Discards => Target is null;
+}
 
 /// <summary>
 /// How one column is mapped, identified by its heading text with its 1-based index as a fallback. Either the whole
@@ -60,13 +65,29 @@ public sealed record ColumnRule(int Column, string? Heading, ImportField? Target
 /// </summary>
 public sealed record InventoryNumberPattern(string Pattern, ImportField? Prefer = null);
 
+/// <summary>One of the structured measurements of an artefact.</summary>
+public enum MeasureKind
+{
+    Width = 0,
+    Height = 1,
+    Length = 2,
+    Diameter = 3,
+}
+
+/// <summary>
+/// How measurements are read from dimensions text: the unit for numbers written without one, and the order of numbers
+/// written without a label ("82 x 64" read as height × width). Without an order, unlabelled numbers make a text unclear.
+/// </summary>
+public sealed record DimensionsOptions(Guid? DefaultUnitId = null, IReadOnlyList<MeasureKind>? UnlabelledOrder = null);
+
 /// <summary>How the rows of a workbook become artefacts. Stored on the job and in templates.</summary>
 public sealed record ImportMapping(
     IReadOnlyList<ColumnRule> Columns,
     InventoryNumberPattern InventoryNumber,
     string Language = "it",
     AcquisitionMethod AcquisitionMethod = AcquisitionMethod.Purchase,
-    IReadOnlyList<string>? LocationPatterns = null);
+    IReadOnlyList<string>? LocationPatterns = null,
+    DimensionsOptions? Dimensions = null);
 
 public enum PlaceAction
 {
@@ -93,6 +114,27 @@ public sealed record PlaceDecision(
 
 /// <summary>A year range given for a date text the rules do not understand.</summary>
 public sealed record DateResolution(string Text, int EarliestYear, int LatestYear);
+
+/// <summary>
+/// The decision for a dimensions text that could not be read clearly: the measurements to import for every row with
+/// that text, or <see cref="KeepTextOnly"/> to import the text without measurements.
+/// </summary>
+public sealed record DimensionResolution(
+    string Text,
+    bool KeepTextOnly = false,
+    MeasurementInput? Width = null,
+    MeasurementInput? Height = null,
+    MeasurementInput? Length = null,
+    MeasurementInput? Diameter = null)
+{
+    [JsonIgnore]
+    public IEnumerable<(MeasureKind Kind, MeasurementInput Input)> Measurements =>
+        new (MeasureKind Kind, MeasurementInput? Input)[]
+            {
+                (MeasureKind.Width, Width), (MeasureKind.Height, Height), (MeasureKind.Length, Length), (MeasureKind.Diameter, Diameter),
+            }
+            .Where(m => m.Input is not null).Select(m => (m.Kind, m.Input!));
+}
 
 /// <summary>The managed lists a workbook text is curated against. Acquisition source and holder share <see cref="Party"/>.</summary>
 public enum ImportList
@@ -127,10 +169,14 @@ public sealed record ListDecision(
     string? Name = null,
     PartyKind? PartyKind = null);
 
-/// <summary>Place, date and list decisions, stored on the job and copied into templates.</summary>
-public sealed record ImportDecisions(IReadOnlyList<PlaceDecision> Places, IReadOnlyList<DateResolution> Dates, IReadOnlyList<ListDecision> Lists)
+/// <summary>Place, date, list and dimensions decisions, stored on the job and copied into templates.</summary>
+public sealed record ImportDecisions(
+    IReadOnlyList<PlaceDecision> Places,
+    IReadOnlyList<DateResolution> Dates,
+    IReadOnlyList<ListDecision> Lists,
+    IReadOnlyList<DimensionResolution>? Dimensions = null)
 {
-    public static readonly ImportDecisions Empty = new([], [], []);
+    public static readonly ImportDecisions Empty = new([], [], [], []);
 
     /// <summary>
     /// These decisions with <paramref name="newer"/> laid over them: per place text, date text, and list and text,
@@ -144,15 +190,20 @@ public sealed record ImportDecisions(IReadOnlyList<PlaceDecision> Places, IReadO
         foreach (var d in Dates.Concat(newer.Dates)) dates[RowEvaluator.DateKey(d.Text)] = d;
         var lists = new Dictionary<(ImportList, string), ListDecision>();
         foreach (var d in Lists.Concat(newer.Lists)) lists[(d.List, NameMatcher.Normalize(d.Text))] = d;
-        return new ImportDecisions(places.Values.ToList(), dates.Values.ToList(), lists.Values.ToList());
+        var dimensions = new Dictionary<string, DimensionResolution>();
+        foreach (var d in (Dimensions ?? []).Concat(newer.Dimensions ?? [])) dimensions[RowEvaluator.DateKey(d.Text)] = d;
+        return new ImportDecisions(places.Values.ToList(), dates.Values.ToList(), lists.Values.ToList(), dimensions.Values.ToList());
     }
 }
 
 /// <summary>A value assigned to a field from one line (or part of a line) of a cell.</summary>
 public sealed record MappedValue(ImportField Field, string Text, int Column, int Line, object? Parsed = null, bool Guessed = false);
 
-/// <summary>Everything a record row's cells were mapped to, plus lines that went nowhere.</summary>
-public sealed record MappedRecord(IReadOnlyList<MappedValue> Values, IReadOnlyList<string> Dropped)
+/// <summary>
+/// Everything a record row's cells were mapped to, plus lines that went nowhere: <see cref="Dropped"/> for lines of a
+/// column without a rest field, <see cref="Discarded"/> for lines a discarding rule removed.
+/// </summary>
+public sealed record MappedRecord(IReadOnlyList<MappedValue> Values, IReadOnlyList<string> Dropped, IReadOnlyList<string>? Discarded = null)
 {
     public IEnumerable<MappedValue> Of(ImportField field) => Values.Where(v => v.Field == field);
     public MappedValue? First(ImportField field) => Values.FirstOrDefault(v => v.Field == field);

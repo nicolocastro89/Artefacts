@@ -5,6 +5,7 @@ using Artefacts.Application.Languages;
 using Artefacts.Application.Lists;
 using Artefacts.Application.Media;
 using Artefacts.Application.ObjectTypes;
+using Artefacts.Application.Units;
 using Artefacts.Application.Parties;
 using Artefacts.Application.Regions;
 using Artefacts.Domain.Lists;
@@ -153,6 +154,42 @@ internal static class Endpoints
                 return TypedResults.NoContent();
             })
             .WithName("deleteObjectType")
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+    }
+
+    public static void MapUnitOfMeasureEndpoints(this IEndpointRouteBuilder app)
+    {
+        var g = app.MapGroup("/api/units").WithTags("Units of measure");
+
+        g.MapGet("/", async (UnitOfMeasureHandler h, CancellationToken ct) => TypedResults.Ok(await h.ListAsync(ct)))
+            .WithName("listUnits")
+            .WithSummary("Every unit of measure with its usage, smallest unit first.");
+
+        g.MapGet("/{id:guid}", async (Guid id, UnitOfMeasureHandler h, CancellationToken ct) => TypedResults.Ok(await h.GetAsync(id, ct)))
+            .WithName("getUnit")
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
+        g.MapPost("/", async (UnitOfMeasureRequest request, UnitOfMeasureHandler h, CancellationToken ct) =>
+            {
+                var unit = await h.AddAsync(request, ct);
+                return TypedResults.Created($"/api/units/{unit.Id}", unit);
+            })
+            .WithName("addUnit")
+            .ProducesValidationProblem();
+
+        g.MapPut("/{id:guid}", async (Guid id, UnitOfMeasureRequest request, UnitOfMeasureHandler h, CancellationToken ct) =>
+                TypedResults.Ok(await h.UpdateAsync(id, request, ct)))
+            .WithName("updateUnit")
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
+        g.MapDelete("/{id:guid}", async (Guid id, UnitOfMeasureHandler h, CancellationToken ct) =>
+            {
+                await h.DeleteAsync(id, ct);
+                return TypedResults.NoContent();
+            })
+            .WithName("deleteUnit")
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
     }

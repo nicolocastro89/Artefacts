@@ -46,7 +46,9 @@ public sealed record EvaluationContext(
     Func<string, ResolvedPlace> Place,
     IReadOnlyDictionary<string, DateResolution> DateResolutions,
     string? SheetName = null,
-    Func<ImportList, string, ResolvedEntry>? ListValue = null);
+    Func<ImportList, string, ResolvedEntry>? ListValue = null,
+    IReadOnlyList<ParserUnit>? Units = null,
+    IReadOnlyDictionary<string, DimensionResolution>? DimensionResolutions = null);
 
 /// <summary>A row as it will be imported.</summary>
 public sealed record EvaluatedRow(
@@ -60,7 +62,10 @@ public sealed record EvaluatedRow(
     string? PlaceText,
     string? DateText,
     bool DateUnresolved,
-    IReadOnlyList<ListText> ListTexts);
+    IReadOnlyList<ListText> ListTexts,
+    string? DimensionsText = null,
+    bool DimensionsUnclear = false,
+    DimensionResolution? DimensionsResolution = null);
 
 /// <summary>
 /// Turns staged rows, the mapping and the decisions into would-be artefact requests, in sheet order: the first row
@@ -148,6 +153,35 @@ public static class RowEvaluator
                 dateUnresolved = true;
                 problems.Add(new RowProblem("creationDate", dateValue.Text,
                     "The date is not understood: give it a year range in the dates step, or correct it in the workbook."));
+            }
+        }
+
+        // ---------- measurements ----------
+        // Read from the dimensions text when it is clear; otherwise the decision taken in the dimensions step applies.
+        var dimensionsText = Joined(ImportField.Dimensions);
+        var measured = new Dictionary<MeasureKind, MeasurementInput>();
+        var dimensionsUnclear = false;
+        DimensionResolution? dimensionsResolution = null;
+        if (dimensionsText is not null)
+        {
+            if (DimensionsParser.Parse(dimensionsText, context.Units ?? [], mapping.Dimensions) is { } parsed)
+            {
+                foreach (var (kind, input) in parsed.Measurements) measured[kind] = input;
+            }
+            else
+            {
+                dimensionsUnclear = true;
+                if (context.DimensionResolutions?.GetValueOrDefault(DateKey(dimensionsText)) is { } resolution && IsUsable(resolution, context.Units))
+                {
+                    dimensionsResolution = resolution;
+                    if (!resolution.KeepTextOnly)
+                        foreach (var (kind, input) in resolution.Measurements) measured[kind] = input;
+                }
+                else
+                {
+                    problems.Add(new RowProblem("dimensions", dimensionsText,
+                        "The measurements could not be read: enter them, or keep the text only, in the dimensions step."));
+                }
             }
         }
 
@@ -256,7 +290,11 @@ public static class RowEvaluator
             catalogueEntries.Count == 0 ? null : catalogueEntries,
             holderId,
             storageLocationId,
-            valuation);
+            valuation,
+            measured.GetValueOrDefault(MeasureKind.Width),
+            measured.GetValueOrDefault(MeasureKind.Height),
+            measured.GetValueOrDefault(MeasureKind.Length),
+            measured.GetValueOrDefault(MeasureKind.Diameter));
 
         var status = problems.Count > 0
             ? ImportRowStatus.Problem
@@ -265,8 +303,14 @@ public static class RowEvaluator
                 : ImportRowStatus.Ready;
 
         return new EvaluatedRow(row, inventoryNumber, status, request, mapped, problems, warnings, placeText,
-            dateValue?.Text, dateUnresolved, listTexts);
+            dateValue?.Text, dateUnresolved, listTexts, dimensionsText, dimensionsUnclear, dimensionsResolution);
     }
+
+    /// <summary>A resolution whose units have since been deleted no longer counts as a decision.</summary>
+    private static bool IsUsable(DimensionResolution resolution, IReadOnlyList<ParserUnit>? units) =>
+        resolution.KeepTextOnly ||
+        (resolution.Measurements.Any() &&
+         (units is null || resolution.Measurements.All(m => m.Input.UnitId is { } id && units.Any(u => u.Id == id))));
 
     /// <summary>Date resolutions apply to every row with the same text, ignoring case and spacing.</summary>
     public static string DateKey(string text) => string.Join(' ', text.Split(' ', StringSplitOptions.RemoveEmptyEntries)).ToLowerInvariant();

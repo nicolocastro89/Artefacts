@@ -95,7 +95,7 @@ export function DatesStep({ job, onDone }: { job: ImportJob; onDone: () => void 
             </p>
           )}
           <button type="button" className="btn btn--primary" disabled={saving} onClick={() => void save()}>
-            Save and continue to review <ArrowRight aria-hidden="true" />
+            Save and continue to dimensions <ArrowRight aria-hidden="true" />
           </button>
         </div>
       </div>

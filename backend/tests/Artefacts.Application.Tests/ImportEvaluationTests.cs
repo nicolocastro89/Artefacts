@@ -127,7 +127,8 @@ public class RowEvaluatorTests
             MappingSuggestion.Rules.Acquisition(5, "Provenienza"),
             new ColumnRule(7, "Valore", ImportField.Valuation),
         ],
-        new InventoryNumberPattern("CER-{group:2}-{item:2}", ImportField.CatalogueNumber));
+        new InventoryNumberPattern("CER-{group:2}-{item:2}", ImportField.CatalogueNumber),
+        Dimensions: new DimensionsOptions(DimensionsParserTests.Cm));
 
     private static StagedRow Row(int sheetRow, string title, string? origin = null, string? acquisition = null, string? value = null,
         params StagedPicture[] pictures)
@@ -145,7 +146,8 @@ public class RowEvaluatorTests
 
     private static EvaluationContext Context(IEnumerable<string>? existing = null, Dictionary<string, DateResolution>? dates = null) =>
         new(Mapping, Headings, Guid.NewGuid(), new HashSet<string>(existing ?? []), _ => new ResolvedPlace(null, false, null),
-            dates ?? new Dictionary<string, DateResolution>(), ListValue: (list, text) => new ResolvedEntry(EntryFor(list, text), false));
+            dates ?? new Dictionary<string, DateResolution>(), ListValue: (list, text) => new ResolvedEntry(EntryFor(list, text), false),
+            Units: DimensionsParserTests.Units);
 
     [Fact]
     public void Catalogue_entry_columns_are_imported_in_their_own_language()

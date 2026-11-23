@@ -21,7 +21,7 @@ The system SHALL accept GraphQL query operations at `/graphql` and answer them f
 - **THEN** the artefact field is null and no error is reported
 
 ### Requirement: Artefact fields and linked records
-An artefact SHALL expose every field of the artefact read view. Each linked record (object type, collection group, place of production region, dynasty, storage location, holder and acquisition source) SHALL appear as an object with its identifier and its name resolved in the request's language. Parties also carry their kind. Historical dates SHALL carry their display text, earliest and latest year, and precision. Monetary values SHALL carry an amount and a currency. The primary image SHALL carry its file details and caption, and signed URLs for each rendition. Values the artefact does not have SHALL be null.
+An artefact SHALL expose every field of the artefact read view. Each linked record (object type, collection group, place of production region, dynasty, storage location, holder and acquisition source) SHALL appear as an object with its identifier and its name resolved in the request's language. Parties also carry their kind. Historical dates SHALL carry their display text, earliest and latest year, and precision. Monetary values SHALL carry an amount and a currency. Measurements (width, height, length and diameter) SHALL carry their value, their value in metres, and their unit as an object with its identifier, its name resolved in the request's language, its abbreviation and its factor. The primary image SHALL carry its file details and caption, and signed URLs for each rendition. Values the artefact does not have SHALL be null.
 
 #### Scenario: Names in the reader's language
 - **WHEN** a client queries an artefact's dynasty with `lang=en` and the dynasty has the English name "Safavid" and the Italian name "Safavide"
@@ -34,6 +34,14 @@ An artefact SHALL expose every field of the artefact read view. Each linked reco
 #### Scenario: Held by the collection
 - **WHEN** a client queries the holder of an artefact without a holder
 - **THEN** the holder is null
+
+#### Scenario: Measurement with its unit
+- **WHEN** a client queries the height of an artefact whose height is 7 cm, with `lang=it`
+- **THEN** the height has the value 7, the value in metres 0.07, and the unit "centimetro" with the abbreviation "cm" and the factor 0.01
+
+#### Scenario: Missing measurement
+- **WHEN** a client queries the width of an artefact without a width
+- **THEN** the width is null
 
 ### Requirement: Nested lists of an artefact
 An artefact SHALL expose its provenance entries in order (region with its resolved name, period as a historical date, note), its images in the order attached (identifiers, file name, format, size, upload time, caption, whether primary, signed URLs), its exhibitions in order, its descriptions per language together with the description resolved in the request's language, and its catalogue entries per language together with the entry resolved in the request's language (and the language it was found in). Asking for nested lists of many artefacts SHALL NOT read the database once per artefact.

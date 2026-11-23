@@ -9,6 +9,10 @@ query ArtefactDetail($id: UUID!) {
     creationDate { display earliestYear latestYear precision }
     medium
     dimensions
+    width { value inMetres unit { id name abbreviation factor } }
+    height { value inMetres unit { id name abbreviation factor } }
+    length { value inMetres unit { id name abbreviation factor } }
+    diameter { value inMetres unit { id name abbreviation factor } }
     description
     descriptionLanguage
     catalogueEntry

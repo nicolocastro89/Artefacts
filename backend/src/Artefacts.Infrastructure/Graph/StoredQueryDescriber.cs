@@ -82,6 +82,7 @@ public static class FieldTypeRules
         ["ImageUrls"] = "image",
         ["HistoricalDate"] = "historical-date",
         ["Money"] = "money",
+        ["Measurement"] = "measurement",
     };
 
     /// <summary>The type of a scalar; an enum, or a scalar not listed, is text.</summary>

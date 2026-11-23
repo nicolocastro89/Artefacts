@@ -22,6 +22,30 @@ export type ImportListValue = Schemas['ImportListValueDto']
 export type ListDecision = Schemas['ListDecision']
 export type ImportTemplate = Schemas['ImportTemplateDto']
 export type ImportReport = Schemas['ImportReportDto']
+export type MeasureKind = Schemas['MeasureKind']
+export type DimensionsOptions = Schemas['DimensionsOptions']
+export type DimensionResolution = Schemas['DimensionResolution']
+export type ImportDimensions = Schemas['ImportDimensionsDto']
+
+/** Measurements in the order the import shows them, with their labels. */
+export const MEASURE_KINDS: { value: MeasureKind; label: string; short: string }[] = [
+  { value: 'height', label: 'Height', short: 'H' },
+  { value: 'width', label: 'Width', short: 'W' },
+  { value: 'length', label: 'Length', short: 'L' },
+  { value: 'diameter', label: 'Diameter', short: 'Ø' },
+]
+
+/** Common orders for numbers written without labels ("82 x 64"). */
+export const UNLABELLED_ORDERS: MeasureKind[][] = [
+  ['height', 'width'],
+  ['height', 'width', 'length'],
+  ['width', 'height'],
+  ['length', 'width', 'height'],
+  ['length', 'width'],
+  ['height', 'diameter'],
+]
+
+export const orderLabel = (order: MeasureKind[]) => order.map((k) => MEASURE_KINDS.find((m) => m.value === k)!.label.toLowerCase()).join(' × ')
 
 /** Fields in the order the mapping step offers them. */
 export const FIELDS: { value: ImportField; label: string }[] = [

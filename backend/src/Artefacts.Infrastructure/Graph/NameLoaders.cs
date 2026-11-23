@@ -9,6 +9,9 @@ namespace Artefacts.Infrastructure.Graph;
 /// <summary>An identifier with the name the database resolved for it (null when the record has no name).</summary>
 internal sealed record NameRow(Guid Id, string? Name);
 
+/// <summary>A unit of measure as read for a measurement.</summary>
+internal sealed record UnitRow(Guid Id, string? Name, string Abbreviation, decimal Factor);
+
 /// <summary>A party as read for a reference: identifier, name and kind.</summary>
 internal sealed record PartyRow(Guid Id, string Name, string Kind);
 
@@ -89,4 +92,25 @@ public sealed class PartiesDataLoader(
     /// <summary>The party, or null when there is no identifier.</summary>
     public async Task<PartyRef?> RefAsync(Guid? id, CancellationToken cancellationToken) =>
         id is { } key ? await LoadAsync(key, cancellationToken) : null;
+}
+
+/// <summary>Resolves the units of many measurements at once, with names in the request's languages.</summary>
+public sealed class UnitsDataLoader(
+    IDbContextFactory<ReadDbContext> dbFactory,
+    ILanguagePreferences preferences,
+    IBatchScheduler batchScheduler,
+    DataLoaderOptions options) : BatchDataLoader<Guid, UnitOfMeasure>(batchScheduler, options)
+{
+    private readonly string[] _languages = [.. preferences.Current];
+
+    protected override async Task<IReadOnlyDictionary<Guid, UnitOfMeasure>> LoadBatchAsync(
+        IReadOnlyList<Guid> keys, CancellationToken cancellationToken)
+    {
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+        var ids = keys.ToArray();
+        var rows = await db.Database
+            .SqlQuery<UnitRow>($"SELECT u.id AS id, unit_of_measure_name(u.id, {_languages}) AS name, u.abbreviation AS abbreviation, u.factor AS factor FROM units_of_measure u WHERE u.id = ANY({ids})")
+            .ToListAsync(cancellationToken);
+        return rows.ToDictionary(r => r.Id, r => new UnitOfMeasure(r.Id, r.Name ?? r.Abbreviation, r.Abbreviation, r.Factor));
+    }
 }

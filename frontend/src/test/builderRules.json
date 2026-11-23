@@ -601,6 +601,678 @@
           ]
         },
         {
+          "name": "widthValue",
+          "label": "Width (value)",
+          "valueType": "number",
+          "graphQlType": "Decimal",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "gt",
+              "list": false
+            },
+            {
+              "name": "ngt",
+              "list": false
+            },
+            {
+              "name": "gte",
+              "list": false
+            },
+            {
+              "name": "ngte",
+              "list": false
+            },
+            {
+              "name": "lt",
+              "list": false
+            },
+            {
+              "name": "nlt",
+              "list": false
+            },
+            {
+              "name": "lte",
+              "list": false
+            },
+            {
+              "name": "nlte",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "widthUnitId",
+          "label": "Width (unit id)",
+          "valueType": "reference",
+          "graphQlType": "UUID",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "gt",
+              "list": false
+            },
+            {
+              "name": "ngt",
+              "list": false
+            },
+            {
+              "name": "gte",
+              "list": false
+            },
+            {
+              "name": "ngte",
+              "list": false
+            },
+            {
+              "name": "lt",
+              "list": false
+            },
+            {
+              "name": "nlt",
+              "list": false
+            },
+            {
+              "name": "lte",
+              "list": false
+            },
+            {
+              "name": "nlte",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "widthMetres",
+          "label": "Width (metres)",
+          "valueType": "number",
+          "graphQlType": "Decimal",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "gt",
+              "list": false
+            },
+            {
+              "name": "ngt",
+              "list": false
+            },
+            {
+              "name": "gte",
+              "list": false
+            },
+            {
+              "name": "ngte",
+              "list": false
+            },
+            {
+              "name": "lt",
+              "list": false
+            },
+            {
+              "name": "nlt",
+              "list": false
+            },
+            {
+              "name": "lte",
+              "list": false
+            },
+            {
+              "name": "nlte",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "heightValue",
+          "label": "Height (value)",
+          "valueType": "number",
+          "graphQlType": "Decimal",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "gt",
+              "list": false
+            },
+            {
+              "name": "ngt",
+              "list": false
+            },
+            {
+              "name": "gte",
+              "list": false
+            },
+            {
+              "name": "ngte",
+              "list": false
+            },
+            {
+              "name": "lt",
+              "list": false
+            },
+            {
+              "name": "nlt",
+              "list": false
+            },
+            {
+              "name": "lte",
+              "list": false
+            },
+            {
+              "name": "nlte",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "heightUnitId",
+          "label": "Height (unit id)",
+          "valueType": "reference",
+          "graphQlType": "UUID",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "gt",
+              "list": false
+            },
+            {
+              "name": "ngt",
+              "list": false
+            },
+            {
+              "name": "gte",
+              "list": false
+            },
+            {
+              "name": "ngte",
+              "list": false
+            },
+            {
+              "name": "lt",
+              "list": false
+            },
+            {
+              "name": "nlt",
+              "list": false
+            },
+            {
+              "name": "lte",
+              "list": false
+            },
+            {
+              "name": "nlte",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "heightMetres",
+          "label": "Height (metres)",
+          "valueType": "number",
+          "graphQlType": "Decimal",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "gt",
+              "list": false
+            },
+            {
+              "name": "ngt",
+              "list": false
+            },
+            {
+              "name": "gte",
+              "list": false
+            },
+            {
+              "name": "ngte",
+              "list": false
+            },
+            {
+              "name": "lt",
+              "list": false
+            },
+            {
+              "name": "nlt",
+              "list": false
+            },
+            {
+              "name": "lte",
+              "list": false
+            },
+            {
+              "name": "nlte",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "lengthValue",
+          "label": "Length (value)",
+          "valueType": "number",
+          "graphQlType": "Decimal",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "gt",
+              "list": false
+            },
+            {
+              "name": "ngt",
+              "list": false
+            },
+            {
+              "name": "gte",
+              "list": false
+            },
+            {
+              "name": "ngte",
+              "list": false
+            },
+            {
+              "name": "lt",
+              "list": false
+            },
+            {
+              "name": "nlt",
+              "list": false
+            },
+            {
+              "name": "lte",
+              "list": false
+            },
+            {
+              "name": "nlte",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "lengthUnitId",
+          "label": "Length (unit id)",
+          "valueType": "reference",
+          "graphQlType": "UUID",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "gt",
+              "list": false
+            },
+            {
+              "name": "ngt",
+              "list": false
+            },
+            {
+              "name": "gte",
+              "list": false
+            },
+            {
+              "name": "ngte",
+              "list": false
+            },
+            {
+              "name": "lt",
+              "list": false
+            },
+            {
+              "name": "nlt",
+              "list": false
+            },
+            {
+              "name": "lte",
+              "list": false
+            },
+            {
+              "name": "nlte",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "lengthMetres",
+          "label": "Length (metres)",
+          "valueType": "number",
+          "graphQlType": "Decimal",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "gt",
+              "list": false
+            },
+            {
+              "name": "ngt",
+              "list": false
+            },
+            {
+              "name": "gte",
+              "list": false
+            },
+            {
+              "name": "ngte",
+              "list": false
+            },
+            {
+              "name": "lt",
+              "list": false
+            },
+            {
+              "name": "nlt",
+              "list": false
+            },
+            {
+              "name": "lte",
+              "list": false
+            },
+            {
+              "name": "nlte",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "diameterValue",
+          "label": "Diameter (value)",
+          "valueType": "number",
+          "graphQlType": "Decimal",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "gt",
+              "list": false
+            },
+            {
+              "name": "ngt",
+              "list": false
+            },
+            {
+              "name": "gte",
+              "list": false
+            },
+            {
+              "name": "ngte",
+              "list": false
+            },
+            {
+              "name": "lt",
+              "list": false
+            },
+            {
+              "name": "nlt",
+              "list": false
+            },
+            {
+              "name": "lte",
+              "list": false
+            },
+            {
+              "name": "nlte",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "diameterUnitId",
+          "label": "Diameter (unit id)",
+          "valueType": "reference",
+          "graphQlType": "UUID",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "gt",
+              "list": false
+            },
+            {
+              "name": "ngt",
+              "list": false
+            },
+            {
+              "name": "gte",
+              "list": false
+            },
+            {
+              "name": "ngte",
+              "list": false
+            },
+            {
+              "name": "lt",
+              "list": false
+            },
+            {
+              "name": "nlt",
+              "list": false
+            },
+            {
+              "name": "lte",
+              "list": false
+            },
+            {
+              "name": "nlte",
+              "list": false
+            }
+          ]
+        },
+        {
+          "name": "diameterMetres",
+          "label": "Diameter (metres)",
+          "valueType": "number",
+          "graphQlType": "Decimal",
+          "operators": [
+            {
+              "name": "eq",
+              "list": false
+            },
+            {
+              "name": "neq",
+              "list": false
+            },
+            {
+              "name": "in",
+              "list": true
+            },
+            {
+              "name": "nin",
+              "list": true
+            },
+            {
+              "name": "gt",
+              "list": false
+            },
+            {
+              "name": "ngt",
+              "list": false
+            },
+            {
+              "name": "gte",
+              "list": false
+            },
+            {
+              "name": "ngte",
+              "list": false
+            },
+            {
+              "name": "lt",
+              "list": false
+            },
+            {
+              "name": "nlt",
+              "list": false
+            },
+            {
+              "name": "lte",
+              "list": false
+            },
+            {
+              "name": "nlte",
+              "list": false
+            }
+          ]
+        },
+        {
           "name": "objectTypeId",
           "label": "Object type",
           "valueType": "reference",
@@ -1707,6 +2379,54 @@
           "label": "Dimensions"
         },
         {
+          "name": "widthValue",
+          "label": "Width (value)"
+        },
+        {
+          "name": "widthUnitId",
+          "label": "Width (unit id)"
+        },
+        {
+          "name": "widthMetres",
+          "label": "Width (metres)"
+        },
+        {
+          "name": "heightValue",
+          "label": "Height (value)"
+        },
+        {
+          "name": "heightUnitId",
+          "label": "Height (unit id)"
+        },
+        {
+          "name": "heightMetres",
+          "label": "Height (metres)"
+        },
+        {
+          "name": "lengthValue",
+          "label": "Length (value)"
+        },
+        {
+          "name": "lengthUnitId",
+          "label": "Length (unit id)"
+        },
+        {
+          "name": "lengthMetres",
+          "label": "Length (metres)"
+        },
+        {
+          "name": "diameterValue",
+          "label": "Diameter (value)"
+        },
+        {
+          "name": "diameterUnitId",
+          "label": "Diameter (unit id)"
+        },
+        {
+          "name": "diameterMetres",
+          "label": "Diameter (metres)"
+        },
+        {
           "name": "objectTypeId",
           "label": "Object type"
         },
@@ -2049,6 +2769,42 @@
           "sensitivity": null
         },
         {
+          "name": "width",
+          "type": "Measurement",
+          "kind": "object",
+          "list": false,
+          "required": false,
+          "valueType": "measurement",
+          "sensitivity": null
+        },
+        {
+          "name": "height",
+          "type": "Measurement",
+          "kind": "object",
+          "list": false,
+          "required": false,
+          "valueType": "measurement",
+          "sensitivity": null
+        },
+        {
+          "name": "length",
+          "type": "Measurement",
+          "kind": "object",
+          "list": false,
+          "required": false,
+          "valueType": "measurement",
+          "sensitivity": null
+        },
+        {
+          "name": "diameter",
+          "type": "Measurement",
+          "kind": "object",
+          "list": false,
+          "required": false,
+          "valueType": "measurement",
+          "sensitivity": null
+        },
+        {
           "name": "century",
           "type": "Int",
           "kind": "scalar",
@@ -2349,6 +3105,37 @@
         }
       ]
     },
+    "Measurement": {
+      "fields": [
+        {
+          "name": "unit",
+          "type": "UnitOfMeasure",
+          "kind": "object",
+          "list": false,
+          "required": true,
+          "valueType": null,
+          "sensitivity": null
+        },
+        {
+          "name": "value",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "valueType": "number",
+          "sensitivity": null
+        },
+        {
+          "name": "inMetres",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "valueType": "number",
+          "sensitivity": null
+        }
+      ]
+    },
     "Money": {
       "fields": [
         {
@@ -2495,6 +3282,46 @@
           "list": false,
           "required": true,
           "valueType": "text",
+          "sensitivity": null
+        }
+      ]
+    },
+    "UnitOfMeasure": {
+      "fields": [
+        {
+          "name": "id",
+          "type": "UUID",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "valueType": "reference",
+          "sensitivity": null
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "valueType": "text",
+          "sensitivity": null
+        },
+        {
+          "name": "abbreviation",
+          "type": "String",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "valueType": "text",
+          "sensitivity": null
+        },
+        {
+          "name": "factor",
+          "type": "Decimal",
+          "kind": "scalar",
+          "list": false,
+          "required": true,
+          "valueType": "number",
           "sensitivity": null
         }
       ]

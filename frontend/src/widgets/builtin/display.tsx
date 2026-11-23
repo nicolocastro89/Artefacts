@@ -7,7 +7,7 @@ import { resolvePath, typeAt } from '../core/paths'
 import { defineWidget } from '../core/registry'
 import { isCompatible } from '../core/validation'
 import type { FieldType } from '../core/types'
-import { formatValue, formatYearRange, isHistoricalDate } from '../format'
+import { formatValue, formatYearRange, isHistoricalDate, formatMeasurements, MEASUREMENT_LABELS, type MeasurementName } from '../format'
 import './display.css'
 
 function isImageUrls(v: unknown): v is ImageUrls {
@@ -149,20 +149,29 @@ defineWidget({
   label: 'Field list',
   slots: {},
   dynamicSlots: { type: 'any' },
-  config: { labels: {} as Record<string, string>, hideEmpty: true, showRanges: true },
+  /**
+   * appendMeasurements names the row (e.g. "dimensions") that the bound height, width, length and diameter follow,
+   * as "diam 17,6 x h 7 · H 7 cm · Ø 17.6 cm"; they get no rows of their own then.
+   */
+  config: { labels: {} as Record<string, string>, hideEmpty: true, showRanges: true, appendMeasurements: '' },
   print: { keepTogether: true },
   component: ({ values, config }) => {
+    const target = config.appendMeasurements
+    const measured = target ? (Object.keys(MEASUREMENT_LABELS) as MeasurementName[]).filter((name) => name in values) : []
+    const measurements = target ? formatMeasurements(Object.fromEntries(measured.map((name) => [name, values[name]!.value]))) : ''
     const rows = Object.entries(values)
-      .map(([name, bound]) => ({ name, bound, text: formatValue(bound.value, bound.type) }))
-      .filter((r) => !config.hideEmpty || r.text !== '')
+      .filter(([name]) => !measured.includes(name as MeasurementName))
+      .map(([name, bound]) => ({ name, bound, text: formatValue(bound.value, bound.type), extra: name === target ? measurements : '' }))
+      .filter((r) => !config.hideEmpty || r.text !== '' || r.extra !== '')
     if (rows.length === 0) return null
     return (
       <dl className="w-fields">
-        {rows.map(({ name, bound, text }) => (
+        {rows.map(({ name, bound, text, extra }) => (
           <div key={name} className="w-fields__row">
             <dt className="label">{config.labels[name] ?? name}</dt>
             <dd>
               {text}
+              {extra && <span className="w-fields__range">{text ? ' · ' : ''}{extra}</span>}
               {config.showRanges && isHistoricalDate(bound.value) && (
                 <span className="w-fields__range"> {formatYearRange(bound.value.earliestYear, bound.value.latestYear)}</span>
               )}

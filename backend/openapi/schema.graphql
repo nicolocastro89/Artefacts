@@ -49,6 +49,10 @@ type Artefact {
   creationDate: HistoricalDate
   medium: String
   dimensions: String
+  width: Measurement
+  height: Measurement
+  length: Measurement
+  diameter: Measurement
   century: Int
   exhibitionCount: Int!
   imageCount: Int!
@@ -97,6 +101,12 @@ type ImageUrls {
   print: String!
 }
 
+type Measurement {
+  unit: UnitOfMeasure! @cost(weight: "10")
+  value: Decimal!
+  inMetres: Decimal!
+}
+
 type Money {
   amount: Decimal!
   currency: String!
@@ -129,6 +139,13 @@ type Translation {
   text: String!
 }
 
+type UnitOfMeasure {
+  id: UUID!
+  name: String!
+  abbreviation: String!
+  factor: Decimal!
+}
+
 input ArtefactFilterInput {
   and: [ArtefactFilterInput!]
   or: [ArtefactFilterInput!]
@@ -142,6 +159,18 @@ input ArtefactFilterInput {
   creationDatePrecision: StringOperationFilterInput
   medium: StringOperationFilterInput
   dimensions: StringOperationFilterInput
+  widthValue: DecimalOperationFilterInput
+  widthUnitId: UuidOperationFilterInput
+  widthMetres: DecimalOperationFilterInput
+  heightValue: DecimalOperationFilterInput
+  heightUnitId: UuidOperationFilterInput
+  heightMetres: DecimalOperationFilterInput
+  lengthValue: DecimalOperationFilterInput
+  lengthUnitId: UuidOperationFilterInput
+  lengthMetres: DecimalOperationFilterInput
+  diameterValue: DecimalOperationFilterInput
+  diameterUnitId: UuidOperationFilterInput
+  diameterMetres: DecimalOperationFilterInput
   objectTypeId: UuidOperationFilterInput
   collectionGroupId: UuidOperationFilterInput
   placeText: StringOperationFilterInput
@@ -175,6 +204,18 @@ input ArtefactSortInput {
   creationDatePrecision: SortEnumType @cost(weight: "10")
   medium: SortEnumType @cost(weight: "10")
   dimensions: SortEnumType @cost(weight: "10")
+  widthValue: SortEnumType @cost(weight: "10")
+  widthUnitId: SortEnumType @cost(weight: "10")
+  widthMetres: SortEnumType @cost(weight: "10")
+  heightValue: SortEnumType @cost(weight: "10")
+  heightUnitId: SortEnumType @cost(weight: "10")
+  heightMetres: SortEnumType @cost(weight: "10")
+  lengthValue: SortEnumType @cost(weight: "10")
+  lengthUnitId: SortEnumType @cost(weight: "10")
+  lengthMetres: SortEnumType @cost(weight: "10")
+  diameterValue: SortEnumType @cost(weight: "10")
+  diameterUnitId: SortEnumType @cost(weight: "10")
+  diameterMetres: SortEnumType @cost(weight: "10")
   objectTypeId: SortEnumType @cost(weight: "10")
   collectionGroupId: SortEnumType @cost(weight: "10")
   placeText: SortEnumType @cost(weight: "10")

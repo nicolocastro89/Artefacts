@@ -508,6 +508,20 @@
 }
 
 .imports__problems,
+.imports__discarded {
+  display: grid;
+  gap: var(--s1);
+  margin: var(--s2) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-sm);
+}
+
+.imports__discarded del {
+  color: var(--ink-muted);
+  text-decoration-thickness: 1px;
+}
+
 .imports__row-warnings {
   display: grid;
   gap: var(--s1);
@@ -646,6 +660,42 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 10rem));
   gap: var(--s3);
+}
+
+/* Dimensions: four value-and-unit pairs per text; a text kept as text only greys them out. */
+.imports__measures {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: var(--s3);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.imports__measures:disabled {
+  opacity: 0.5;
+}
+
+.imports__measure-inputs {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 4.5rem;
+  gap: var(--s1);
+}
+
+.imports__dimension .imports__check {
+  margin-top: var(--s2);
+}
+
+.imports__actions-side {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2) var(--s3);
+  align-items: center;
+}
+
+.imports__actions-side p {
+  margin: 0;
 }
 
 /* ---------- phones ---------- */

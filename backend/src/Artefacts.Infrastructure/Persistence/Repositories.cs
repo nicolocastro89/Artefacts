@@ -4,6 +4,7 @@ using Artefacts.Domain.Classification;
 using Artefacts.Domain.Common;
 using Artefacts.Domain.Languages;
 using Artefacts.Domain.Lists;
+using Artefacts.Domain.Measures;
 using Artefacts.Domain.Media;
 using Artefacts.Domain.Parties;
 using Artefacts.Domain.Regions;
@@ -45,6 +46,43 @@ internal sealed class ArtefactRepository(CollectionDbContext db) : IArtefactRepo
             .GroupBy(a => a.ObjectTypeId!.Value)
             .Select(g => new { g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.Key, x => x.Count, ct);
+
+    public async Task<IReadOnlyDictionary<UnitOfMeasureId, int>> CountByUnitAsync(CancellationToken ct)
+    {
+        var pairs = await db.Artefacts
+            .Select(a => new
+            {
+                a.Id,
+                W = a.Width != null ? (UnitOfMeasureId?)a.Width.UnitId : null,
+                H = a.Height != null ? (UnitOfMeasureId?)a.Height.UnitId : null,
+                L = a.Length != null ? (UnitOfMeasureId?)a.Length.UnitId : null,
+                D = a.Diameter != null ? (UnitOfMeasureId?)a.Diameter.UnitId : null,
+            })
+            .Where(x => x.W != null || x.H != null || x.L != null || x.D != null)
+            .ToListAsync(ct);
+        return pairs
+            .SelectMany(x => new[] { x.W, x.H, x.L, x.D }.Where(u => u is not null).Select(u => (x.Id, Unit: u!.Value)).Distinct())
+            .GroupBy(x => x.Unit)
+            .ToDictionary(g => g.Key, g => g.Count());
+    }
+}
+
+internal sealed class UnitOfMeasureRepository(CollectionDbContext db) : IUnitOfMeasureRepository
+{
+    public Task<UnitOfMeasure?> GetAsync(UnitOfMeasureId id, CancellationToken ct) =>
+        db.UnitsOfMeasure.SingleOrDefaultAsync(u => u.Id == id, ct);
+
+    public async Task<IReadOnlyList<UnitOfMeasure>> ListAsync(CancellationToken ct) =>
+        await db.UnitsOfMeasure.OrderBy(u => u.Factor).ThenBy(u => u.NormalizedAbbreviation).ToListAsync(ct);
+
+    public Task<UnitOfMeasure?> FindByAbbreviationAsync(string normalizedAbbreviation, CancellationToken ct) =>
+        db.UnitsOfMeasure.FirstOrDefaultAsync(u => u.NormalizedAbbreviation == normalizedAbbreviation, ct);
+
+    public Task<UnitOfMeasure?> FindByNameAsync(string language, string normalizedName, CancellationToken ct) =>
+        db.UnitsOfMeasure.FirstOrDefaultAsync(u => u.Names.Any(n => n.Language == language && n.NormalizedName == normalizedName), ct);
+
+    public void Add(UnitOfMeasure unit) => db.UnitsOfMeasure.Add(unit);
+    public void Remove(UnitOfMeasure unit) => db.UnitsOfMeasure.Remove(unit);
 }
 
 internal sealed class ObjectTypeRepository(CollectionDbContext db) : IObjectTypeRepository
@@ -211,6 +249,7 @@ internal sealed class LanguageRepository(CollectionDbContext db) : ILanguageRepo
     public async Task<bool> InUseAsync(string code, CancellationToken ct) =>
         await db.Regions.AnyAsync(r => r.Names.Any(n => n.Language == code), ct) ||
         await db.ObjectTypes.AnyAsync(t => t.Names.Any(n => n.Language == code), ct) ||
+        await db.UnitsOfMeasure.AnyAsync(u => u.Names.Any(n => n.Language == code), ct) ||
         await db.ReferenceEntries.AnyAsync(e => e.Names.Any(n => n.Language == code), ct) ||
         await db.Artefacts.AnyAsync(a => a.Translations.Any(t => t.Language == code), ct);
 
@@ -278,6 +317,12 @@ internal sealed class UnitOfWork(CollectionDbContext db) : IUnitOfWork
                     new DomainValidationException("names", "Another entry of this list already has this name in the same language."),
                 { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: CollectionDbContext.ReferenceEntrySingleNameIndex } =>
                     new DomainValidationException("name", "Another entry of this list already has this name."),
+                { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: CollectionDbContext.UnitNameIndex } =>
+                    new DomainValidationException("names", "Another unit already has this name in the same language."),
+                { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: CollectionDbContext.UnitAbbreviationIndex } =>
+                    new DomainValidationException("abbreviation", "Another unit already has this abbreviation."),
+                { SqlState: PostgresErrorCodes.ForeignKeyViolation } when pg.ConstraintName?.StartsWith("fk_artefacts_units_of_measure_") == true =>
+                    new ConflictException("unit_in_use", "The unit is used by measurements and cannot be deleted."),
                 { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: CollectionDbContext.PartyNameIndex } =>
                     new DomainValidationException("name", "Another party already has this name."),
                 { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: CollectionDbContext.StoredQueryNameIndex } =>

@@ -41,7 +41,9 @@ public static class MappingSuggestion
             rules,
             // {sheet} keeps a template usable for every workbook: each gets its own prefix ("CER", "TES", …).
             new InventoryNumberPattern("{sheet}-{group:2}-{item:2}", ImportField.CatalogueNumber),
-            LocationPatterns: Detectors.DefaultLocationPatterns);
+            LocationPatterns: Detectors.DefaultLocationPatterns,
+            // The collection measures in centimetres; numbers are never read in an assumed order.
+            Dimensions: new DimensionsOptions(Domain.Measures.SeededUnits.Centimetre.Value));
     }
 
     /// <summary>The usual line rules for the multi-line columns of the collection's workbooks.</summary>

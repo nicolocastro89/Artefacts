@@ -26,3 +26,17 @@ const STATUS_TONE: Record<ImportRowStatus, string> = {
 export function StatusChip({ status }: { status: ImportRowStatus }) {
   return <span className={`chip chip--${STATUS_TONE[status]}`}>{STATUS_LABELS[status]}</span>
 }
+
+/** Lines a discarding rule dropped from a row ("Nome File: “vedi foto”"), crossed out: they are imported nowhere. */
+export function DiscardedLines({ lines }: { lines: string[] | null | undefined }) {
+  if (!lines || lines.length === 0) return null
+  return (
+    <ul className="imports__discarded" aria-label="Discarded lines">
+      {lines.map((line, i) => (
+        <li key={i}>
+          <del>{line}</del> <span className="muted">not imported</span>
+        </li>
+      ))}
+    </ul>
+  )
+}

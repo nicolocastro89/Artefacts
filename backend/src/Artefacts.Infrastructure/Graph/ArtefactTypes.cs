@@ -26,6 +26,24 @@ public sealed record Money(decimal Amount, string Currency)
         amount is { } a && currency is not null ? new Money(a, currency.Trim()) : null;
 }
 
+/// <summary>A unit of measure: its name in the reader's language, abbreviation, and metres per one of the unit.</summary>
+public sealed record UnitOfMeasure(Guid Id, string Name, string Abbreviation, decimal Factor);
+
+/// <summary>A measured length in the unit it was entered in, with its value in metres.</summary>
+public sealed class Measurement(decimal value, Guid unitId, decimal inMetres)
+{
+    public decimal Value => value;
+
+    /// <summary>The value converted to metres with the unit's current factor.</summary>
+    public decimal InMetres => inMetres;
+
+    public async Task<UnitOfMeasure> GetUnit(UnitsDataLoader units, CancellationToken cancellationToken) =>
+        (await units.LoadAsync(unitId, cancellationToken))!;
+
+    internal static Measurement? From(decimal? value, Guid? unitId, decimal? metres) =>
+        value is { } v && unitId is { } u ? new Measurement(v, u, metres ?? 0m) : null;
+}
+
 /// <summary>A linked record with its name in the reader's language.</summary>
 public sealed record NamedRef(Guid Id, string Name);
 
@@ -97,6 +115,10 @@ public sealed class Artefact(ArtefactRow row, string? groupKey = null, string? g
     public HistoricalDate? CreationDate => HistoricalDate.From(row.CreationDateDisplay, row.CreationDateEarliestYear, row.CreationDateLatestYear, row.CreationDatePrecision);
     public string? Medium => row.Medium;
     public string? Dimensions => row.Dimensions;
+    public Measurement? Width => Measurement.From(row.WidthValue, row.WidthUnitId, row.WidthMetres);
+    public Measurement? Height => Measurement.From(row.HeightValue, row.HeightUnitId, row.HeightMetres);
+    public Measurement? Length => Measurement.From(row.LengthValue, row.LengthUnitId, row.LengthMetres);
+    public Measurement? Diameter => Measurement.From(row.DiameterValue, row.DiameterUnitId, row.DiameterMetres);
 
     /// <summary>The century of the creation date (17 = 1601-1700; negative for BCE).</summary>
     public int? Century => row.Century;

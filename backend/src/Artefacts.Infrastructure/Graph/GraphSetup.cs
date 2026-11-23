@@ -42,6 +42,7 @@ public static class GraphSetup
             .AddDataLoader<ObjectTypeNamesDataLoader>()
             .AddDataLoader<EntryNamesDataLoader>()
             .AddDataLoader<PartiesDataLoader>()
+            .AddDataLoader<UnitsDataLoader>()
             .AddDataLoader<ProvenanceDataLoader>()
             .AddDataLoader<ImagesDataLoader>()
             .AddDataLoader<ExhibitionsDataLoader>()

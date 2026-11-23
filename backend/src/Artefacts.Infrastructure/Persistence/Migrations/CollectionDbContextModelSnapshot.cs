@@ -433,6 +433,69 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                     b.ToTable("reference_entries", (string)null);
                 });
 
+            modelBuilder.Entity("Artefacts.Domain.Measures.UnitOfMeasure", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Abbreviation")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("abbreviation");
+
+                    b.Property<decimal>("Factor")
+                        .HasPrecision(28, 12)
+                        .HasColumnType("numeric(28,12)")
+                        .HasColumnName("factor");
+
+                    b.Property<string>("NormalizedAbbreviation")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("normalized_abbreviation");
+
+                    b.HasKey("Id")
+                        .HasName("pk_units_of_measure");
+
+                    b.HasIndex("NormalizedAbbreviation")
+                        .IsUnique()
+                        .HasDatabaseName("ux_units_of_measure_normalized_abbreviation");
+
+                    b.ToTable("units_of_measure", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("0193a1c0-0000-7000-8000-000000000001"),
+                            Abbreviation = "mm",
+                            Factor = 0.001m,
+                            NormalizedAbbreviation = "mm"
+                        },
+                        new
+                        {
+                            Id = new Guid("0193a1c0-0000-7000-8000-000000000002"),
+                            Abbreviation = "cm",
+                            Factor = 0.01m,
+                            NormalizedAbbreviation = "cm"
+                        },
+                        new
+                        {
+                            Id = new Guid("0193a1c0-0000-7000-8000-000000000003"),
+                            Abbreviation = "m",
+                            Factor = 1m,
+                            NormalizedAbbreviation = "m"
+                        },
+                        new
+                        {
+                            Id = new Guid("0193a1c0-0000-7000-8000-000000000004"),
+                            Abbreviation = "in",
+                            Factor = 0.0254m,
+                            NormalizedAbbreviation = "in"
+                        });
+                });
+
             modelBuilder.Entity("Artefacts.Domain.Media.MediaAsset", b =>
                 {
                     b.Property<Guid>("Id")
@@ -783,6 +846,108 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                                 .HasConstraintName("fk_artefacts_artefacts_id");
                         });
 
+                    b.OwnsOne("Artefacts.Domain.Measures.Measurement", "Diameter", b1 =>
+                        {
+                            b1.Property<Guid>("ArtefactId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("id");
+
+                            b1.Property<Guid>("UnitId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("diameter_unit_id");
+
+                            b1.Property<decimal>("Value")
+                                .HasPrecision(19, 4)
+                                .HasColumnType("numeric(19,4)")
+                                .HasColumnName("diameter_value");
+
+                            b1.HasKey("ArtefactId");
+
+                            b1.HasIndex("UnitId")
+                                .HasDatabaseName("ix_artefacts_diameter_unit_id");
+
+                            b1.ToTable("artefacts");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ArtefactId")
+                                .HasConstraintName("fk_artefacts_artefacts_id");
+
+                            b1.HasOne("Artefacts.Domain.Measures.UnitOfMeasure", null)
+                                .WithMany()
+                                .HasForeignKey("UnitId")
+                                .OnDelete(DeleteBehavior.Restrict)
+                                .IsRequired()
+                                .HasConstraintName("fk_artefacts_units_of_measure_diameter");
+                        });
+
+                    b.OwnsOne("Artefacts.Domain.Measures.Measurement", "Height", b1 =>
+                        {
+                            b1.Property<Guid>("ArtefactId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("id");
+
+                            b1.Property<Guid>("UnitId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("height_unit_id");
+
+                            b1.Property<decimal>("Value")
+                                .HasPrecision(19, 4)
+                                .HasColumnType("numeric(19,4)")
+                                .HasColumnName("height_value");
+
+                            b1.HasKey("ArtefactId");
+
+                            b1.HasIndex("UnitId")
+                                .HasDatabaseName("ix_artefacts_height_unit_id");
+
+                            b1.ToTable("artefacts");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ArtefactId")
+                                .HasConstraintName("fk_artefacts_artefacts_id");
+
+                            b1.HasOne("Artefacts.Domain.Measures.UnitOfMeasure", null)
+                                .WithMany()
+                                .HasForeignKey("UnitId")
+                                .OnDelete(DeleteBehavior.Restrict)
+                                .IsRequired()
+                                .HasConstraintName("fk_artefacts_units_of_measure_height");
+                        });
+
+                    b.OwnsOne("Artefacts.Domain.Measures.Measurement", "Length", b1 =>
+                        {
+                            b1.Property<Guid>("ArtefactId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("id");
+
+                            b1.Property<Guid>("UnitId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("length_unit_id");
+
+                            b1.Property<decimal>("Value")
+                                .HasPrecision(19, 4)
+                                .HasColumnType("numeric(19,4)")
+                                .HasColumnName("length_value");
+
+                            b1.HasKey("ArtefactId");
+
+                            b1.HasIndex("UnitId")
+                                .HasDatabaseName("ix_artefacts_length_unit_id");
+
+                            b1.ToTable("artefacts");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ArtefactId")
+                                .HasConstraintName("fk_artefacts_artefacts_id");
+
+                            b1.HasOne("Artefacts.Domain.Measures.UnitOfMeasure", null)
+                                .WithMany()
+                                .HasForeignKey("UnitId")
+                                .OnDelete(DeleteBehavior.Restrict)
+                                .IsRequired()
+                                .HasConstraintName("fk_artefacts_units_of_measure_length");
+                        });
+
                     b.OwnsOne("Artefacts.Domain.Finance.Money", "Valuation", b1 =>
                         {
                             b1.Property<Guid>("ArtefactId")
@@ -808,6 +973,40 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                             b1.WithOwner()
                                 .HasForeignKey("ArtefactId")
                                 .HasConstraintName("fk_artefacts_artefacts_id");
+                        });
+
+                    b.OwnsOne("Artefacts.Domain.Measures.Measurement", "Width", b1 =>
+                        {
+                            b1.Property<Guid>("ArtefactId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("id");
+
+                            b1.Property<Guid>("UnitId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("width_unit_id");
+
+                            b1.Property<decimal>("Value")
+                                .HasPrecision(19, 4)
+                                .HasColumnType("numeric(19,4)")
+                                .HasColumnName("width_value");
+
+                            b1.HasKey("ArtefactId");
+
+                            b1.HasIndex("UnitId")
+                                .HasDatabaseName("ix_artefacts_width_unit_id");
+
+                            b1.ToTable("artefacts");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ArtefactId")
+                                .HasConstraintName("fk_artefacts_artefacts_id");
+
+                            b1.HasOne("Artefacts.Domain.Measures.UnitOfMeasure", null)
+                                .WithMany()
+                                .HasForeignKey("UnitId")
+                                .OnDelete(DeleteBehavior.Restrict)
+                                .IsRequired()
+                                .HasConstraintName("fk_artefacts_units_of_measure_width");
                         });
 
                     b.OwnsMany("Artefacts.Domain.Catalogue.ArtefactTranslation", "Translations", b1 =>
@@ -1065,9 +1264,15 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
 
                     b.Navigation("CreationDate");
 
+                    b.Navigation("Diameter");
+
                     b.Navigation("Exhibitions");
 
+                    b.Navigation("Height");
+
                     b.Navigation("Images");
+
+                    b.Navigation("Length");
 
                     b.Navigation("PlaceOfProduction");
 
@@ -1076,6 +1281,8 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                     b.Navigation("Translations");
 
                     b.Navigation("Valuation");
+
+                    b.Navigation("Width");
                 });
 
             modelBuilder.Entity("Artefacts.Domain.Classification.ObjectType", b =>
@@ -1212,6 +1419,116 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                             b1.WithOwner()
                                 .HasForeignKey("ReferenceEntryId")
                                 .HasConstraintName("fk_reference_entry_names_reference_entries_reference_entry_id");
+                        });
+
+                    b.Navigation("Names");
+                });
+
+            modelBuilder.Entity("Artefacts.Domain.Measures.UnitOfMeasure", b =>
+                {
+                    b.OwnsMany("Artefacts.Domain.Languages.LocalizedName", "Names", b1 =>
+                        {
+                            b1.Property<Guid>("UnitOfMeasureId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("unit_of_measure_id");
+
+                            b1.Property<string>("Language")
+                                .HasMaxLength(10)
+                                .HasColumnType("character varying(10)")
+                                .HasColumnName("language");
+
+                            b1.Property<string>("Name")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("name");
+
+                            b1.Property<string>("NormalizedName")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)")
+                                .HasColumnName("normalized_name");
+
+                            b1.HasKey("UnitOfMeasureId", "Language")
+                                .HasName("pk_unit_of_measure_names");
+
+                            b1.HasIndex("NormalizedName")
+                                .HasDatabaseName("ix_unit_of_measure_names_normalized_name");
+
+                            b1.HasIndex("Language", "NormalizedName")
+                                .IsUnique()
+                                .HasDatabaseName("ux_unit_of_measure_names_language_normalized_name");
+
+                            b1.ToTable("unit_of_measure_names", (string)null);
+
+                            b1.HasOne("Artefacts.Domain.Languages.Language", null)
+                                .WithMany()
+                                .HasForeignKey("Language")
+                                .OnDelete(DeleteBehavior.Restrict)
+                                .IsRequired()
+                                .HasConstraintName("fk_language_unit_of_measure_names");
+
+                            b1.WithOwner()
+                                .HasForeignKey("UnitOfMeasureId")
+                                .HasConstraintName("fk_unit_of_measure_names_units_of_measure_unit_of_measure_id");
+
+                            b1.HasData(
+                                new
+                                {
+                                    UnitOfMeasureId = new Guid("0193a1c0-0000-7000-8000-000000000001"),
+                                    Language = "en",
+                                    Name = "Millimetre",
+                                    NormalizedName = "millimetre"
+                                },
+                                new
+                                {
+                                    UnitOfMeasureId = new Guid("0193a1c0-0000-7000-8000-000000000001"),
+                                    Language = "it",
+                                    Name = "millimetro",
+                                    NormalizedName = "millimetro"
+                                },
+                                new
+                                {
+                                    UnitOfMeasureId = new Guid("0193a1c0-0000-7000-8000-000000000002"),
+                                    Language = "en",
+                                    Name = "Centimetre",
+                                    NormalizedName = "centimetre"
+                                },
+                                new
+                                {
+                                    UnitOfMeasureId = new Guid("0193a1c0-0000-7000-8000-000000000002"),
+                                    Language = "it",
+                                    Name = "centimetro",
+                                    NormalizedName = "centimetro"
+                                },
+                                new
+                                {
+                                    UnitOfMeasureId = new Guid("0193a1c0-0000-7000-8000-000000000003"),
+                                    Language = "en",
+                                    Name = "Metre",
+                                    NormalizedName = "metre"
+                                },
+                                new
+                                {
+                                    UnitOfMeasureId = new Guid("0193a1c0-0000-7000-8000-000000000003"),
+                                    Language = "it",
+                                    Name = "metro",
+                                    NormalizedName = "metro"
+                                },
+                                new
+                                {
+                                    UnitOfMeasureId = new Guid("0193a1c0-0000-7000-8000-000000000004"),
+                                    Language = "en",
+                                    Name = "Inch",
+                                    NormalizedName = "inch"
+                                },
+                                new
+                                {
+                                    UnitOfMeasureId = new Guid("0193a1c0-0000-7000-8000-000000000004"),
+                                    Language = "it",
+                                    Name = "pollice",
+                                    NormalizedName = "pollice"
+                                });
                         });
 
                     b.Navigation("Names");

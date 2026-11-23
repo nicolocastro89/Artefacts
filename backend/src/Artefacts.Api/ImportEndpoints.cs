@@ -86,6 +86,18 @@ internal static class ImportEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
 
+        g.MapGet("/{id:guid}/dimensions", async (Guid id, ImportHandler h, CancellationToken ct) => TypedResults.Ok(await h.DimensionsAsync(id, ct)))
+            .WithName("getImportDimensions")
+            .WithSummary("Dimensions texts whose measurements could not be read clearly, with their rows and decisions.")
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
+        g.MapPut("/{id:guid}/dimensions", async (Guid id, SetDimensionResolutionsRequest request, ImportHandler h, CancellationToken ct) =>
+                TypedResults.Ok(await h.SetDimensionsAsync(id, request, ct)))
+            .WithName("setImportDimensions")
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+
         g.MapGet("/{id:guid}/review", async Task<IResult> (Guid id, string? status, int? page, int? pageSize, ImportHandler h, CancellationToken ct) =>
             {
                 ImportRowStatus? filter = null;

@@ -5,6 +5,7 @@ using Artefacts.Domain.Common;
 using Artefacts.Domain.Imports;
 using Artefacts.Domain.Languages;
 using Artefacts.Domain.Lists;
+using Artefacts.Domain.Measures;
 using Artefacts.Domain.Media;
 using Artefacts.Domain.Pages;
 using Artefacts.Domain.Parties;
@@ -28,6 +29,19 @@ public interface IArtefactRepository
     Task<bool> AnyReferencesAsync(ObjectTypeId objectTypeId, CancellationToken ct);
 
     Task<IReadOnlyDictionary<ObjectTypeId, int>> CountByObjectTypeAsync(CancellationToken ct);
+
+    /// <summary>The number of artefacts with at least one measurement in each unit.</summary>
+    Task<IReadOnlyDictionary<UnitOfMeasureId, int>> CountByUnitAsync(CancellationToken ct);
+}
+
+public interface IUnitOfMeasureRepository
+{
+    Task<UnitOfMeasure?> GetAsync(UnitOfMeasureId id, CancellationToken ct);
+    Task<IReadOnlyList<UnitOfMeasure>> ListAsync(CancellationToken ct);
+    Task<UnitOfMeasure?> FindByAbbreviationAsync(string normalizedAbbreviation, CancellationToken ct);
+    Task<UnitOfMeasure?> FindByNameAsync(string language, string normalizedName, CancellationToken ct);
+    void Add(UnitOfMeasure unit);
+    void Remove(UnitOfMeasure unit);
 }
 
 public interface IObjectTypeRepository

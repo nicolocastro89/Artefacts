@@ -40,6 +40,16 @@ export const languagesRoute = {
   ],
 }
 
+/** The seeded units of measure, smallest first, as the API lists them. */
+export const unitsRoute = {
+  'GET /api/units': () => [
+    { id: 'u-mm', name: 'Millimetre', nameLanguage: 'en', names: { en: 'Millimetre', it: 'millimetro' }, abbreviation: 'mm', factor: 0.001, artefactCount: 0 },
+    { id: 'u-cm', name: 'Centimetre', nameLanguage: 'en', names: { en: 'Centimetre', it: 'centimetro' }, abbreviation: 'cm', factor: 0.01, artefactCount: 0 },
+    { id: 'u-in', name: 'Inch', nameLanguage: 'en', names: { en: 'Inch', it: 'pollice' }, abbreviation: 'in', factor: 0.0254, artefactCount: 0 },
+    { id: 'u-m', name: 'Metre', nameLanguage: 'en', names: { en: 'Metre', it: 'metro' }, abbreviation: 'm', factor: 1, artefactCount: 0 },
+  ],
+}
+
 export function problem(status: number, body: object): Response {
   return new Response(JSON.stringify({ status, ...body }), { status, headers: { 'Content-Type': 'application/problem+json' } })
 }

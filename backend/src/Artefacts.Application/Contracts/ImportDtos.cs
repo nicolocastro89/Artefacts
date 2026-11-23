@@ -81,6 +81,14 @@ public sealed record ImportDateDto(string Text, IReadOnlyList<int> SheetRows, Da
 
 public sealed record SetDateResolutionsRequest(IReadOnlyList<DateResolution>? Dates);
 
+/// <summary>
+/// A distinct dimensions text whose measurements could not be read clearly, with the rows using it and the decision
+/// in force (none means undecided).
+/// </summary>
+public sealed record ImportDimensionsDto(string Text, IReadOnlyList<int> SheetRows, DimensionResolution? Resolution);
+
+public sealed record SetDimensionResolutionsRequest(IReadOnlyList<DimensionResolution>? Dimensions);
+
 // ---------- Review ----------
 
 public sealed record ReviewFieldDto(ImportField Field, string Value);
@@ -97,7 +105,8 @@ public sealed record ReviewRowDto(
     IReadOnlyList<ReviewPictureDto> Pictures,
     IReadOnlyList<RowProblem> Problems,
     IReadOnlyList<string> Warnings,
-    Guid? ArtefactId);
+    Guid? ArtefactId,
+    IReadOnlyList<string>? Discarded = null);
 
 public sealed record ImportReviewDto(ImportCountsDto Counts, IReadOnlyList<ReviewRowDto> Rows, int Total, int Page, int PageSize);
 

@@ -4,6 +4,7 @@ import { CustomPageRoute, PageNotFound, PageRoute } from '../pages/PageRoute'
 import { ImportsPage } from '../pages/imports/ImportsPage'
 import { ImportWizard } from '../pages/imports/ImportWizard'
 import { LanguagesPage } from '../pages/LanguagesPage'
+import { UnitsPage } from '../pages/UnitsPage'
 import { ListPage } from '../pages/ListPage'
 import { ObjectTypesPage } from '../pages/ObjectTypesPage'
 import { PageEditor } from '../pages/PageEditor'
@@ -39,6 +40,7 @@ export const routes = [
       { path: 'reference/collection-groups', element: <ListPage key="collection-groups" list="collection-groups" /> },
       { path: 'reference/storage-locations', element: <ListPage key="storage-locations" list="storage-locations" /> },
       { path: 'reference/parties', element: <PartiesPage /> },
+      { path: 'reference/units', element: <UnitsPage /> },
       { path: 'reference/languages', element: <LanguagesPage /> },
       { path: 'imports', element: <ImportsPage /> },
       { path: 'imports/:id', element: <ImportWizard /> },

@@ -36,8 +36,10 @@ const artefact = {
   images: [image('m1', true, 'Recto'), image('m2', false, 'Verso')],
 }
 
-function renderDetail() {
-  mockFetch(artefactDetailRoutes(artefact))
+const cm = { id: 'u-cm', name: 'Centimetre', abbreviation: 'cm', factor: 0.01 }
+
+function renderDetail(record: object = artefact) {
+  mockFetch(artefactDetailRoutes(record))
   return renderWithProviders(
     <Routes>
       <Route path="/artefacts/:id" element={<PageRoute slug="artefact-detail" />} />
@@ -67,6 +69,30 @@ describe('artefact detail page', () => {
     expect(screen.getByText('Private collection')).toBeInTheDocument()
     expect(screen.getByText('Purchase')).toBeInTheDocument()
     expect(document.querySelector('.widget-config-error')).toBeNull()
+  })
+
+  it('shows the dimensions text followed by the measurements', async () => {
+    renderDetail({
+      ...artefact,
+      dimensions: 'diam 17,6 x h 7',
+      height: { value: 7, inMetres: 0.07, unit: cm },
+      width: null,
+      length: null,
+      diameter: { value: 17.6, inMetres: 0.176, unit: cm },
+    })
+
+    await screen.findByRole('heading', { name: 'Still Life with Lemons' })
+    const row = screen.getByText('Dimensions').closest('.w-fields__row') as HTMLElement
+    expect(within(row).getByRole('definition')).toHaveTextContent('diam 17,6 x h 7 · H 7 cm · Ø 17.6 cm')
+    expect(screen.queryByText('height')).toBeNull()
+  })
+
+  it('shows measurements on their own when there is no dimensions text', async () => {
+    renderDetail({ ...artefact, dimensions: null, height: { value: 82, inMetres: 0.82, unit: cm }, width: { value: 64, inMetres: 0.64, unit: cm } })
+
+    await screen.findByRole('heading', { name: 'Still Life with Lemons' })
+    const row = screen.getByText('Dimensions').closest('.w-fields__row') as HTMLElement
+    expect(within(row).getByRole('definition')).toHaveTextContent(/^H 82 cm · W 64 cm$/)
   })
 
   it('shows the primary image at web size and switches the viewer when another image is picked', async () => {

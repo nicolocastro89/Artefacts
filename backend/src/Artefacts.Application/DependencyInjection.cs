@@ -22,6 +22,7 @@ public static class DependencyInjection
         services.AddSingleton<HistoricalDateParseHandler>();
         services.AddScoped<RegionHandler>();
         services.AddScoped<ObjectTypeHandler>();
+        services.AddScoped<Units.UnitOfMeasureHandler>();
         services.AddScoped<ListHandler>();
         services.AddScoped<PartyHandler>();
         services.AddScoped<LanguageHandler>();

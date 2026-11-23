@@ -26,6 +26,16 @@
   grid-template-columns: minmax(10rem, 1fr) minmax(8rem, 12rem) auto;
 }
 
+/* Units: names per language, abbreviation, factor, then the button. */
+.units__add {
+  grid-template-columns: repeat(var(--name-columns, 1), minmax(9rem, 1fr)) minmax(5rem, 7rem) minmax(7rem, 9rem) auto;
+}
+
+.units__input {
+  min-width: 5rem;
+  max-width: 9rem;
+}
+
 .regions__count {
   width: 1%;
   white-space: nowrap;
@@ -35,7 +45,7 @@
 
 .reference-tabs {
   justify-self: start;
-  /* Seven lists: on narrow screens the tabs scroll sideways inside their own strip instead of widening the page. */
+  /* Eight lists: on narrow screens the tabs scroll sideways inside their own strip instead of widening the page. */
   max-width: 100%;
   overflow-x: auto;
   scrollbar-width: thin;

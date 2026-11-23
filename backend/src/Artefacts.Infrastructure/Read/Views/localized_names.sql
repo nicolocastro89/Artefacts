@@ -21,6 +21,15 @@ LANGUAGE sql STABLE AS $$
     LIMIT 1
 $$;
 
+CREATE OR REPLACE FUNCTION unit_of_measure_name(p_id uuid, p_languages text[]) RETURNS text
+LANGUAGE sql STABLE AS $$
+    SELECT n.name
+    FROM unit_of_measure_names n
+    WHERE n.unit_of_measure_id = p_id
+    ORDER BY coalesce(array_position(p_languages, n.language::text), 2147483647), n.language
+    LIMIT 1
+$$;
+
 -- Resolve the name of a list entry (dynasty, collection group, storage location): the single name of an
 -- untranslated entry, otherwise its name in the first language of p_languages that has one.
 CREATE OR REPLACE FUNCTION reference_entry_name(p_id uuid, p_languages text[]) RETURNS text

@@ -947,6 +947,210 @@
         }
       }
     },
+    "/api/units": {
+      "get": {
+        "tags": [
+          "Units of measure"
+        ],
+        "summary": "Every unit of measure with its usage, smallest unit first.",
+        "operationId": "listUnits",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UnitOfMeasureDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Units of measure"
+        ],
+        "operationId": "addUnit",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnitOfMeasureRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnitOfMeasureDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/units/{id}": {
+      "get": {
+        "tags": [
+          "Units of measure"
+        ],
+        "operationId": "getUnit",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnitOfMeasureDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Units of measure"
+        ],
+        "operationId": "updateUnit",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnitOfMeasureRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnitOfMeasureDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Units of measure"
+        ],
+        "operationId": "deleteUnit",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/lists/{list}": {
       "get": {
         "tags": [
@@ -2230,6 +2434,123 @@
                   "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/ImportDateDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/imports/{id}/dimensions": {
+      "get": {
+        "tags": [
+          "Imports"
+        ],
+        "summary": "Dimensions texts whose measurements could not be read clearly, with their rows and decisions.",
+        "operationId": "getImportDimensions",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ImportDimensionsDto"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Imports"
+        ],
+        "operationId": "setImportDimensions",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetDimensionResolutionsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ImportDimensionsDto"
                   }
                 }
               }
@@ -3805,6 +4126,46 @@
                 "$ref": "#/components/schemas/MoneyDto"
               }
             ]
+          },
+          "width": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MeasurementDto"
+              }
+            ]
+          },
+          "height": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MeasurementDto"
+              }
+            ]
+          },
+          "length": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MeasurementDto"
+              }
+            ]
+          },
+          "diameter": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MeasurementDto"
+              }
+            ]
           }
         }
       },
@@ -3998,6 +4359,46 @@
               },
               {
                 "$ref": "#/components/schemas/MoneyDto"
+              }
+            ]
+          },
+          "width": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MeasurementInput"
+              }
+            ]
+          },
+          "height": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MeasurementInput"
+              }
+            ]
+          },
+          "length": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MeasurementInput"
+              }
+            ]
+          },
+          "diameter": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MeasurementInput"
               }
             ]
           }
@@ -4495,6 +4896,82 @@
           }
         }
       },
+      "DimensionResolution": {
+        "required": [
+          "text"
+        ],
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "keepTextOnly": {
+            "type": "boolean",
+            "default": false
+          },
+          "width": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MeasurementInput"
+              }
+            ]
+          },
+          "height": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MeasurementInput"
+              }
+            ]
+          },
+          "length": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MeasurementInput"
+              }
+            ]
+          },
+          "diameter": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MeasurementInput"
+              }
+            ]
+          }
+        }
+      },
+      "DimensionsOptions": {
+        "type": "object",
+        "properties": {
+          "defaultUnitId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "unlabelledOrder": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/MeasureKind"
+            }
+          }
+        }
+      },
       "DocumentDescriptionDto": {
         "required": [
           "description",
@@ -4645,7 +5122,8 @@
           "money",
           "image",
           "reference",
-          "boolean"
+          "boolean",
+          "measurement"
         ]
       },
       "HistoricalDateDto": {
@@ -4912,6 +5390,45 @@
             "items": {
               "$ref": "#/components/schemas/ListDecision"
             }
+          },
+          "dimensions": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/DimensionResolution"
+            }
+          }
+        }
+      },
+      "ImportDimensionsDto": {
+        "required": [
+          "text",
+          "sheetRows",
+          "resolution"
+        ],
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "sheetRows": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "resolution": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/DimensionResolution"
+              }
+            ]
           }
         }
       },
@@ -5200,6 +5717,16 @@
             "items": {
               "type": "string"
             }
+          },
+          "dimensions": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/DimensionsOptions"
+              }
+            ]
           }
         }
       },
@@ -5456,7 +5983,14 @@
         "type": "object",
         "properties": {
           "target": {
-            "$ref": "#/components/schemas/ImportField"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ImportField"
+              }
+            ]
           },
           "detector": {
             "oneOf": [
@@ -5575,6 +6109,58 @@
           },
           "alias": {
             "type": "boolean"
+          }
+        }
+      },
+      "MeasureKind": {
+        "enum": [
+          "width",
+          "height",
+          "length",
+          "diameter"
+        ]
+      },
+      "MeasurementDto": {
+        "required": [
+          "value",
+          "inMetres",
+          "unit"
+        ],
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "number",
+            "format": "double"
+          },
+          "inMetres": {
+            "type": "number",
+            "format": "double"
+          },
+          "unit": {
+            "$ref": "#/components/schemas/UnitRefDto"
+          }
+        }
+      },
+      "MeasurementInput": {
+        "required": [
+          "value",
+          "unitId"
+        ],
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "unitId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
           }
         }
       },
@@ -6243,6 +6829,15 @@
               "string"
             ],
             "format": "uuid"
+          },
+          "discarded": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -6336,6 +6931,23 @@
             ],
             "items": {
               "$ref": "#/components/schemas/DateResolution"
+            }
+          }
+        }
+      },
+      "SetDimensionResolutionsRequest": {
+        "required": [
+          "dimensions"
+        ],
+        "type": "object",
+        "properties": {
+          "dimensions": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/DimensionResolution"
             }
           }
         }
@@ -6568,6 +7180,104 @@
             "format": "date-time"
           }
         }
+      },
+      "UnitOfMeasureDto": {
+        "required": [
+          "id",
+          "name",
+          "nameLanguage",
+          "names",
+          "abbreviation",
+          "factor",
+          "artefactCount"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "nameLanguage": {
+            "type": "string"
+          },
+          "names": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "abbreviation": {
+            "type": "string"
+          },
+          "factor": {
+            "type": "number",
+            "format": "double"
+          },
+          "artefactCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "UnitOfMeasureRequest": {
+        "required": [
+          "names",
+          "abbreviation",
+          "factor"
+        ],
+        "type": "object",
+        "properties": {
+          "names": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "abbreviation": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "factor": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "UnitRefDto": {
+        "required": [
+          "id",
+          "name",
+          "abbreviation",
+          "factor"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "abbreviation": {
+            "type": "string"
+          },
+          "factor": {
+            "type": "number",
+            "format": "double"
+          }
+        }
       }
     }
   },
@@ -6589,6 +7299,9 @@
     },
     {
       "name": "Object types"
+    },
+    {
+      "name": "Units of measure"
     },
     {
       "name": "Lists"

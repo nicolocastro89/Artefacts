@@ -108,7 +108,11 @@
                           "maker": "artefact.maker",
                           "creationDate": "artefact.creationDate",
                           "medium": "artefact.medium",
-                          "dimensions": "artefact.dimensions"
+                          "dimensions": "artefact.dimensions",
+                          "height": "artefact.height",
+                          "width": "artefact.width",
+                          "length": "artefact.length",
+                          "diameter": "artefact.diameter"
                         },
                         "config": {
                           "labels": {
@@ -117,7 +121,8 @@
                             "creationDate": "Date",
                             "medium": "Medium",
                             "dimensions": "Dimensions"
-                          }
+                          },
+                          "appendMeasurements": "dimensions"
                         }
                       },
                       {

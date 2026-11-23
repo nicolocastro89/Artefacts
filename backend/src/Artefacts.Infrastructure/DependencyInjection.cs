@@ -47,6 +47,7 @@ public static class DependencyInjection
         services.AddScoped<IArtefactRepository, ArtefactRepository>();
         services.AddScoped<IRegionRepository, RegionRepository>();
         services.AddScoped<IObjectTypeRepository, ObjectTypeRepository>();
+        services.AddScoped<IUnitOfMeasureRepository, UnitOfMeasureRepository>();
         services.AddScoped<IReferenceEntryRepository, ReferenceEntryRepository>();
         services.AddScoped<IPartyRepository, PartyRepository>();
         services.AddScoped<IStoredQueryRepository, StoredQueryRepository>();

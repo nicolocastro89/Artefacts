@@ -26,6 +26,7 @@ public sealed class ImportHandler(
     IReferenceEntryRepository listEntries,
     IPartyRepository parties,
     IArtefactRepository artefacts,
+    IUnitOfMeasureRepository units,
     IMediaStorage storage,
     IUnitOfWork unitOfWork,
     TimeProvider clock,
@@ -156,6 +157,8 @@ public sealed class ImportHandler(
                 if ((line.Detector is null) == (line.Position is null))
                     v.Add($"{key}.lines[{j}]", "A line rule recognises lines either by content or by position.");
                 if (line.Position is < 0) v.Add($"{key}.lines[{j}].position", "Line positions start at 0.");
+                if (line.Discards && line.Continues)
+                    v.Add($"{key}.lines[{j}].continues", "A rule that discards lines cannot continue into the lines that follow.");
             }
 
             var label = c.Heading is { Length: > 0 } h ? $"\"{SheetLayoutReader.Clean(h)}\"" : $"column {c.Column}";
@@ -175,6 +178,15 @@ public sealed class ImportHandler(
         var languages = await contentLanguages.ListAsync(ct);
         if (!languages.Any(l => l.Code == mapping.Language))
             v.Add("mapping.language", $"\"{mapping.Language}\" is not a content language.");
+
+        if (mapping.Dimensions is { } dims)
+        {
+            if (dims.DefaultUnitId is { } unitId && await units.GetAsync(new Domain.Common.UnitOfMeasureId(unitId), ct) is null)
+                v.Add("mapping.dimensions.defaultUnitId", "The unit does not exist.");
+            var order = dims.UnlabelledOrder ?? [];
+            if (order.Distinct().Count() != order.Count)
+                v.Add("mapping.dimensions.unlabelledOrder", "Each measurement can appear once in the order.");
+        }
 
         var patterns = mapping.LocationPatterns ?? [];
         for (var i = 0; i < patterns.Count; i++)
@@ -399,6 +411,57 @@ public sealed class ImportHandler(
         return await DatesAsync(id, ct);
     }
 
+    // ---------- dimensions ----------
+
+    public async Task<IReadOnlyList<ImportDimensionsDto>> DimensionsAsync(Guid id, CancellationToken ct)
+    {
+        var job = await LoadAsync(id, ct);
+        var evaluation = await EvaluateAsync(job, null, ct, validate: false);
+        var resolutions = (Decisions(job).Dimensions ?? []).ToDictionary(d => RowEvaluator.DateKey(d.Text));
+        return evaluation.Rows
+            .Where(r => r.DimensionsUnclear && r.DimensionsText is not null)
+            .GroupBy(r => RowEvaluator.DateKey(r.DimensionsText!))
+            .Select(g => new ImportDimensionsDto(g.First().DimensionsText!, g.Select(r => r.Row.SheetRow).ToList(),
+                g.First().DimensionsResolution ?? resolutions.GetValueOrDefault(g.Key)))
+            .OrderByDescending(d => d.SheetRows.Count)
+            .ThenBy(d => d.Text, StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
+    }
+
+    /// <summary>Saves dimensions decisions; decisions for texts not in the request are kept.</summary>
+    public async Task<IReadOnlyList<ImportDimensionsDto>> SetDimensionsAsync(Guid id, SetDimensionResolutionsRequest request, CancellationToken ct)
+    {
+        var job = await LoadAsync(id, ct);
+        var v = new ValidationCollector();
+        var items = request.Dimensions ?? [];
+        var known = (await units.ListAsync(ct)).Select(u => u.Id.Value).ToHashSet();
+        for (var i = 0; i < items.Count; i++)
+        {
+            var d = items[i];
+            var key = $"dimensions[{i}]";
+            if (string.IsNullOrWhiteSpace(d.Text)) v.Add($"{key}.text", "The dimensions text is required.");
+            if (d.KeepTextOnly) continue;
+            if (!d.Measurements.Any()) v.Add(key, "Enter at least one measurement, or keep the text only.");
+            foreach (var (kind, input) in d.Measurements)
+            {
+                var field = $"{key}.{JsonName(kind.ToString())}";
+                v.Try(field, () => Domain.Measures.Measurement.Create(input.Value, input.UnitId));
+                if (input.UnitId is { } unitId && !known.Contains(unitId)) v.Add($"{field}.unitId", "The unit does not exist.");
+            }
+        }
+
+        v.ThrowIfAny();
+        var decisions = Decisions(job);
+        var byKey = (decisions.Dimensions ?? []).ToDictionary(d => RowEvaluator.DateKey(d.Text));
+        foreach (var d in items)
+            byKey[RowEvaluator.DateKey(d.Text)] = d.KeepTextOnly
+                ? new DimensionResolution(d.Text.Trim(), KeepTextOnly: true)
+                : d with { Text = d.Text.Trim() };
+        job.SetDecisions(ImportJson.Write(decisions with { Dimensions = byKey.Values.ToList() }), clock.GetUtcNow());
+        await unitOfWork.SaveChangesAsync(ct);
+        return await DimensionsAsync(id, ct);
+    }
+
     // ---------- review, commit, discard ----------
 
     public async Task<ImportReviewDto> ReviewAsync(Guid id, ImportRowStatus? status, int page, int pageSize, CancellationToken ct)
@@ -462,7 +525,9 @@ public sealed class ImportHandler(
     // ---------- evaluation ----------
 
     /// <summary>The evaluated rows of a job with its current (or the given) mapping, decisions and catalogue.</summary>
-    public sealed record Evaluation(ImportJob Job, IReadOnlyList<EvaluatedRow> Rows, PlaceResolver Places, ListResolver Lists);
+    public sealed record Evaluation(
+        ImportJob Job, IReadOnlyList<EvaluatedRow> Rows, PlaceResolver Places, ListResolver Lists,
+        IReadOnlyDictionary<Guid, string>? UnitAbbreviations = null);
 
     public async Task<Evaluation> EvaluateAsync(ImportJob job, ImportMapping? mapping, CancellationToken ct, bool validate = true)
     {
@@ -472,8 +537,11 @@ public sealed class ImportHandler(
         var places = await PlaceResolverAsync(decisions, ct);
         var lists = await ListResolverAsync(decisions, ct);
         var dates = decisions.Dates.GroupBy(d => RowEvaluator.DateKey(d.Text)).ToDictionary(g => g.Key, g => g.Last());
+        var dimensions = (decisions.Dimensions ?? []).GroupBy(d => RowEvaluator.DateKey(d.Text)).ToDictionary(g => g.Key, g => g.Last());
+        var unitList = await units.ListAsync(ct);
+        var parserUnits = unitList.Select(u => new ParserUnit(u.Id.Value, u.Abbreviation, u.Names.Select(n => n.Name).ToList())).ToList();
         var context = new EvaluationContext(mapping, Headings(job), job.ObjectTypeId.Value, new HashSet<string>(), places.Resolve, dates,
-            job.SheetName, lists.Resolve);
+            job.SheetName, lists.Resolve, parserUnits, dimensions);
 
         var evaluated = RowEvaluator.Evaluate(rows, context);
         var numbers = evaluated.Where(r => r.InventoryNumber is not null).Select(r => r.InventoryNumber!).ToList();
@@ -481,7 +549,7 @@ public sealed class ImportHandler(
         if (existing.Count > 0) evaluated = RowEvaluator.Evaluate(rows, context with { ExistingInventoryNumbers = existing });
 
         if (validate) evaluated = await ValidateRowsAsync(evaluated, ct);
-        return new Evaluation(job, evaluated, places, lists);
+        return new Evaluation(job, evaluated, places, lists, unitList.ToDictionary(u => u.Id.Value, u => u.Abbreviation));
     }
 
     /// <summary>Adds the catalogue's own validation (lengths, currencies, references) to rows that are otherwise ready.</summary>
@@ -520,6 +588,7 @@ public sealed class ImportHandler(
             "title" => r?.Title,
             "inventoryNumber" => r?.InventoryNumber,
             "dimensions" => r?.Dimensions,
+            _ when key.StartsWith("width") || key.StartsWith("height") || key.StartsWith("length") || key.StartsWith("diameter") => r?.Dimensions,
             "collectionGroupId" => ListTextOf(row, ImportField.CollectionGroup),
             "dynastyId" => ListTextOf(row, ImportField.Dynasty),
             "holderId" => ListTextOf(row, ImportField.Holder),
@@ -659,7 +728,7 @@ public sealed class ImportHandler(
         (page, pageSize) = (Math.Max(1, page), Math.Clamp(pageSize, 1, 200));
         var items = filtered.Skip((page - 1) * pageSize).Take(pageSize)
             .Select(r => new ReviewRowDto(r.Row.SheetRow, r.Status, r.InventoryNumber, r.Request?.Title, r.Row.GroupLabel,
-                Fields(r, evaluation, names), Pictures(r.Row.Pictures), r.Problems, r.Warnings, null))
+                Fields(r, evaluation, names), Pictures(r.Row.Pictures), r.Problems, r.Warnings, null, r.Mapped.Discarded ?? []))
             .ToList();
         return new ImportReviewDto(counts, items, filtered.Count, page, pageSize);
     }
@@ -695,7 +764,7 @@ public sealed class ImportHandler(
         Add(ImportField.Title, r.Title);
         Add(ImportField.ItemNumber, row.Mapped.First(ImportField.ItemNumber)?.Text);
         Add(ImportField.CatalogueNumber, row.Mapped.First(ImportField.CatalogueNumber)?.Text);
-        Add(ImportField.Dimensions, r.Dimensions);
+        Add(ImportField.Dimensions, r.Dimensions is null ? null : r.Dimensions + MeasurementsNote(row, evaluation));
         Add(ImportField.Maker, r.Maker);
         Add(ImportField.Medium, r.Medium);
         if (r.PlaceOfProduction is { } place)
@@ -756,6 +825,20 @@ public sealed class ImportHandler(
         return fields;
     }
 
+    /// <summary>" → Ø 17.6 cm · H 7 cm" after a dimensions text, or what is still to decide for it.</summary>
+    private static string MeasurementsNote(EvaluatedRow row, Evaluation evaluation)
+    {
+        var r = row.Request!;
+        var parts = new (string Label, MeasurementInput? Input)[] { ("H", r.Height), ("W", r.Width), ("L", r.Length), ("Ø", r.Diameter) }
+            .Where(m => m.Input is { Value: not null })
+            .Select(m => $"{m.Label} {m.Input!.Value!.Value.ToString("0.####", CultureInfo.InvariantCulture)} " +
+                         $"{(m.Input.UnitId is { } u ? evaluation.UnitAbbreviations?.GetValueOrDefault(u) : null) ?? ""}".TrimEnd())
+            .ToList();
+        if (parts.Count > 0) return " → " + string.Join(" · ", parts);
+        if (row.DimensionsResolution is { KeepTextOnly: true }) return " (text only)";
+        return row.DimensionsUnclear ? " (measurements not decided)" : "";
+    }
+
     private static string Amount(MoneyDto money) => $"{money.Amount.ToString("#,0.##", CultureInfo.InvariantCulture)} {money.Currency}";
 
     // ---------- loading and mapping to DTOs ----------
@@ -781,7 +864,7 @@ public sealed class ImportHandler(
     public static ImportDecisions ReadDecisions(string json)
     {
         var d = ImportJson.Read<ImportDecisions>(json);
-        return new ImportDecisions(d.Places ?? [], d.Dates ?? [], d.Lists ?? []);
+        return new ImportDecisions(d.Places ?? [], d.Dates ?? [], d.Lists ?? [], d.Dimensions ?? []);
     }
 
     private static bool SameHeading(string a, string b) =>

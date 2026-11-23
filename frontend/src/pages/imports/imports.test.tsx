@@ -2,7 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Route, Routes } from 'react-router'
 import { vi } from 'vitest'
-import { languagesRoute, mockFetch } from '../../test/fetchMock'
+import { languagesRoute, mockFetch, unitsRoute } from '../../test/fetchMock'
 import { renderWithProviders } from '../../test/render'
 import type { ImportJob, ImportMapping, ImportReview } from './importApi'
 import { ImportsPage } from './ImportsPage'
@@ -72,6 +72,7 @@ const review: ImportReview = {
       problems: [],
       warnings: [],
       artefactId: null,
+      discarded: ['Nome File: “vedi foto”'],
     },
     {
       sheetRow: 5,
@@ -189,6 +190,7 @@ describe('mapping step', () => {
 
   const routes = (current = job()) => ({
     ...languagesRoute,
+    ...unitsRoute,
     'GET /api/imports/j1': () => current,
     'GET /api/imports/j1/columns': () => ({
       columns: [
@@ -221,6 +223,30 @@ describe('mapping step', () => {
     expect(title.lines![1]).toEqual({ target: 'medium', detector: 'dimensions', continues: false })
     expect(title.lines).toHaveLength(3)
     expect(title.rest).toBe('description')
+  })
+
+  it('adds a rule that discards a line in every row, and sets how measurements are read', async () => {
+    const user = userEvent.setup()
+    const { calls } = mockFetch(routes())
+    renderWizard('/imports/j1')
+
+    await screen.findByRole('heading', { name: 'Nome File' })
+    await user.click(screen.getByRole('button', { name: 'Add rule to Nome File' }))
+    const rules = screen.getByRole('list', { name: 'Line rules of Nome File' })
+    await user.selectOptions(within(rules).getByRole('combobox', { name: 'Rule 3: lines' }), 'Line 3')
+    await user.click(within(rules).getAllByRole('checkbox')[0]!)
+    await user.selectOptions(within(rules).getByRole('combobox', { name: 'Rule 3: go to' }), 'Discard: not imported')
+    expect(within(rules).getByText('These lines are dropped in every row')).toBeInTheDocument()
+    expect(within(rules).getAllByRole('checkbox')).toHaveLength(2)
+    await user.selectOptions(await screen.findByRole('combobox', { name: 'Unit when none is written' }), 'Centimetre (cm)')
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Numbers without labels, such as “82 x 64”' }), 'Read as height × width')
+    await user.click(screen.getByRole('button', { name: 'Save mapping' }))
+
+    await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true))
+    const body = calls.find((c) => c.method === 'PUT')!.body as ImportMapping
+    const title = body.columns.find((c) => c.heading === 'Nome File')!
+    expect(title.lines![2]).toEqual({ target: null, detector: null, position: 2, continues: false })
+    expect(body.dimensions).toEqual({ defaultUnitId: 'u-cm', unlabelledOrder: ['height', 'width'] })
   })
 
   it('warns when a split column has no field for remaining lines', async () => {
@@ -302,7 +328,7 @@ describe('places and dates steps', () => {
     await user.type(await screen.findByRole('textbox', { name: "Earliest year for “19 Dhu'l hijja 797 (4 Ottobre 1395)”" }), '1395')
     await user.type(screen.getByRole('textbox', { name: "Latest year for “19 Dhu'l hijja 797 (4 Ottobre 1395)”" }), '1395')
     expect(screen.getByText('Rows 12, 14')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: /Save and continue to review/ }))
+    await user.click(screen.getByRole('button', { name: /Save and continue to dimensions/ }))
 
     await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true))
     expect(calls.find((c) => c.method === 'PUT')!.body).toEqual({
@@ -311,6 +337,60 @@ describe('places and dates steps', () => {
         { text: 'datato 1491', earliestYear: 1491, latestYear: 1491 },
       ],
     })
+  })
+})
+
+describe('dimensions step', () => {
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('enters measurements for one text, keeps the rest as text only, and continues to review', async () => {
+    const user = userEvent.setup()
+    const { calls } = mockFetch({
+      ...unitsRoute,
+      'GET /api/imports/j1': () => job({ state: 'readyForReview', mapping: { ...mapping, dimensions: { defaultUnitId: 'u-cm', unlabelledOrder: [] } } }),
+      'GET /api/imports/j1/dimensions': () => [
+        { text: 'chiuso 12 x 8; aperto 24 x 8', sheetRows: [4, 9], resolution: null },
+        { text: 'misure varie', sheetRows: [12], resolution: null },
+        { text: '30 x 20', sheetRows: [15], resolution: null },
+      ],
+      'PUT /api/imports/j1/dimensions': () => [],
+      'GET /api/imports/j1/review': () => review,
+    })
+    renderWizard('/imports/j1?step=dimensions')
+
+    expect(await screen.findByText('Rows 4, 9')).toBeInTheDocument()
+    await user.type(screen.getByRole('textbox', { name: 'Height for “chiuso 12 x 8; aperto 24 x 8”' }), '12')
+    await user.type(screen.getByRole('textbox', { name: 'Width for “chiuso 12 x 8; aperto 24 x 8”' }), '8')
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Unit of height for “chiuso 12 x 8; aperto 24 x 8”' })).toHaveValue('u-cm'))
+    expect(screen.getByText('2 without a decision')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Keep the remaining 2 texts without measurements' }))
+    expect(screen.getByText('Every text has a decision.')).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: /Keep the text only.*misure varie/ })).toBeChecked()
+    expect(screen.getByRole('checkbox', { name: /Keep the text only.*chiuso/ })).not.toBeChecked()
+    await user.click(screen.getByRole('button', { name: /Save and continue to review/ }))
+
+    await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true))
+    expect(calls.find((c) => c.method === 'PUT')!.body).toEqual({
+      dimensions: [
+        {
+          text: 'chiuso 12 x 8; aperto 24 x 8',
+          keepTextOnly: false,
+          height: { value: 12, unitId: 'u-cm' },
+          width: { value: 8, unitId: 'u-cm' },
+          length: null,
+          diameter: null,
+        },
+        { text: 'misure varie', keepTextOnly: true },
+        { text: '30 x 20', keepTextOnly: true },
+      ],
+    })
+  })
+
+  it('says so when every text could be read', async () => {
+    mockFetch({ ...unitsRoute, 'GET /api/imports/j1': () => job({ state: 'readyForReview' }), 'GET /api/imports/j1/dimensions': () => [] })
+    renderWizard('/imports/j1?step=dimensions')
+
+    expect(await screen.findByText('The measurements of every dimensions text could be read.')).toBeInTheDocument()
   })
 })
 
@@ -335,6 +415,9 @@ describe('review, import and report', () => {
     const table = screen.getByRole('table', { name: 'Rows as they will be imported' })
     expect(within(table).getByRole('img', { name: 'Immagine 1.jpg' })).toHaveAttribute('src', 'http://imgproxy.test/x/thumb.jpg')
     expect(within(table).getByText('Row 4 has the same inventory number.')).toBeInTheDocument()
+    const discarded = within(table).getByRole('list', { name: 'Discarded lines' })
+    expect(within(discarded).getByText('Nome File: “vedi foto”').tagName).toBe('DEL')
+    expect(discarded).toHaveTextContent('not imported')
 
     await user.click(screen.getByRole('button', { name: /Problems/ }))
     await waitFor(() => expect(calls.some((c) => c.url.pathname.endsWith('/review') && c.url.searchParams.get('status') === 'problem')).toBe(true))

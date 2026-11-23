@@ -119,23 +119,6 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "stored_queries",
-                columns: table => new
-                {
-                    id = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
-                    name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    normalized_name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    document = table.Column<string>(type: "text", nullable: false),
-                    is_system = table.Column<bool>(type: "boolean", nullable: false),
-                    created_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    updated_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_stored_queries", x => x.id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "stored_pages",
                 columns: table => new
                 {
@@ -153,6 +136,37 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("pk_stored_pages", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "stored_queries",
+                columns: table => new
+                {
+                    id = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    normalized_name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    document = table.Column<string>(type: "text", nullable: false),
+                    is_system = table.Column<bool>(type: "boolean", nullable: false),
+                    created_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    updated_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_stored_queries", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "units_of_measure",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    abbreviation = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    normalized_abbreviation = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    factor = table.Column<decimal>(type: "numeric(28,12)", precision: 28, scale: 12, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_units_of_measure", x => x.id);
                 });
 
             migrationBuilder.CreateTable(
@@ -255,6 +269,32 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "region_names",
+                columns: table => new
+                {
+                    language = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
+                    region_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    normalized_name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_region_names", x => new { x.region_id, x.language });
+                    table.ForeignKey(
+                        name: "fk_language_region_names",
+                        column: x => x.language,
+                        principalTable: "languages",
+                        principalColumn: "code",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_region_names_regions_region_id",
+                        column: x => x.region_id,
+                        principalTable: "regions",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "artefacts",
                 columns: table => new
                 {
@@ -268,6 +308,14 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                     creation_date_precision = table.Column<string>(type: "character varying(16)", maxLength: 16, nullable: true),
                     medium = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     dimensions = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    width_value = table.Column<decimal>(type: "numeric(19,4)", precision: 19, scale: 4, nullable: true),
+                    width_unit_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    height_value = table.Column<decimal>(type: "numeric(19,4)", precision: 19, scale: 4, nullable: true),
+                    height_unit_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    length_value = table.Column<decimal>(type: "numeric(19,4)", precision: 19, scale: 4, nullable: true),
+                    length_unit_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    diameter_value = table.Column<decimal>(type: "numeric(19,4)", precision: 19, scale: 4, nullable: true),
+                    diameter_unit_id = table.Column<Guid>(type: "uuid", nullable: true),
                     acquisition_method = table.Column<string>(type: "character varying(16)", maxLength: 16, nullable: true),
                     acquisition_date = table.Column<DateOnly>(type: "date", nullable: true),
                     acquisition_source_id = table.Column<Guid>(type: "uuid", nullable: true),
@@ -330,30 +378,54 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                         principalTable: "regions",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_artefacts_units_of_measure_diameter",
+                        column: x => x.diameter_unit_id,
+                        principalTable: "units_of_measure",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_artefacts_units_of_measure_height",
+                        column: x => x.height_unit_id,
+                        principalTable: "units_of_measure",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_artefacts_units_of_measure_length",
+                        column: x => x.length_unit_id,
+                        principalTable: "units_of_measure",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "fk_artefacts_units_of_measure_width",
+                        column: x => x.width_unit_id,
+                        principalTable: "units_of_measure",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
-                name: "region_names",
+                name: "unit_of_measure_names",
                 columns: table => new
                 {
                     language = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
-                    region_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    normalized_name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false)
+                    unit_of_measure_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    normalized_name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_region_names", x => new { x.region_id, x.language });
+                    table.PrimaryKey("pk_unit_of_measure_names", x => new { x.unit_of_measure_id, x.language });
                     table.ForeignKey(
-                        name: "fk_language_region_names",
+                        name: "fk_language_unit_of_measure_names",
                         column: x => x.language,
                         principalTable: "languages",
                         principalColumn: "code",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "fk_region_names_regions_region_id",
-                        column: x => x.region_id,
-                        principalTable: "regions",
+                        name: "fk_unit_of_measure_names_units_of_measure_unit_of_measure_id",
+                        column: x => x.unit_of_measure_id,
+                        principalTable: "units_of_measure",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -504,6 +576,32 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                     { "it", "Italian", 2 }
                 });
 
+            migrationBuilder.InsertData(
+                table: "units_of_measure",
+                columns: new[] { "id", "abbreviation", "factor", "normalized_abbreviation" },
+                values: new object[,]
+                {
+                    { new Guid("0193a1c0-0000-7000-8000-000000000001"), "mm", 0.001m, "mm" },
+                    { new Guid("0193a1c0-0000-7000-8000-000000000002"), "cm", 0.01m, "cm" },
+                    { new Guid("0193a1c0-0000-7000-8000-000000000003"), "m", 1m, "m" },
+                    { new Guid("0193a1c0-0000-7000-8000-000000000004"), "in", 0.0254m, "in" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "unit_of_measure_names",
+                columns: new[] { "language", "unit_of_measure_id", "name", "normalized_name" },
+                values: new object[,]
+                {
+                    { "en", new Guid("0193a1c0-0000-7000-8000-000000000001"), "Millimetre", "millimetre" },
+                    { "it", new Guid("0193a1c0-0000-7000-8000-000000000001"), "millimetro", "millimetro" },
+                    { "en", new Guid("0193a1c0-0000-7000-8000-000000000002"), "Centimetre", "centimetre" },
+                    { "it", new Guid("0193a1c0-0000-7000-8000-000000000002"), "centimetro", "centimetro" },
+                    { "en", new Guid("0193a1c0-0000-7000-8000-000000000003"), "Metre", "metre" },
+                    { "it", new Guid("0193a1c0-0000-7000-8000-000000000003"), "metro", "metro" },
+                    { "en", new Guid("0193a1c0-0000-7000-8000-000000000004"), "Inch", "inch" },
+                    { "it", new Guid("0193a1c0-0000-7000-8000-000000000004"), "pollice", "pollice" }
+                });
+
             migrationBuilder.CreateIndex(
                 name: "ix_artefact_exhibitions_artefact_id",
                 table: "artefact_exhibitions",
@@ -546,14 +644,29 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                 column: "collection_group_id");
 
             migrationBuilder.CreateIndex(
+                name: "ix_artefacts_diameter_unit_id",
+                table: "artefacts",
+                column: "diameter_unit_id");
+
+            migrationBuilder.CreateIndex(
                 name: "ix_artefacts_dynasty_id",
                 table: "artefacts",
                 column: "dynasty_id");
 
             migrationBuilder.CreateIndex(
+                name: "ix_artefacts_height_unit_id",
+                table: "artefacts",
+                column: "height_unit_id");
+
+            migrationBuilder.CreateIndex(
                 name: "ix_artefacts_holder_id",
                 table: "artefacts",
                 column: "holder_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_artefacts_length_unit_id",
+                table: "artefacts",
+                column: "length_unit_id");
 
             migrationBuilder.CreateIndex(
                 name: "ix_artefacts_object_type_id",
@@ -569,6 +682,11 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                 name: "ix_artefacts_storage_location_id",
                 table: "artefacts",
                 column: "storage_location_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_artefacts_width_unit_id",
+                table: "artefacts",
+                column: "width_unit_id");
 
             migrationBuilder.CreateIndex(
                 name: "ux_artefacts_inventory_number",
@@ -676,12 +794,6 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                 column: "parent_id");
 
             migrationBuilder.CreateIndex(
-                name: "ux_stored_queries_normalized_name",
-                table: "stored_queries",
-                column: "normalized_name",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "ux_stored_pages_normalized_name",
                 table: "stored_pages",
                 column: "normalized_name",
@@ -691,6 +803,29 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                 name: "ux_stored_pages_slug",
                 table: "stored_pages",
                 column: "slug",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "ux_stored_queries_normalized_name",
+                table: "stored_queries",
+                column: "normalized_name",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "ix_unit_of_measure_names_normalized_name",
+                table: "unit_of_measure_names",
+                column: "normalized_name");
+
+            migrationBuilder.CreateIndex(
+                name: "ux_unit_of_measure_names_language_normalized_name",
+                table: "unit_of_measure_names",
+                columns: new[] { "language", "normalized_name" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "ux_units_of_measure_normalized_abbreviation",
+                table: "units_of_measure",
+                column: "normalized_abbreviation",
                 unique: true);
 
             // The name-resolving functions and the read view.
@@ -706,6 +841,7 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                                  "DROP VIEW IF EXISTS v_artefact_image; DROP VIEW IF EXISTS v_artefact_provenance;");
             migrationBuilder.Sql("DROP VIEW IF EXISTS v_artefact;");
             migrationBuilder.Sql("DROP FUNCTION IF EXISTS region_name(uuid, text[]); DROP FUNCTION IF EXISTS object_type_name(uuid, text[]); " +
+                                 "DROP FUNCTION IF EXISTS unit_of_measure_name(uuid, text[]); " +
                                  "DROP FUNCTION IF EXISTS reference_entry_name(uuid, text[]); DROP FUNCTION IF EXISTS reference_entry_matches(uuid, text); " +
                                  "DROP FUNCTION IF EXISTS party_name(uuid);");
             migrationBuilder.DropTable(
@@ -739,6 +875,9 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                 name: "stored_queries");
 
             migrationBuilder.DropTable(
+                name: "unit_of_measure_names");
+
+            migrationBuilder.DropTable(
                 name: "media_assets");
 
             migrationBuilder.DropTable(
@@ -758,6 +897,9 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "regions");
+
+            migrationBuilder.DropTable(
+                name: "units_of_measure");
 
             migrationBuilder.DropTable(
                 name: "import_templates");

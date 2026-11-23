@@ -3,6 +3,7 @@ import { ArrowRight, Plus, Save, X } from 'lucide-react'
 import { useEffect, useId, useMemo, useState } from 'react'
 import { api } from '../../api/client'
 import { unwrap } from '../../api/problem'
+import { useUnits } from '../../api/units'
 import { useContentLanguages } from '../../app/languages'
 import {
   DETECTORS,
@@ -16,8 +17,11 @@ import {
   type ImportMapping,
   type ImportReview,
   type LineRule,
+  type MeasureKind,
+  orderLabel,
+  UNLABELLED_ORDERS,
 } from './importApi'
-import { StatusChip } from './parts'
+import { StatusChip, DiscardedLines } from './parts'
 
 const clean = (s: string | null | undefined) => (s ?? '').replace(/\s+/g, ' ').trim()
 
@@ -97,7 +101,7 @@ export function MappingStep({ job, onDone }: { job: ImportJob; onDone: () => voi
           Columns
         </h2>
         <p className="muted imports__section-sub">
-          Send each column to a field, or split its lines: a line goes to the first rule that recognises it, and every other line to the field for remaining lines, so no text is lost.
+          Send each column to a field, or split its lines: a line goes to the first rule that recognises it, and every other line to the field for remaining lines, so no text is lost unless a rule discards it.
         </p>
         {columns.isPending ? (
           <div className="data-state" aria-busy="true">
@@ -124,6 +128,8 @@ export function MappingStep({ job, onDone }: { job: ImportJob; onDone: () => voi
       </section>
 
       <InventoryAndLanguage mapping={mapping} onChange={setMapping} languages={languages} />
+
+      <DimensionsSettings mapping={mapping} onChange={setMapping} />
 
       <Preview job={job} mapping={mapping} />
 
@@ -304,22 +310,87 @@ function RuleRow({
         <label className="field__label" htmlFor={targetId}>
           Rule {index + 1}: go to
         </label>
-        <select id={targetId} className="select" value={line.target ?? 'title'} onChange={(e) => onChange({ ...line, target: e.target.value as ImportField })}>
+        <select
+          id={targetId}
+          className="select"
+          value={line.target ?? ''}
+          onChange={(e) => onChange(e.target.value ? { ...line, target: e.target.value as ImportField } : { ...line, target: null, continues: false })}
+        >
+          <option value="">Discard: not imported</option>
           {FIELDS.map((f) => (
             <option key={f.value} value={f.value}>
               {f.label}
             </option>
           ))}
         </select>
+        {!line.target && <p className="field__hint">These lines are dropped in every row</p>}
       </div>
-      <label className="imports__check">
-        <input type="checkbox" checked={line.continues} onChange={(e) => onChange({ ...line, continues: e.target.checked })} />
-        with the unmatched lines after it
-      </label>
+      {line.target && (
+        <label className="imports__check">
+          <input type="checkbox" checked={line.continues} onChange={(e) => onChange({ ...line, continues: e.target.checked })} />
+          with the unmatched lines after it
+        </label>
+      )}
       <button type="button" className="btn btn--icon btn--sm" aria-label={`Remove rule ${index + 1} of ${column}`} onClick={onRemove}>
         <X aria-hidden="true" />
       </button>
     </li>
+  )
+}
+
+/** How measurements are read from dimensions text: the unit when none is written, and the order of unlabelled numbers. */
+function DimensionsSettings({ mapping, onChange }: { mapping: ImportMapping; onChange: (m: ImportMapping) => void }) {
+  const unitId = useId()
+  const orderId = useId()
+  const { data: units = [] } = useUnits()
+  const dimensions = mapping.dimensions ?? { defaultUnitId: null, unlabelledOrder: [] }
+  const order = dimensions.unlabelledOrder ?? []
+  const orderKey = order.join(',')
+  const orders = UNLABELLED_ORDERS.some((o) => o.join(',') === orderKey) || order.length === 0 ? UNLABELLED_ORDERS : [...UNLABELLED_ORDERS, order]
+  const set = (patch: Partial<typeof dimensions>) => onChange({ ...mapping, dimensions: { ...dimensions, ...patch } })
+  return (
+    <section className="plate imports__section" aria-labelledby="dimensions-heading">
+      <h2 id="dimensions-heading" className="imports__section-title">
+        Measurements
+      </h2>
+      <p className="muted imports__section-sub">
+        Width, height, length and diameter are read from the dimensions text when it is clear, such as “diam 17,6 x h 7”. The text is always kept as
+        written; texts that cannot be read are listed in the dimensions step.
+      </p>
+      <div className="imports__grid">
+        <div className="field">
+          <label className="field__label" htmlFor={unitId}>
+            Unit when none is written
+          </label>
+          <select id={unitId} className="select" value={dimensions.defaultUnitId ?? ''} onChange={(e) => set({ defaultUnitId: e.target.value || null })}>
+            <option value="">None: numbers need a written unit</option>
+            {units.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.name} ({u.abbreviation})
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="field">
+          <label className="field__label" htmlFor={orderId}>
+            Numbers without labels, such as “82 x 64”
+          </label>
+          <select
+            id={orderId}
+            className="select"
+            value={orderKey}
+            onChange={(e) => set({ unlabelledOrder: e.target.value ? (e.target.value.split(',') as MeasureKind[]) : [] })}
+          >
+            <option value="">Not read: decided in the dimensions step</option>
+            {orders.map((o) => (
+              <option key={o.join(',')} value={o.join(',')}>
+                Read as {orderLabel(o)}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+    </section>
   )
 }
 
@@ -476,6 +547,7 @@ export function PreviewRows({ review }: { review: ImportReview }) {
                 </div>
               ))}
           </dl>
+          <DiscardedLines lines={row.discarded} />
           {row.problems.length > 0 && (
             <ul className="imports__problems">
               {row.problems.map((p, i) => (

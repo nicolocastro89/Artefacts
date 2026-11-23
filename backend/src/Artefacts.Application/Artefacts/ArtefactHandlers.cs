@@ -8,6 +8,7 @@ using Artefacts.Domain.Common;
 using Artefacts.Domain.Dating;
 using Artefacts.Domain.Finance;
 using Artefacts.Domain.Lists;
+using Artefacts.Domain.Measures;
 using Artefacts.Domain.Parties;
 
 namespace Artefacts.Application.Artefacts;
@@ -19,6 +20,7 @@ public sealed class ArtefactCommandHandler(
     IObjectTypeRepository objectTypes,
     IReferenceEntryRepository listEntries,
     IPartyRepository parties,
+    IUnitOfMeasureRepository units,
     IContentLanguages contentLanguages,
     IUnitOfWork unitOfWork,
     ArtefactDetailQueryHandler detail)
@@ -92,6 +94,7 @@ public sealed class ArtefactCommandHandler(
             ? v.Try("creationDate", () => HistoricalDate.Create(cd.Text, cd.EarliestYear, cd.LatestYear))
             : null;
         v.Try("", () => artefact.Describe(request.Maker, creationDate, request.Medium, request.Dimensions));
+        await ApplyMeasurementsAsync(artefact, request, v, ct);
         var descriptions = TranslationInput.Check(request.Descriptions, await contentLanguages.ListAsync(ct), "descriptions", v);
         v.Try("", () => artefact.ReplaceDescriptions(descriptions));
 
@@ -129,6 +132,37 @@ public sealed class ArtefactCommandHandler(
         }
 
         if (!v.HasErrors) artefact.ReplaceProvenance(entries);
+    }
+
+    /// <summary>Width, height, length and diameter: each optional, with a unit that must exist.</summary>
+    private async Task ApplyMeasurementsAsync(Artefact artefact, ArtefactWriteRequest request, ValidationCollector v, CancellationToken ct)
+    {
+        var inputs = new (string Field, MeasurementInput? Input)[]
+        {
+            ("width", request.Width), ("height", request.Height), ("length", request.Length), ("diameter", request.Diameter),
+        };
+        var known = inputs.Any(i => i.Input is not null)
+            ? (await units.ListAsync(ct)).Select(u => u.Id).ToHashSet()
+            : [];
+        var measured = new Dictionary<string, Measurement?>();
+        foreach (var (field, input) in inputs)
+        {
+            if (input is null || (input.Value is null && input.UnitId is null))
+            {
+                measured[field] = null;
+                continue;
+            }
+            var m = v.Try(field, () => Measurement.Create(input.Value, input.UnitId));
+            if (m is not null && !known.Contains(m.UnitId))
+            {
+                v.Add($"{field}.unitId", "The unit does not exist.");
+                m = null;
+            }
+            measured[field] = m;
+        }
+
+        if (!v.HasErrors)
+            artefact.Measure(new ArtefactMeasurements(measured["width"], measured["height"], measured["length"], measured["diameter"]));
     }
 
     /// <summary>Object type, collection group, origin, exhibitions, catalogue entry and holding.</summary>
@@ -185,6 +219,7 @@ public sealed class ArtefactDetailQueryHandler(
     IPartyRepository parties,
     ILanguagePreferences preferences,
     IMediaAssetRepository mediaAssets,
+    IUnitOfMeasureRepository units,
     IImageUrlBuilder imageUrls)
 {
     public async Task<ArtefactDetail> GetAsync(Guid id, CancellationToken ct)
@@ -206,6 +241,15 @@ public sealed class ArtefactDetailQueryHandler(
             id is { } e && entryMap.TryGetValue(e, out var entry) ? new NamedRefDto(e.Value, entry.NameIn(languages)?.Text ?? "") : null;
         PartyRefDto? PartyRef(PartyId? id) =>
             id is { } pid && partyMap.TryGetValue(pid, out var party) ? new PartyRefDto(pid.Value, party.Name, party.Kind) : null;
+
+        var unitMap = a.Measurements.UnitIds.Any()
+            ? (await units.ListAsync(ct)).ToDictionary(u => u.Id)
+            : new Dictionary<UnitOfMeasureId, UnitOfMeasure>();
+        MeasurementDto? Measure(Measurement? m) =>
+            m is not null && unitMap.TryGetValue(m.UnitId, out var u)
+                ? new MeasurementDto(m.Value, m.Value * u.Factor,
+                    new UnitRefDto(u.Id.Value, u.NameIn(languages)?.Text ?? u.Abbreviation, u.Abbreviation, u.Factor))
+                : null;
 
         var images = a.Images
             .Where(i => assetMap.ContainsKey(i.MediaAssetId))
@@ -257,7 +301,11 @@ public sealed class ArtefactDetailQueryHandler(
             a.Translations.Where(t => t.CatalogueEntry is not null).ToDictionary(t => t.Language, t => t.CatalogueEntry!),
             PartyRef(a.HolderId),
             Entry(a.StorageLocationId),
-            a.Valuation is { } val ? new MoneyDto(val.Amount, val.Currency) : null);
+            a.Valuation is { } val ? new MoneyDto(val.Amount, val.Currency) : null,
+            Measure(a.Width),
+            Measure(a.Height),
+            Measure(a.Length),
+            Measure(a.Diameter));
     }
 }
 

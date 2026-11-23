@@ -5,7 +5,7 @@ import { api } from '../../api/client'
 import { unwrap } from '../../api/problem'
 import { errorMessage, fieldLabel, type ImportJob, type ImportRowStatus, type ReviewRow } from './importApi'
 import { TemplateSaver } from './MappingStep'
-import { StatusChip } from './parts'
+import { StatusChip, DiscardedLines } from './parts'
 
 const FILTERS: { value: ImportRowStatus | null; label: string; count: (c: { total: number; ready: number; skipped: number; problems: number }) => number }[] = [
   { value: null, label: 'All rows', count: (c) => c.total },
@@ -193,6 +193,7 @@ function ReviewTableRow({ row }: { row: ReviewRow }) {
               ))}
           </dl>
         )}
+        <DiscardedLines lines={row.discarded} />
         {row.problems.length > 0 && (
           <ul className="imports__problems">
             {row.problems.map((p, i) => (

@@ -22,6 +22,9 @@ export type Party = Schemas['PartyDto']
 export type PartyKind = Schemas['PartyKind']
 export type PartyRef = Schemas['PartyRefDto']
 export type NamedRef = Schemas['NamedRefDto']
+export type UnitOfMeasure = Schemas['UnitOfMeasureDto']
+export type Measurement = Schemas['MeasurementDto']
+export type MeasurementInput = Schemas['MeasurementInput']
 
 /** The URL segment of each managed list (`/api/lists/{list}`). */
 export type ListSlug = 'dynasties' | 'collection-groups' | 'storage-locations'

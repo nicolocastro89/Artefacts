@@ -10,6 +10,8 @@ export type FieldType =
   | 'date'
   | 'historical-date'
   | 'money'
+  /** A positive value with its unit ({ value, inMetres, unit: { abbreviation } }). */
+  | 'measurement'
   | 'image'
   | 'reference'
   | 'boolean'

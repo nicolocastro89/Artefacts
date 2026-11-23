@@ -2,7 +2,7 @@
 // backend's FieldTypeRules for query results (the cases are in ../backend/openapi/field-type-rules.json).
 
 /** OpenAPI object schemas that are one value of their own. */
-export const SPECIAL = { ImageUrls: 'image', HistoricalDateDto: 'historical-date', MoneyDto: 'money' }
+export const SPECIAL = { ImageUrls: 'image', HistoricalDateDto: 'historical-date', MoneyDto: 'money', MeasurementDto: 'measurement' }
 
 /** The type of a leaf schema (a primitive, or one of the special objects), or undefined when it is neither. */
 export function leafType(schema) {

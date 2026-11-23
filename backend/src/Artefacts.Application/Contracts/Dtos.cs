@@ -22,6 +22,15 @@ public sealed record HistoricalDateInput(string? Text, int? EarliestYear = null,
 
 public sealed record MoneyDto(decimal Amount, string Currency);
 
+/// <summary>A unit of measure as referenced by a measurement: its resolved name, abbreviation and metres per unit.</summary>
+public sealed record UnitRefDto(Guid Id, string Name, string Abbreviation, decimal Factor);
+
+/// <summary>A measurement in the unit it was entered in, with its value converted to metres.</summary>
+public sealed record MeasurementDto(decimal Value, decimal InMetres, UnitRefDto Unit);
+
+/// <summary>A measurement as entered: a positive value and the unit's identifier.</summary>
+public sealed record MeasurementInput(decimal? Value, Guid? UnitId);
+
 // ---------- Artefacts ----------
 
 public sealed record AcquisitionDto(
@@ -74,7 +83,11 @@ public sealed record ArtefactDetail(
     IReadOnlyDictionary<string, string> CatalogueEntries,
     PartyRefDto? Holder,
     NamedRefDto? StorageLocation,
-    MoneyDto? Valuation);
+    MoneyDto? Valuation,
+    MeasurementDto? Width = null,
+    MeasurementDto? Height = null,
+    MeasurementDto? Length = null,
+    MeasurementDto? Diameter = null);
 
 /// <summary>Grouping of the artefact list. <see cref="None"/> keeps the plain sorted list.</summary>
 public enum ArtefactGrouping
@@ -131,7 +144,11 @@ public sealed record ArtefactWriteRequest(
     IReadOnlyDictionary<string, string?>? CatalogueEntries = null,
     Guid? HolderId = null,
     Guid? StorageLocationId = null,
-    MoneyDto? Valuation = null);
+    MoneyDto? Valuation = null,
+    MeasurementInput? Width = null,
+    MeasurementInput? Height = null,
+    MeasurementInput? Length = null,
+    MeasurementInput? Diameter = null);
 
 public sealed record SetCaptionRequest(string? Caption);
 
@@ -166,6 +183,15 @@ public sealed record AddObjectTypeRequest(IReadOnlyDictionary<string, string?>? 
 
 /// <summary>Outcome of adding an object type: <see cref="Created"/> is false when an existing one was returned.</summary>
 public sealed record AddObjectTypeResult(ObjectTypeDto ObjectType, bool Created);
+
+// ---------- Units of measure ----------
+
+/// <summary>A unit with its resolved and per-language names, abbreviation, metres per unit and usage.</summary>
+public sealed record UnitOfMeasureDto(
+    Guid Id, string Name, string NameLanguage, IReadOnlyDictionary<string, string> Names, string Abbreviation, decimal Factor, int ArtefactCount);
+
+/// <summary>A unit's names keyed by content language, its abbreviation, and its factor (metres per one of the unit).</summary>
+public sealed record UnitOfMeasureRequest(IReadOnlyDictionary<string, string?>? Names, string? Abbreviation, decimal? Factor);
 
 // ---------- Regions ----------
 
@@ -204,6 +230,9 @@ public enum FieldType
     Image,
     Reference,
     Boolean,
+
+    /// <summary>A positive value with a unit of measure (and its value in metres).</summary>
+    Measurement,
 }
 
 public sealed record FieldDto(

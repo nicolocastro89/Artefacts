@@ -29,10 +29,12 @@ export const responseFieldTypes = {
     "description": "text",
     "descriptionLanguage": "text",
     "descriptions": "map",
+    "diameter": "measurement",
     "dimensions": "text",
     "dynasty.id": "reference",
     "dynasty.name": "text",
     "exhibitions[]": "text",
+    "height": "measurement",
     "holder.id": "reference",
     "holder.kind": "text",
     "holder.name": "text",
@@ -48,6 +50,7 @@ export const responseFieldTypes = {
     "images[].urls": "image",
     "inventoryNumber": "text",
     "language": "text",
+    "length": "measurement",
     "maker": "text",
     "medium": "text",
     "objectType.id": "reference",
@@ -71,7 +74,8 @@ export const responseFieldTypes = {
     "storageLocation.id": "reference",
     "storageLocation.name": "text",
     "title": "text",
-    "valuation": "money"
+    "valuation": "money",
+    "width": "measurement"
   },
   "updateArtefact": {
     "acquisition.date": "date",
@@ -90,10 +94,12 @@ export const responseFieldTypes = {
     "description": "text",
     "descriptionLanguage": "text",
     "descriptions": "map",
+    "diameter": "measurement",
     "dimensions": "text",
     "dynasty.id": "reference",
     "dynasty.name": "text",
     "exhibitions[]": "text",
+    "height": "measurement",
     "holder.id": "reference",
     "holder.kind": "text",
     "holder.name": "text",
@@ -109,6 +115,7 @@ export const responseFieldTypes = {
     "images[].urls": "image",
     "inventoryNumber": "text",
     "language": "text",
+    "length": "measurement",
     "maker": "text",
     "medium": "text",
     "objectType.id": "reference",
@@ -132,7 +139,8 @@ export const responseFieldTypes = {
     "storageLocation.id": "reference",
     "storageLocation.name": "text",
     "title": "text",
-    "valuation": "money"
+    "valuation": "money",
+    "width": "measurement"
   },
   "createArtefact": {
     "acquisition.date": "date",
@@ -151,10 +159,12 @@ export const responseFieldTypes = {
     "description": "text",
     "descriptionLanguage": "text",
     "descriptions": "map",
+    "diameter": "measurement",
     "dimensions": "text",
     "dynasty.id": "reference",
     "dynasty.name": "text",
     "exhibitions[]": "text",
+    "height": "measurement",
     "holder.id": "reference",
     "holder.kind": "text",
     "holder.name": "text",
@@ -170,6 +180,7 @@ export const responseFieldTypes = {
     "images[].urls": "image",
     "inventoryNumber": "text",
     "language": "text",
+    "length": "measurement",
     "maker": "text",
     "medium": "text",
     "objectType.id": "reference",
@@ -193,7 +204,8 @@ export const responseFieldTypes = {
     "storageLocation.id": "reference",
     "storageLocation.name": "text",
     "title": "text",
-    "valuation": "money"
+    "valuation": "money",
+    "width": "measurement"
   },
   "uploadArtefactImages": {
     "acquisition.date": "date",
@@ -212,10 +224,12 @@ export const responseFieldTypes = {
     "description": "text",
     "descriptionLanguage": "text",
     "descriptions": "map",
+    "diameter": "measurement",
     "dimensions": "text",
     "dynasty.id": "reference",
     "dynasty.name": "text",
     "exhibitions[]": "text",
+    "height": "measurement",
     "holder.id": "reference",
     "holder.kind": "text",
     "holder.name": "text",
@@ -231,6 +245,7 @@ export const responseFieldTypes = {
     "images[].urls": "image",
     "inventoryNumber": "text",
     "language": "text",
+    "length": "measurement",
     "maker": "text",
     "medium": "text",
     "objectType.id": "reference",
@@ -254,7 +269,8 @@ export const responseFieldTypes = {
     "storageLocation.id": "reference",
     "storageLocation.name": "text",
     "title": "text",
-    "valuation": "money"
+    "valuation": "money",
+    "width": "measurement"
   },
   "makeArtefactImagePrimary": {
     "acquisition.date": "date",
@@ -273,10 +289,12 @@ export const responseFieldTypes = {
     "description": "text",
     "descriptionLanguage": "text",
     "descriptions": "map",
+    "diameter": "measurement",
     "dimensions": "text",
     "dynasty.id": "reference",
     "dynasty.name": "text",
     "exhibitions[]": "text",
+    "height": "measurement",
     "holder.id": "reference",
     "holder.kind": "text",
     "holder.name": "text",
@@ -292,6 +310,7 @@ export const responseFieldTypes = {
     "images[].urls": "image",
     "inventoryNumber": "text",
     "language": "text",
+    "length": "measurement",
     "maker": "text",
     "medium": "text",
     "objectType.id": "reference",
@@ -315,7 +334,8 @@ export const responseFieldTypes = {
     "storageLocation.id": "reference",
     "storageLocation.name": "text",
     "title": "text",
-    "valuation": "money"
+    "valuation": "money",
+    "width": "measurement"
   },
   "setArtefactImageCaption": {
     "acquisition.date": "date",
@@ -334,10 +354,12 @@ export const responseFieldTypes = {
     "description": "text",
     "descriptionLanguage": "text",
     "descriptions": "map",
+    "diameter": "measurement",
     "dimensions": "text",
     "dynasty.id": "reference",
     "dynasty.name": "text",
     "exhibitions[]": "text",
+    "height": "measurement",
     "holder.id": "reference",
     "holder.kind": "text",
     "holder.name": "text",
@@ -353,6 +375,7 @@ export const responseFieldTypes = {
     "images[].urls": "image",
     "inventoryNumber": "text",
     "language": "text",
+    "length": "measurement",
     "maker": "text",
     "medium": "text",
     "objectType.id": "reference",
@@ -376,7 +399,8 @@ export const responseFieldTypes = {
     "storageLocation.id": "reference",
     "storageLocation.name": "text",
     "title": "text",
-    "valuation": "money"
+    "valuation": "money",
+    "width": "measurement"
   },
   "deleteArtefactImage": {
     "acquisition.date": "date",
@@ -395,10 +419,12 @@ export const responseFieldTypes = {
     "description": "text",
     "descriptionLanguage": "text",
     "descriptions": "map",
+    "diameter": "measurement",
     "dimensions": "text",
     "dynasty.id": "reference",
     "dynasty.name": "text",
     "exhibitions[]": "text",
+    "height": "measurement",
     "holder.id": "reference",
     "holder.kind": "text",
     "holder.name": "text",
@@ -414,6 +440,7 @@ export const responseFieldTypes = {
     "images[].urls": "image",
     "inventoryNumber": "text",
     "language": "text",
+    "length": "measurement",
     "maker": "text",
     "medium": "text",
     "objectType.id": "reference",
@@ -437,7 +464,8 @@ export const responseFieldTypes = {
     "storageLocation.id": "reference",
     "storageLocation.name": "text",
     "title": "text",
-    "valuation": "money"
+    "valuation": "money",
+    "width": "measurement"
   },
   "listRegions": {
     "[]": "list",
@@ -504,6 +532,43 @@ export const responseFieldTypes = {
   },
   "setObjectTypeNames": {
     "artefactCount": "number",
+    "id": "reference",
+    "name": "text",
+    "nameLanguage": "text",
+    "names": "map"
+  },
+  "listUnits": {
+    "[]": "list",
+    "[].abbreviation": "text",
+    "[].artefactCount": "number",
+    "[].factor": "number",
+    "[].id": "reference",
+    "[].name": "text",
+    "[].nameLanguage": "text",
+    "[].names": "map"
+  },
+  "addUnit": {
+    "abbreviation": "text",
+    "artefactCount": "number",
+    "factor": "number",
+    "id": "reference",
+    "name": "text",
+    "nameLanguage": "text",
+    "names": "map"
+  },
+  "getUnit": {
+    "abbreviation": "text",
+    "artefactCount": "number",
+    "factor": "number",
+    "id": "reference",
+    "name": "text",
+    "nameLanguage": "text",
+    "names": "map"
+  },
+  "updateUnit": {
+    "abbreviation": "text",
+    "artefactCount": "number",
+    "factor": "number",
     "id": "reference",
     "name": "text",
     "nameLanguage": "text",
@@ -592,6 +657,7 @@ export const responseFieldTypes = {
     "committedAt": "date",
     "createdAt": "date",
     "decisions.dates[]": "list",
+    "decisions.dimensions[]": "list",
     "decisions.lists[]": "list",
     "decisions.places[]": "list",
     "error": "text",
@@ -603,6 +669,8 @@ export const responseFieldTypes = {
     "importedRows": "number",
     "mapping.acquisitionMethod": "text",
     "mapping.columns[]": "list",
+    "mapping.dimensions.defaultUnitId": "reference",
+    "mapping.dimensions.unlabelledOrder[]": "list",
     "mapping.inventoryNumber.pattern": "text",
     "mapping.language": "text",
     "mapping.locationPatterns[]": "text",
@@ -625,6 +693,7 @@ export const responseFieldTypes = {
     "[].committedAt": "date",
     "[].createdAt": "date",
     "[].decisions.dates[]": "list",
+    "[].decisions.dimensions[]": "list",
     "[].decisions.lists[]": "list",
     "[].decisions.places[]": "list",
     "[].error": "text",
@@ -656,6 +725,7 @@ export const responseFieldTypes = {
     "committedAt": "date",
     "createdAt": "date",
     "decisions.dates[]": "list",
+    "decisions.dimensions[]": "list",
     "decisions.lists[]": "list",
     "decisions.places[]": "list",
     "error": "text",
@@ -667,6 +737,8 @@ export const responseFieldTypes = {
     "importedRows": "number",
     "mapping.acquisitionMethod": "text",
     "mapping.columns[]": "list",
+    "mapping.dimensions.defaultUnitId": "reference",
+    "mapping.dimensions.unlabelledOrder[]": "list",
     "mapping.inventoryNumber.pattern": "text",
     "mapping.language": "text",
     "mapping.locationPatterns[]": "text",
@@ -698,6 +770,7 @@ export const responseFieldTypes = {
     "job.committedAt": "date",
     "job.createdAt": "date",
     "job.decisions.dates[]": "list",
+    "job.decisions.dimensions[]": "list",
     "job.decisions.lists[]": "list",
     "job.decisions.places[]": "list",
     "job.error": "text",
@@ -735,6 +808,7 @@ export const responseFieldTypes = {
     "pageSize": "number",
     "rows[]": "list",
     "rows[].artefactId": "reference",
+    "rows[].discarded[]": "text",
     "rows[].fields[]": "list",
     "rows[].groupLabel": "text",
     "rows[].inventoryNumber": "text",
@@ -820,6 +894,20 @@ export const responseFieldTypes = {
     "[].sheetRows[]": "number",
     "[].text": "text"
   },
+  "getImportDimensions": {
+    "[]": "list",
+    "[].resolution.keepTextOnly": "boolean",
+    "[].resolution.text": "text",
+    "[].sheetRows[]": "number",
+    "[].text": "text"
+  },
+  "setImportDimensions": {
+    "[]": "list",
+    "[].resolution.keepTextOnly": "boolean",
+    "[].resolution.text": "text",
+    "[].sheetRows[]": "number",
+    "[].text": "text"
+  },
   "getImportReview": {
     "counts.imported": "number",
     "counts.problems": "number",
@@ -830,6 +918,7 @@ export const responseFieldTypes = {
     "pageSize": "number",
     "rows[]": "list",
     "rows[].artefactId": "reference",
+    "rows[].discarded[]": "text",
     "rows[].fields[]": "list",
     "rows[].groupLabel": "text",
     "rows[].inventoryNumber": "text",
@@ -845,6 +934,7 @@ export const responseFieldTypes = {
     "committedAt": "date",
     "createdAt": "date",
     "decisions.dates[]": "list",
+    "decisions.dimensions[]": "list",
     "decisions.lists[]": "list",
     "decisions.places[]": "list",
     "error": "text",
@@ -856,6 +946,8 @@ export const responseFieldTypes = {
     "importedRows": "number",
     "mapping.acquisitionMethod": "text",
     "mapping.columns[]": "list",
+    "mapping.dimensions.defaultUnitId": "reference",
+    "mapping.dimensions.unlabelledOrder[]": "list",
     "mapping.inventoryNumber.pattern": "text",
     "mapping.language": "text",
     "mapping.locationPatterns[]": "text",
@@ -877,6 +969,7 @@ export const responseFieldTypes = {
     "committedAt": "date",
     "createdAt": "date",
     "decisions.dates[]": "list",
+    "decisions.dimensions[]": "list",
     "decisions.lists[]": "list",
     "decisions.places[]": "list",
     "error": "text",
@@ -888,6 +981,8 @@ export const responseFieldTypes = {
     "importedRows": "number",
     "mapping.acquisitionMethod": "text",
     "mapping.columns[]": "list",
+    "mapping.dimensions.defaultUnitId": "reference",
+    "mapping.dimensions.unlabelledOrder[]": "list",
     "mapping.inventoryNumber.pattern": "text",
     "mapping.language": "text",
     "mapping.locationPatterns[]": "text",
@@ -909,6 +1004,7 @@ export const responseFieldTypes = {
     "job.committedAt": "date",
     "job.createdAt": "date",
     "job.decisions.dates[]": "list",
+    "job.decisions.dimensions[]": "list",
     "job.decisions.lists[]": "list",
     "job.decisions.places[]": "list",
     "job.error": "text",
@@ -945,6 +1041,7 @@ export const responseFieldTypes = {
   "listImportTemplates": {
     "[]": "list",
     "[].decisions.dates[]": "list",
+    "[].decisions.dimensions[]": "list",
     "[].decisions.lists[]": "list",
     "[].decisions.places[]": "list",
     "[].id": "reference",
@@ -957,11 +1054,14 @@ export const responseFieldTypes = {
   },
   "createImportTemplate": {
     "decisions.dates[]": "list",
+    "decisions.dimensions[]": "list",
     "decisions.lists[]": "list",
     "decisions.places[]": "list",
     "id": "reference",
     "mapping.acquisitionMethod": "text",
     "mapping.columns[]": "list",
+    "mapping.dimensions.defaultUnitId": "reference",
+    "mapping.dimensions.unlabelledOrder[]": "list",
     "mapping.inventoryNumber.pattern": "text",
     "mapping.language": "text",
     "mapping.locationPatterns[]": "text",
@@ -970,11 +1070,14 @@ export const responseFieldTypes = {
   },
   "getImportTemplate": {
     "decisions.dates[]": "list",
+    "decisions.dimensions[]": "list",
     "decisions.lists[]": "list",
     "decisions.places[]": "list",
     "id": "reference",
     "mapping.acquisitionMethod": "text",
     "mapping.columns[]": "list",
+    "mapping.dimensions.defaultUnitId": "reference",
+    "mapping.dimensions.unlabelledOrder[]": "list",
     "mapping.inventoryNumber.pattern": "text",
     "mapping.language": "text",
     "mapping.locationPatterns[]": "text",
@@ -983,11 +1086,14 @@ export const responseFieldTypes = {
   },
   "updateImportTemplate": {
     "decisions.dates[]": "list",
+    "decisions.dimensions[]": "list",
     "decisions.lists[]": "list",
     "decisions.places[]": "list",
     "id": "reference",
     "mapping.acquisitionMethod": "text",
     "mapping.columns[]": "list",
+    "mapping.dimensions.defaultUnitId": "reference",
+    "mapping.dimensions.unlabelledOrder[]": "list",
     "mapping.inventoryNumber.pattern": "text",
     "mapping.language": "text",
     "mapping.locationPatterns[]": "text",
@@ -1197,6 +1303,26 @@ export const operations = {
     "method": "DELETE",
     "path": "/api/object-types/{id}"
   },
+  "listUnits": {
+    "method": "GET",
+    "path": "/api/units"
+  },
+  "addUnit": {
+    "method": "POST",
+    "path": "/api/units"
+  },
+  "getUnit": {
+    "method": "GET",
+    "path": "/api/units/{id}"
+  },
+  "updateUnit": {
+    "method": "PUT",
+    "path": "/api/units/{id}"
+  },
+  "deleteUnit": {
+    "method": "DELETE",
+    "path": "/api/units/{id}"
+  },
   "listListEntries": {
     "method": "GET",
     "path": "/api/lists/{list}"
@@ -1300,6 +1426,14 @@ export const operations = {
   "setImportDates": {
     "method": "PUT",
     "path": "/api/imports/{id}/dates"
+  },
+  "getImportDimensions": {
+    "method": "GET",
+    "path": "/api/imports/{id}/dimensions"
+  },
+  "setImportDimensions": {
+    "method": "PUT",
+    "path": "/api/imports/{id}/dimensions"
   },
   "getImportReview": {
     "method": "GET",

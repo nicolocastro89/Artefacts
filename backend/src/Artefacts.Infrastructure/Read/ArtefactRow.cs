@@ -36,6 +36,46 @@ public sealed class ArtefactRow
     [CatalogField("dimensions", "Dimensions", FieldType.Text), Filterable]
     public string? Dimensions { get; init; }
 
+    [CatalogField("width", "Width", FieldType.Measurement)]
+    public decimal? WidthValue { get; init; }
+
+    [PartOf("width")]
+    public Guid? WidthUnitId { get; init; }
+
+    /// <summary>The width in metres, from the unit's current factor.</summary>
+    [PartOf("width")]
+    public decimal? WidthMetres { get; init; }
+
+    [CatalogField("height", "Height", FieldType.Measurement)]
+    public decimal? HeightValue { get; init; }
+
+    [PartOf("height")]
+    public Guid? HeightUnitId { get; init; }
+
+    /// <summary>The height in metres, from the unit's current factor.</summary>
+    [PartOf("height")]
+    public decimal? HeightMetres { get; init; }
+
+    [CatalogField("length", "Length", FieldType.Measurement)]
+    public decimal? LengthValue { get; init; }
+
+    [PartOf("length")]
+    public Guid? LengthUnitId { get; init; }
+
+    /// <summary>The length in metres, from the unit's current factor.</summary>
+    [PartOf("length")]
+    public decimal? LengthMetres { get; init; }
+
+    [CatalogField("diameter", "Diameter", FieldType.Measurement)]
+    public decimal? DiameterValue { get; init; }
+
+    [PartOf("diameter")]
+    public Guid? DiameterUnitId { get; init; }
+
+    /// <summary>The diameter in metres, from the unit's current factor.</summary>
+    [PartOf("diameter")]
+    public decimal? DiameterMetres { get; init; }
+
     [CatalogField("objectType", "Object type", FieldType.Reference), Filterable, Sortable]
     public Guid? ObjectTypeId { get; init; }
 

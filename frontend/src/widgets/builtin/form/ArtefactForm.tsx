@@ -2,11 +2,12 @@ import { useQueryClient } from '@tanstack/react-query'
 import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react'
 import { useId, useState, type FormEvent, type ReactNode } from 'react'
 import { useNavigate } from 'react-router'
-import { api, type AcquisitionMethod, type ArtefactWriteRequest, type HistoricalDateInput } from '../../../api/client'
+import { api, type AcquisitionMethod, type ArtefactWriteRequest, type HistoricalDateInput, type UnitOfMeasure } from '../../../api/client'
+import { useUnits } from '../../../api/units'
 import { ApiError, unwrap } from '../../../api/problem'
 import { defineWidget } from '../../core/registry'
 import { useContentLanguages } from '../../../app/languages'
-import { isHistoricalDate, isMoney } from '../../format'
+import { isHistoricalDate, isMeasurement, isMoney, MEASUREMENT_LABELS, type MeasurementName } from '../../format'
 import { HistoricalDateField } from './HistoricalDateField'
 import type { PickedRef } from './ReferencePicker'
 import {
@@ -32,6 +33,19 @@ interface ExhibitionRow {
   text: string
 }
 
+/** A measurement as edited: the value as typed and the chosen unit ('' = none yet). */
+interface MeasurementDraft {
+  value: string
+  unitId: string
+}
+
+const MEASUREMENTS: { name: MeasurementName; label: string }[] = [
+  { name: 'height', label: 'Height' },
+  { name: 'width', label: 'Width' },
+  { name: 'length', label: 'Length' },
+  { name: 'diameter', label: 'Diameter' },
+]
+
 interface FormState {
   inventoryNumber: string
   title: string
@@ -39,6 +53,7 @@ interface FormState {
   creationDate: HistoricalDateInput
   medium: string
   dimensions: string
+  measurements: Record<MeasurementName, MeasurementDraft>
   /** Description per language code; languages without text are left out when saving. */
   descriptions: Record<string, string>
   method: AcquisitionMethod | ''
@@ -94,6 +109,12 @@ function amountOf(text: string): number | null {
   return text.trim() === '' ? null : Number(text.replace(',', '.'))
 }
 
+function measurementDraft(v: unknown): MeasurementDraft {
+  if (!isMeasurement(v)) return { value: '', unitId: '' }
+  const unit = (v.unit ?? {}) as { id?: unknown }
+  return { value: String(v.value), unitId: typeof unit.id === 'string' ? unit.id : '' }
+}
+
 function initialState(values: Record<string, { value: unknown }>): FormState {
   const price = values.acquisitionPrice?.value
   const valuation = values.valuation?.value
@@ -106,6 +127,12 @@ function initialState(values: Record<string, { value: unknown }>): FormState {
     creationDate: dateInput(values.creationDate?.value),
     medium: str(values.medium?.value),
     dimensions: str(values.dimensions?.value),
+    measurements: {
+      height: measurementDraft(values.height?.value),
+      width: measurementDraft(values.width?.value),
+      length: measurementDraft(values.length?.value),
+      diameter: measurementDraft(values.diameter?.value),
+    },
     descriptions: Object.fromEntries(Object.entries((values.descriptions?.value ?? {}) as Record<string, unknown>).map(([k, v]) => [k, str(v)])),
     method: (str(values.acquisitionMethod?.value) as AcquisitionMethod) || '',
     acquisitionDate: str(values.acquisitionDate?.value),
@@ -140,6 +167,8 @@ function toRequest(s: FormState): ArtefactWriteRequest {
     (d.text ?? '').trim() === '' ? null : { text: d.text, earliestYear: d.earliestYear ?? null, latestYear: d.latestYear ?? null }
   const amount = amountOf(s.priceAmount)
   const valuation = amountOf(s.valuationAmount)
+  // A measurement left empty is not saved; a value without a unit is sent so the server reports it on the field.
+  const measurement = (m: MeasurementDraft) => (m.value.trim() === '' ? null : { value: amountOf(m.value), unitId: m.unitId || null })
   return {
     inventoryNumber: s.inventoryNumber,
     title: s.title,
@@ -147,6 +176,10 @@ function toRequest(s: FormState): ArtefactWriteRequest {
     creationDate: dateOrNull(s.creationDate),
     medium: opt(s.medium),
     dimensions: opt(s.dimensions),
+    height: measurement(s.measurements.height),
+    width: measurement(s.measurements.width),
+    length: measurement(s.measurements.length),
+    diameter: measurement(s.measurements.diameter),
     descriptions: Object.fromEntries(Object.entries(s.descriptions).filter(([, text]) => text.trim() !== '')),
     acquisition: s.method
       ? {
@@ -217,6 +250,10 @@ defineWidget({
     creationDate: { type: 'historical-date' },
     medium: { type: 'text' },
     dimensions: { type: 'text' },
+    height: { type: 'measurement' },
+    width: { type: 'measurement' },
+    length: { type: 'measurement' },
+    diameter: { type: 'measurement' },
     descriptions: { type: 'map' },
     acquisitionMethod: { type: 'text' },
     acquisitionDate: { type: 'date' },
@@ -251,6 +288,19 @@ defineWidget({
     const queryClient = useQueryClient()
     const [state, setState] = useState<FormState>(() => initialState(values))
     const { data: languages = [] } = useContentLanguages()
+    const { data: units = [] } = useUnits()
+    // A new measurement takes the unit used last in the form, else centimetres.
+    const [lastUnit, setLastUnit] = useState<string>(() => Object.values(state.measurements).find((m) => m.unitId)?.unitId ?? '')
+    const defaultUnit = lastUnit || units.find((u) => u.abbreviation === 'cm')?.id || units[0]?.id || ''
+    const setMeasurement = (name: MeasurementName, patch: Partial<MeasurementDraft>) => {
+      if (patch.unitId) setLastUnit(patch.unitId)
+      setState((s) => {
+        const current = s.measurements[name]
+        const next = { ...current, ...patch }
+        if (patch.value !== undefined && patch.value.trim() !== '' && !next.unitId) next.unitId = defaultUnit
+        return { ...s, measurements: { ...s.measurements, [name]: next } }
+      })
+    }
     const [errors, setErrors] = useState<Record<string, string[]>>({})
     const [summary, setSummary] = useState<string | null>(null)
     const [saving, setSaving] = useState(false)
@@ -331,6 +381,19 @@ defineWidget({
             <HistoricalDateField label="Date" value={state.creationDate} onChange={(v) => set('creationDate', v)} errors={errorsFor(errors, 'creationDate')} />
             <TextField label="Medium" value={state.medium} onChange={(v) => set('medium', v)} errors={errorsFor(errors, 'medium')} />
             <TextField label="Dimensions" value={state.dimensions} onChange={(v) => set('dimensions', v)} errors={errorsFor(errors, 'dimensions')} hint="As written, e.g. 82 × 64 cm (framed 96 × 78 cm)" />
+          </div>
+          <div className="measurements" role="group" aria-label="Measurements">
+            {MEASUREMENTS.map(({ name, label }) => (
+              <MeasurementField
+                key={name}
+                label={label}
+                short={MEASUREMENT_LABELS[name]}
+                value={state.measurements[name]}
+                units={units}
+                onChange={(patch) => setMeasurement(name, patch)}
+                errors={errorsFor(errors, name)}
+              />
+            ))}
           </div>
           {languages.map((language) => (
             <TextField
@@ -521,6 +584,48 @@ function DateField({ label, value, onChange, errors, disabled }: { label: string
         {label}
       </label>
       <input id={id} type="date" className="input" value={value} disabled={disabled} onChange={(e) => onChange(e.target.value)} />
+      {errors?.map((e) => (
+        <p key={e} className="field__error">
+          {e}
+        </p>
+      ))}
+    </div>
+  )
+}
+
+/** A measurement: the number, and the unit it is in. Left empty, the measurement is not recorded. */
+function MeasurementField({
+  label,
+  short,
+  value,
+  units,
+  onChange,
+  errors,
+}: {
+  label: string
+  short: string
+  value: MeasurementDraft
+  units: UnitOfMeasure[]
+  onChange: (patch: Partial<MeasurementDraft>) => void
+  errors?: string[]
+}) {
+  const id = useId()
+  return (
+    <div className={`field measurement-field${errors ? ' field--invalid' : ''}`}>
+      <label className="field__label" htmlFor={id}>
+        {label} <span className="muted">({short})</span>
+      </label>
+      <div className="measurement-field__inputs">
+        <input id={id} className="input" inputMode="decimal" value={value.value} aria-invalid={!!errors} onChange={(e) => onChange({ value: e.target.value })} />
+        <select className="select measurement-field__unit" aria-label={`${label} unit`} value={value.unitId} onChange={(e) => onChange({ unitId: e.target.value })}>
+          <option value="">Unit</option>
+          {units.map((u) => (
+            <option key={u.id} value={u.id}>
+              {u.abbreviation}
+            </option>
+          ))}
+        </select>
+      </div>
       {errors?.map((e) => (
         <p key={e} className="field__error">
           {e}

@@ -5,6 +5,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { api } from '../../api/client'
 import { unwrap } from '../../api/problem'
 import { DatesStep } from './DatesStep'
+import { DimensionsStep } from './DimensionsStep'
 import { errorMessage, formatBytes, isEditable, useImportJob, type ImportJob } from './importApi'
 import { ListsStep } from './ListsStep'
 import { MappingStep } from './MappingStep'
@@ -14,13 +15,14 @@ import { ProgressView } from './ProgressView'
 import { ReviewStep } from './ReviewStep'
 import './imports.css'
 
-export type WizardStep = 'mapping' | 'places' | 'lists' | 'dates' | 'review'
+export type WizardStep = 'mapping' | 'places' | 'lists' | 'dates' | 'dimensions' | 'review'
 
 const STEPS: { id: WizardStep; label: string }[] = [
   { id: 'mapping', label: 'Columns' },
   { id: 'places', label: 'Places' },
   { id: 'lists', label: 'Lists' },
   { id: 'dates', label: 'Dates' },
+  { id: 'dimensions', label: 'Dimensions' },
   { id: 'review', label: 'Review' },
 ]
 
@@ -30,7 +32,7 @@ function defaultStep(job: ImportJob): WizardStep {
 }
 
 /**
- * One import, as a workflow over its state: the user maps columns, settles places, list values and dates and reviews every row,
+ * One import, as a workflow over its state: the user maps columns, settles places, list values, dates and dimensions and reviews every row,
  * moving freely between those steps until they import; then the page follows the background import to its report.
  */
 export function ImportWizard() {
@@ -135,7 +137,8 @@ function Body({ job }: { job: ImportJob }) {
       {step === 'mapping' && <MappingStep job={job} onDone={() => go('places')} />}
       {step === 'places' && <PlacesStep job={job} onDone={() => go('lists')} />}
       {step === 'lists' && <ListsStep job={job} onDone={() => go('dates')} />}
-      {step === 'dates' && <DatesStep job={job} onDone={() => go('review')} />}
+      {step === 'dates' && <DatesStep job={job} onDone={() => go('dimensions')} />}
+      {step === 'dimensions' && <DimensionsStep job={job} onDone={() => go('review')} />}
       {step === 'review' && <ReviewStep job={job} />}
     </>
   )

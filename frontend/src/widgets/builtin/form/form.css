@@ -90,6 +90,19 @@
   letter-spacing: 0.04em;
 }
 
+/* Measurements: four narrow value-and-unit pairs under the dimensions text. */
+.measurements {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: var(--s3);
+}
+
+.measurement-field__inputs {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 5rem;
+  gap: var(--s2);
+}
+
 /* Region picker */
 .region-picker__box {
   position: relative;

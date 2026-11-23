@@ -4,6 +4,7 @@ using Artefacts.Domain.Common;
 using Artefacts.Domain.Imports;
 using Artefacts.Domain.Languages;
 using Artefacts.Domain.Lists;
+using Artefacts.Domain.Measures;
 using Artefacts.Domain.Media;
 using Artefacts.Domain.Pages;
 using Artefacts.Domain.Parties;
@@ -28,6 +29,8 @@ public sealed class CollectionDbContext(DbContextOptions<CollectionDbContext> op
     public const string StoredQueryNameIndex = "ux_stored_queries_normalized_name";
     public const string StoredPageNameIndex = "ux_stored_pages_normalized_name";
     public const string StoredPageSlugIndex = "ux_stored_pages_slug";
+    public const string UnitNameIndex = "ux_unit_of_measure_names_language_normalized_name";
+    public const string UnitAbbreviationIndex = "ux_units_of_measure_normalized_abbreviation";
 
     public DbSet<Artefact> Artefacts => Set<Artefact>();
     public DbSet<Region> Regions => Set<Region>();
@@ -41,6 +44,7 @@ public sealed class CollectionDbContext(DbContextOptions<CollectionDbContext> op
     public DbSet<ImportTemplate> ImportTemplates => Set<ImportTemplate>();
     public DbSet<StoredQuery> StoredQueries => Set<StoredQuery>();
     public DbSet<StoredPage> StoredPages => Set<StoredPage>();
+    public DbSet<UnitOfMeasure> UnitsOfMeasure => Set<UnitOfMeasure>();
 
     protected override void ConfigureConventions(ModelConfigurationBuilder builder)
     {
@@ -50,6 +54,7 @@ public sealed class CollectionDbContext(DbContextOptions<CollectionDbContext> op
         builder.Properties<ObjectTypeId>().HaveConversion<ObjectTypeIdConverter>();
         builder.Properties<ReferenceEntryId>().HaveConversion<ReferenceEntryIdConverter>();
         builder.Properties<PartyId>().HaveConversion<PartyIdConverter>();
+        builder.Properties<UnitOfMeasureId>().HaveConversion<UnitOfMeasureIdConverter>();
     }
 
     protected override void OnModelCreating(ModelBuilder model)
@@ -84,6 +89,29 @@ public sealed class CollectionDbContext(DbContextOptions<CollectionDbContext> op
             b.Property(t => t.Id).ValueGeneratedNever();
             b.OwnsMany(t => t.Names, n => MapNames(n, "object_type_names", "ObjectTypeId", ObjectType.MaxNameLength, ObjectTypeNameIndex));
             b.Navigation(t => t.Names).HasField("_names").UsePropertyAccessMode(PropertyAccessMode.Field);
+        });
+
+        model.Entity<UnitOfMeasure>(b =>
+        {
+            b.ToTable("units_of_measure");
+            b.HasKey(u => u.Id);
+            b.Property(u => u.Id).ValueGeneratedNever();
+            b.Property(u => u.Abbreviation).HasMaxLength(UnitOfMeasure.MaxAbbreviationLength).IsRequired();
+            b.Property(u => u.NormalizedAbbreviation).HasMaxLength(UnitOfMeasure.MaxAbbreviationLength).IsRequired();
+            b.HasIndex(u => u.NormalizedAbbreviation).IsUnique().HasDatabaseName(UnitAbbreviationIndex);
+            b.Property(u => u.Factor).HasPrecision(28, 12);
+            b.OwnsMany(u => u.Names, n =>
+            {
+                MapNames(n, "unit_of_measure_names", "UnitOfMeasureId", UnitOfMeasure.MaxNameLength, UnitNameIndex);
+                n.HasData(SeededUnits.All.SelectMany(u => new object[]
+                {
+                    new { UnitOfMeasureId = u.Id, Language = "en", Name = u.English, NormalizedName = u.English.ToLowerInvariant() },
+                    new { UnitOfMeasureId = u.Id, Language = "it", Name = u.Italian, NormalizedName = u.Italian.ToLowerInvariant() },
+                }));
+            });
+            b.Navigation(u => u.Names).HasField("_names").UsePropertyAccessMode(PropertyAccessMode.Field);
+            // Initial units; more are added as data.
+            b.HasData(SeededUnits.All.Select(u => new { u.Id, u.Abbreviation, NormalizedAbbreviation = u.Abbreviation, u.Factor }));
         });
 
         model.Entity<ReferenceEntry>(b =>
@@ -150,6 +178,11 @@ public sealed class CollectionDbContext(DbContextOptions<CollectionDbContext> op
             b.Property(a => a.Medium).HasMaxLength(Artefact.MaxShortTextLength);
             b.Property(a => a.Dimensions).HasMaxLength(Artefact.MaxShortTextLength);
             b.Ignore(a => a.PrimaryImage);
+            b.Ignore(a => a.Measurements);
+            MapMeasurement(b, a => a.Width, "width");
+            MapMeasurement(b, a => a.Height, "height");
+            MapMeasurement(b, a => a.Length, "length");
+            MapMeasurement(b, a => a.Diameter, "diameter");
 
             b.Property(a => a.ObjectTypeId).HasConversion(new ObjectTypeIdConverter());
             b.HasOne<ObjectType>().WithMany().HasForeignKey(a => a.ObjectTypeId).OnDelete(DeleteBehavior.Restrict);
@@ -329,6 +362,19 @@ public sealed class CollectionDbContext(DbContextOptions<CollectionDbContext> op
         });
     }
 
+    /// <summary>One measurement as <c>{prefix}_value</c> and <c>{prefix}_unit_id</c>; a unit in use cannot be deleted.</summary>
+    private static void MapMeasurement(
+        Microsoft.EntityFrameworkCore.Metadata.Builders.EntityTypeBuilder<Artefact> b,
+        System.Linq.Expressions.Expression<Func<Artefact, Measurement?>> navigation, string prefix) =>
+        b.OwnsOne(navigation, m =>
+        {
+            m.Property(x => x.Value).HasColumnName($"{prefix}_value").HasPrecision(19, 4);
+            m.Property(x => x.UnitId).HasColumnName($"{prefix}_unit_id");
+            m.HasOne<UnitOfMeasure>().WithMany().HasForeignKey(x => x.UnitId)
+                .HasConstraintName($"fk_artefacts_units_of_measure_{prefix}").OnDelete(DeleteBehavior.Restrict);
+            m.HasIndex(x => x.UnitId);
+        });
+
     /// <summary>Per-language names of a reference entry: one row per (owner, language), unique name per language.</summary>
     private static void MapNames<TOwner>(
         Microsoft.EntityFrameworkCore.Metadata.Builders.OwnedNavigationBuilder<TOwner, LocalizedName> n,
@@ -351,5 +397,6 @@ public sealed class CollectionDbContext(DbContextOptions<CollectionDbContext> op
     private sealed class ObjectTypeIdConverter() : ValueConverter<ObjectTypeId, Guid>(id => id.Value, v => new ObjectTypeId(v));
     private sealed class ReferenceEntryIdConverter() : ValueConverter<ReferenceEntryId, Guid>(id => id.Value, v => new ReferenceEntryId(v));
     private sealed class PartyIdConverter() : ValueConverter<PartyId, Guid>(id => id.Value, v => new PartyId(v));
+    private sealed class UnitOfMeasureIdConverter() : ValueConverter<UnitOfMeasureId, Guid>(id => id.Value, v => new UnitOfMeasureId(v));
     private sealed class MediaAssetIdConverter() : ValueConverter<MediaAssetId, Guid>(id => id.Value, v => new MediaAssetId(v));
 }

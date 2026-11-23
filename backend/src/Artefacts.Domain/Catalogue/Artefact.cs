@@ -2,6 +2,7 @@ using Artefacts.Domain.Common;
 using Artefacts.Domain.Dating;
 using Artefacts.Domain.Finance;
 using Artefacts.Domain.Languages;
+using Artefacts.Domain.Measures;
 
 namespace Artefacts.Domain.Catalogue;
 
@@ -30,6 +31,14 @@ public sealed class Artefact
     public HistoricalDate? CreationDate { get; private set; }
     public string? Medium { get; private set; }
     public string? Dimensions { get; private set; }
+
+    /// <summary>Structured measurements, each in its own unit; independent of the <see cref="Dimensions"/> text.</summary>
+    public Measurement? Width { get; private set; }
+    public Measurement? Height { get; private set; }
+    public Measurement? Length { get; private set; }
+    public Measurement? Diameter { get; private set; }
+
+    public ArtefactMeasurements Measurements => new(Width, Height, Length, Diameter);
     public Acquisition? Acquisition { get; private set; }
 
     /// <summary>Kind of object, from the object type reference list.</summary>
@@ -100,6 +109,15 @@ public sealed class Artefact
         Medium = Guard.Optional(medium, "medium", MaxShortTextLength);
         Dimensions = Guard.Optional(dimensions, "dimensions", MaxShortTextLength);
         CreationDate = creationDate;
+    }
+
+    /// <summary>Replaces the four measurements (null clears one). Units are checked by the caller.</summary>
+    public void Measure(ArtefactMeasurements measurements)
+    {
+        Width = measurements.Width;
+        Height = measurements.Height;
+        Length = measurements.Length;
+        Diameter = measurements.Diameter;
     }
 
     /// <summary>

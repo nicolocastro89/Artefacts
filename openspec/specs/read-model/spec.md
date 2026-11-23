@@ -3,9 +3,11 @@
 ## Purpose
 
 Provides read-only views of collection data that are shaped for display and querying, together with a machine-readable catalog of the fields those views expose. This is the stable contract that future custom views and the semantic layer are built on.
+
 ## Requirements
+
 ### Requirement: Artefact read view
-The system SHALL provide a read-only, flattened artefact view. Each row contains the artefact's identifier, inventory number, title, maker, creation date (display text, earliest year, latest year), medium, dimensions, object type identifier, collection group identifier, place of production (text and region identifier), dynasty identifier, holder identifier, storage location identifier, acquisition method, date, source identifier, lot and note, acquisition price amount and currency, valuation amount and currency, the number of exhibitions, the primary image reference, and the number of images. Names of linked records (object types, regions, collection groups, dynasties, storage locations and parties) are not columns of the view: queries over the view resolve them, in the request's language where they are translated. The view SHALL reflect the current state of the catalogue.
+The system SHALL provide a read-only, flattened artefact view. Each row contains the artefact's identifier, inventory number, title, maker, creation date (display text, earliest year, latest year), medium, dimensions, the width, height, length and diameter (each as value, unit identifier and value in metres), object type identifier, collection group identifier, place of production (text and region identifier), dynasty identifier, holder identifier, storage location identifier, acquisition method, date, source identifier, lot and note, acquisition price amount and currency, valuation amount and currency, the number of exhibitions, the primary image reference, and the number of images. Names of linked records (object types, regions, collection groups, dynasties, storage locations, parties and units of measure) are not columns of the view: queries over the view resolve them, in the request's language where they are translated. The view SHALL reflect the current state of the catalogue, including the current factor of each unit.
 
 #### Scenario: View reflects updates
 - **WHEN** a user changes an artefact's title and then reads the artefact read view
@@ -22,6 +24,10 @@ The system SHALL provide a read-only, flattened artefact view. Each row contains
 #### Scenario: Renamed party
 - **WHEN** a user renames the party "Christies" to "Christie's" and then searches artefacts for "Christie's"
 - **THEN** the artefacts acquired from that party are found
+
+#### Scenario: Measurement in metres
+- **WHEN** an artefact has a height of 7 cm
+- **THEN** its read view row has the height value 7, the centimetre unit identifier and the height in metres 0.07
 
 ### Requirement: Field catalog
 The system SHALL publish a field catalog. For each read view (an "entity") it lists every field's stable identifier, human-readable label, data type (text, number, date, historical-date, money, image, reference, or boolean), and whether the field can be filtered and sorted. The catalog SHALL describe exactly the fields that the read views expose: no missing fields and no extra ones.
@@ -63,4 +69,3 @@ The system SHALL provide read-only views of an artefact's provenance entries (ar
 #### Scenario: Catalog lists the new entities
 - **WHEN** a client requests the field catalog
 - **THEN** it contains the entities for provenance entries, images, exhibitions, descriptions and catalogue entries, each with its fields and types
-

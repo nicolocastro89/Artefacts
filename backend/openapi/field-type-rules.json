@@ -12,6 +12,7 @@
     { "graphql": "DateTime", "openapi": { "type": "string", "format": "date-time" }, "type": "date" },
     { "graphql": "ImageUrls", "openapi": { "$ref": "#/components/schemas/ImageUrls" }, "type": "image" },
     { "graphql": "HistoricalDate", "openapi": { "$ref": "#/components/schemas/HistoricalDateDto" }, "type": "historical-date" },
-    { "graphql": "Money", "openapi": { "$ref": "#/components/schemas/MoneyDto" }, "type": "money" }
+    { "graphql": "Money", "openapi": { "$ref": "#/components/schemas/MoneyDto" }, "type": "money" },
+    { "graphql": "Measurement", "openapi": { "$ref": "#/components/schemas/MeasurementDto" }, "type": "measurement" }
   ]
 }
