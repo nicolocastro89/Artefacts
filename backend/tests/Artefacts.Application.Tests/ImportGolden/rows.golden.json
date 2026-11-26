@@ -1,0 +1,1976 @@
+{
+  "plain-title": {
+    "inventoryNumber": "CER-01-01",
+    "status": "Ready",
+    "mapped": [
+      {
+        "field": "GroupNumber",
+        "text": "01",
+        "column": 1,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "Title",
+        "text": "Coppa Celadon",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "ItemNumber",
+        "text": "01",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "Dimensions",
+        "text": "diam 17,6 x h 7",
+        "column": 2,
+        "line": 1,
+        "guessed": false
+      }
+    ],
+    "dropped": [],
+    "discarded": [],
+    "problems": [],
+    "warnings": [],
+    "dateUnresolved": false,
+    "listTexts": [
+      "CollectionGroup/CollectionGroup: CINA"
+    ],
+    "dimensionsText": "diam 17,6 x h 7",
+    "dimensionsUnclear": false,
+    "request": {
+      "inventoryNumber": "CER-01-01",
+      "title": "Coppa Celadon",
+      "dimensions": "diam 17,6 x h 7",
+      "collectionGroupId": "fd308037-eacb-78c9-2521-4fa293bd3645",
+      "exhibitions": [],
+      "height": {
+        "value": 7,
+        "unitId": "0193a1c0-0000-7000-8000-000000000002"
+      },
+      "diameter": {
+        "value": 17.6,
+        "unitId": "0193a1c0-0000-7000-8000-000000000002"
+      }
+    }
+  },
+  "multi-line-title": {
+    "inventoryNumber": "CER-01-03",
+    "status": "Ready",
+    "mapped": [
+      {
+        "field": "GroupNumber",
+        "text": "01",
+        "column": 1,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "Title",
+        "text": "Piatto bianco e blu",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "ItemNumber",
+        "text": "03",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "Title",
+        "text": "con circoli",
+        "column": 2,
+        "line": 1,
+        "guessed": false
+      },
+      {
+        "field": "Dimensions",
+        "text": "diam 34,6",
+        "column": 2,
+        "line": 2,
+        "guessed": false
+      },
+      {
+        "field": "Description",
+        "text": "DA MONTARE",
+        "column": 2,
+        "line": 3,
+        "guessed": false
+      }
+    ],
+    "dropped": [],
+    "discarded": [],
+    "problems": [],
+    "warnings": [],
+    "dateUnresolved": false,
+    "listTexts": [
+      "CollectionGroup/CollectionGroup: CINA"
+    ],
+    "dimensionsText": "diam 34,6",
+    "dimensionsUnclear": false,
+    "request": {
+      "inventoryNumber": "CER-01-03",
+      "title": "Piatto bianco e blu con circoli",
+      "dimensions": "diam 34,6",
+      "descriptions": {
+        "it": "DA MONTARE"
+      },
+      "collectionGroupId": "fd308037-eacb-78c9-2521-4fa293bd3645",
+      "exhibitions": [],
+      "diameter": {
+        "value": 34.6,
+        "unitId": "0193a1c0-0000-7000-8000-000000000002"
+      }
+    }
+  },
+  "letter-suffix": {
+    "inventoryNumber": "CER-02-02a",
+    "status": "Ready",
+    "mapped": [
+      {
+        "field": "GroupNumber",
+        "text": "02",
+        "column": 1,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "Title",
+        "text": "Frammento",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "ItemNumber",
+        "text": "02a",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      }
+    ],
+    "dropped": [],
+    "discarded": [],
+    "problems": [],
+    "warnings": [],
+    "dateUnresolved": false,
+    "listTexts": [
+      "CollectionGroup/CollectionGroup: CINA"
+    ],
+    "dimensionsUnclear": false,
+    "request": {
+      "inventoryNumber": "CER-02-02a",
+      "title": "Frammento",
+      "collectionGroupId": "fd308037-eacb-78c9-2521-4fa293bd3645",
+      "exhibitions": []
+    }
+  },
+  "no-number": {
+    "status": "Problem",
+    "mapped": [
+      {
+        "field": "GroupNumber",
+        "text": "01",
+        "column": 1,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "Title",
+        "text": "nessun numero",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "Title",
+        "text": "solo testo",
+        "column": 2,
+        "line": 1,
+        "guessed": false
+      }
+    ],
+    "dropped": [],
+    "discarded": [],
+    "problems": [
+      {
+        "field": "inventoryNumber",
+        "reason": "The inventory number pattern \u0022{sheet}-{group:2}-{item:2}\u0022 needs a value this row does not have."
+      }
+    ],
+    "warnings": [],
+    "dateUnresolved": false,
+    "listTexts": [
+      "CollectionGroup/CollectionGroup: CINA"
+    ],
+    "dimensionsUnclear": false,
+    "request": {
+      "title": "nessun numero solo testo",
+      "collectionGroupId": "fd308037-eacb-78c9-2521-4fa293bd3645",
+      "exhibitions": []
+    }
+  },
+  "times-dimensions": {
+    "inventoryNumber": "CER-01-01",
+    "status": "Ready",
+    "mapped": [
+      {
+        "field": "GroupNumber",
+        "text": "01",
+        "column": 1,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "Title",
+        "text": "abito sciamanico collo",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "ItemNumber",
+        "text": "01",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "Title",
+        "text": "a tre lobi",
+        "column": 2,
+        "line": 1,
+        "guessed": false
+      },
+      {
+        "field": "Dimensions",
+        "text": "126 x 210",
+        "column": 2,
+        "line": 2,
+        "guessed": false
+      }
+    ],
+    "dropped": [],
+    "discarded": [],
+    "problems": [],
+    "warnings": [],
+    "dateUnresolved": false,
+    "listTexts": [
+      "CollectionGroup/CollectionGroup: CINA"
+    ],
+    "dimensionsText": "126 x 210",
+    "dimensionsUnclear": false,
+    "request": {
+      "inventoryNumber": "CER-01-01",
+      "title": "abito sciamanico collo a tre lobi",
+      "dimensions": "126 x 210",
+      "collectionGroupId": "fd308037-eacb-78c9-2521-4fa293bd3645",
+      "exhibitions": [],
+      "width": {
+        "value": 210,
+        "unitId": "0193a1c0-0000-7000-8000-000000000002"
+      },
+      "height": {
+        "value": 126,
+        "unitId": "0193a1c0-0000-7000-8000-000000000002"
+      }
+    }
+  },
+  "unlabelled-cm": {
+    "inventoryNumber": "CER-01-01",
+    "status": "Ready",
+    "mapped": [
+      {
+        "field": "GroupNumber",
+        "text": "01",
+        "column": 1,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "Title",
+        "text": "Doppia pagina da corano",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "ItemNumber",
+        "text": "01",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "Dimensions",
+        "text": "27,9 x 36 cm",
+        "column": 2,
+        "line": 1,
+        "guessed": false
+      },
+      {
+        "field": "Description",
+        "text": "DA MONTARE",
+        "column": 2,
+        "line": 2,
+        "guessed": false
+      }
+    ],
+    "dropped": [],
+    "discarded": [],
+    "problems": [],
+    "warnings": [],
+    "dateUnresolved": false,
+    "listTexts": [
+      "CollectionGroup/CollectionGroup: CINA"
+    ],
+    "dimensionsText": "27,9 x 36 cm",
+    "dimensionsUnclear": false,
+    "request": {
+      "inventoryNumber": "CER-01-01",
+      "title": "Doppia pagina da corano",
+      "dimensions": "27,9 x 36 cm",
+      "descriptions": {
+        "it": "DA MONTARE"
+      },
+      "collectionGroupId": "fd308037-eacb-78c9-2521-4fa293bd3645",
+      "exhibitions": [],
+      "width": {
+        "value": 36,
+        "unitId": "0193a1c0-0000-7000-8000-000000000002"
+      },
+      "height": {
+        "value": 27.9,
+        "unitId": "0193a1c0-0000-7000-8000-000000000002"
+      }
+    }
+  },
+  "holding-column": {
+    "inventoryNumber": "CER-01-04",
+    "status": "Ready",
+    "mapped": [
+      {
+        "field": "GroupNumber",
+        "text": "01",
+        "column": 1,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "StorageLocation",
+        "text": "Beta2",
+        "column": 1,
+        "line": 1,
+        "guessed": false
+      },
+      {
+        "field": "Holder",
+        "text": "Rossetti",
+        "column": 1,
+        "line": 2,
+        "guessed": false
+      },
+      {
+        "field": "Holder",
+        "text": "Fine Arts srl",
+        "column": 1,
+        "line": 3,
+        "guessed": false
+      },
+      {
+        "field": "StorageLocation",
+        "text": "cella 16",
+        "column": 1,
+        "line": 4,
+        "guessed": false
+      },
+      {
+        "field": "Title",
+        "text": "Ciotola",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "ItemNumber",
+        "text": "04",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      }
+    ],
+    "dropped": [],
+    "discarded": [],
+    "problems": [],
+    "warnings": [],
+    "dateUnresolved": false,
+    "listTexts": [
+      "CollectionGroup/CollectionGroup: CINA",
+      "StorageLocation/StorageLocation: Beta2 cella 16",
+      "Party/Holder: Rossetti Fine Arts srl"
+    ],
+    "dimensionsUnclear": false,
+    "request": {
+      "inventoryNumber": "CER-01-04",
+      "title": "Ciotola",
+      "collectionGroupId": "fd308037-eacb-78c9-2521-4fa293bd3645",
+      "exhibitions": [],
+      "holderId": "6a0f2284-d9a8-d004-a2d1-7d9d20fcee8e",
+      "storageLocationId": "79f99ea5-89f9-f8fd-2b48-569bcef9f0c9"
+    }
+  },
+  "catalogue-number": {
+    "inventoryNumber": "W.391",
+    "status": "Ready",
+    "mapped": [
+      {
+        "field": "GroupNumber",
+        "text": "01",
+        "column": 1,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "CatalogueNumber",
+        "text": "W.391",
+        "column": 1,
+        "line": 1,
+        "guessed": false
+      },
+      {
+        "field": "Title",
+        "text": "Brocca",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "ItemNumber",
+        "text": "05",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      }
+    ],
+    "dropped": [],
+    "discarded": [],
+    "problems": [],
+    "warnings": [],
+    "dateUnresolved": false,
+    "listTexts": [
+      "CollectionGroup/CollectionGroup: CINA"
+    ],
+    "dimensionsUnclear": false,
+    "request": {
+      "inventoryNumber": "W.391",
+      "title": "Brocca",
+      "collectionGroupId": "fd308037-eacb-78c9-2521-4fa293bd3645",
+      "exhibitions": []
+    }
+  },
+  "location-code": {
+    "inventoryNumber": "CER-01-06",
+    "status": "Ready",
+    "mapped": [
+      {
+        "field": "GroupNumber",
+        "text": "01",
+        "column": 1,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "Holder",
+        "text": "AB",
+        "column": 1,
+        "line": 1,
+        "guessed": false
+      },
+      {
+        "field": "StorageLocation",
+        "text": "MI F3",
+        "column": 1,
+        "line": 2,
+        "guessed": false
+      },
+      {
+        "field": "Title",
+        "text": "Vaso",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "ItemNumber",
+        "text": "06",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      }
+    ],
+    "dropped": [],
+    "discarded": [],
+    "problems": [],
+    "warnings": [],
+    "dateUnresolved": false,
+    "listTexts": [
+      "CollectionGroup/CollectionGroup: CINA",
+      "StorageLocation/StorageLocation: MI F3",
+      "Party/Holder: AB"
+    ],
+    "dimensionsUnclear": false,
+    "request": {
+      "inventoryNumber": "CER-01-06",
+      "title": "Vaso",
+      "collectionGroupId": "fd308037-eacb-78c9-2521-4fa293bd3645",
+      "exhibitions": [],
+      "holderId": "13657ddc-b458-8a4f-fcd2-7ddc5cf044f9",
+      "storageLocationId": "f5a68cca-fe2f-f1dc-f64e-f189be41f9d9"
+    }
+  },
+  "origin-date-dynasty": {
+    "inventoryNumber": "CER-01-07",
+    "status": "Ready",
+    "mapped": [
+      {
+        "field": "GroupNumber",
+        "text": "01",
+        "column": 1,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "Title",
+        "text": "Tazza",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "ItemNumber",
+        "text": "07",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "PlaceOfProduction",
+        "text": "Cina",
+        "column": 4,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "CreationDate",
+        "text": "X-XII (907-1125)",
+        "column": 4,
+        "line": 1,
+        "parsed": {
+          "text": "X-XII (907-1125)",
+          "interpretation": {
+            "earliest": 907,
+            "latest": 1125,
+            "precision": "year"
+          }
+        },
+        "guessed": false
+      },
+      {
+        "field": "Dynasty",
+        "text": "Liao",
+        "column": 4,
+        "line": 2,
+        "guessed": false
+      }
+    ],
+    "dropped": [],
+    "discarded": [],
+    "problems": [],
+    "warnings": [],
+    "placeText": "Cina",
+    "dateText": "X-XII (907-1125)",
+    "dateUnresolved": false,
+    "listTexts": [
+      "CollectionGroup/CollectionGroup: CINA",
+      "Dynasty/Dynasty: Liao"
+    ],
+    "dimensionsUnclear": false,
+    "request": {
+      "inventoryNumber": "CER-01-07",
+      "title": "Tazza",
+      "creationDate": {
+        "text": "X-XII (907-1125)"
+      },
+      "collectionGroupId": "fd308037-eacb-78c9-2521-4fa293bd3645",
+      "placeOfProduction": {
+        "text": "Cina"
+      },
+      "dynastyId": "b5b98d51-17b6-0445-d048-fe569d748e3a",
+      "exhibitions": []
+    }
+  },
+  "origin-century": {
+    "inventoryNumber": "CER-01-08",
+    "status": "Ready",
+    "mapped": [
+      {
+        "field": "GroupNumber",
+        "text": "01",
+        "column": 1,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "Title",
+        "text": "Tazza",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "ItemNumber",
+        "text": "08",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "PlaceOfProduction",
+        "text": "Medio oriente o",
+        "column": 4,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "PlaceOfProduction",
+        "text": "nord Africa",
+        "column": 4,
+        "line": 1,
+        "guessed": false
+      },
+      {
+        "field": "CreationDate",
+        "text": "IX secolo",
+        "column": 4,
+        "line": 2,
+        "parsed": {
+          "text": "IX secolo",
+          "interpretation": {
+            "earliest": 801,
+            "latest": 900,
+            "precision": "century"
+          }
+        },
+        "guessed": false
+      },
+      {
+        "field": "Dynasty",
+        "text": "Abbaside",
+        "column": 4,
+        "line": 3,
+        "guessed": false
+      }
+    ],
+    "dropped": [],
+    "discarded": [],
+    "problems": [],
+    "warnings": [],
+    "placeText": "Medio oriente o nord Africa",
+    "dateText": "IX secolo",
+    "dateUnresolved": false,
+    "listTexts": [
+      "CollectionGroup/CollectionGroup: CINA",
+      "Dynasty/Dynasty: Abbaside"
+    ],
+    "dimensionsUnclear": false,
+    "request": {
+      "inventoryNumber": "CER-01-08",
+      "title": "Tazza",
+      "creationDate": {
+        "text": "IX secolo"
+      },
+      "collectionGroupId": "fd308037-eacb-78c9-2521-4fa293bd3645",
+      "placeOfProduction": {
+        "text": "Medio oriente o nord Africa"
+      },
+      "dynastyId": "3dd200d1-78b0-0d08-831e-a628c5690af3",
+      "exhibitions": []
+    }
+  },
+  "date-over-two-lines": {
+    "inventoryNumber": "CER-01-09",
+    "status": "Ready",
+    "mapped": [
+      {
+        "field": "GroupNumber",
+        "text": "01",
+        "column": 1,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "Title",
+        "text": "Piatto",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "ItemNumber",
+        "text": "09",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "PlaceOfProduction",
+        "text": "Egitto",
+        "column": 4,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "CreationDate",
+        "text": "seconda met\u00E0 XVI",
+        "column": 4,
+        "line": 1,
+        "parsed": {
+          "text": "seconda met\u00E0 XVI",
+          "interpretation": {
+            "earliest": 1551,
+            "latest": 1600,
+            "precision": "century"
+          }
+        },
+        "guessed": false
+      },
+      {
+        "field": "Dynasty",
+        "text": "ottomana",
+        "column": 4,
+        "line": 3,
+        "guessed": false
+      }
+    ],
+    "dropped": [],
+    "discarded": [],
+    "problems": [],
+    "warnings": [],
+    "placeText": "Egitto",
+    "dateText": "seconda met\u00E0 XVI",
+    "dateUnresolved": false,
+    "listTexts": [
+      "CollectionGroup/CollectionGroup: CINA",
+      "Dynasty/Dynasty: ottomana"
+    ],
+    "dimensionsUnclear": false,
+    "request": {
+      "inventoryNumber": "CER-01-09",
+      "title": "Piatto",
+      "creationDate": {
+        "text": "seconda met\u00E0 XVI"
+      },
+      "collectionGroupId": "fd308037-eacb-78c9-2521-4fa293bd3645",
+      "placeOfProduction": {
+        "text": "Egitto"
+      },
+      "dynastyId": "a2d0c8dc-11a7-fdf8-c119-25c0d801502f",
+      "exhibitions": []
+    }
+  },
+  "date-with-bracket": {
+    "inventoryNumber": "CER-01-10",
+    "status": "Problem",
+    "mapped": [
+      {
+        "field": "GroupNumber",
+        "text": "01",
+        "column": 1,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "Title",
+        "text": "Piatto",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "ItemNumber",
+        "text": "10",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "PlaceOfProduction",
+        "text": "Egitto",
+        "column": 4,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "CreationDate",
+        "text": "19 Dhu\u0027l hijja 797 (4 Ottobre 1395)",
+        "column": 4,
+        "line": 1,
+        "parsed": {
+          "text": "19 Dhu\u0027l hijja 797 (4 Ottobre 1395)"
+        },
+        "guessed": false
+      },
+      {
+        "field": "Dynasty",
+        "text": "Mamelucco",
+        "column": 4,
+        "line": 3,
+        "guessed": false
+      }
+    ],
+    "dropped": [],
+    "discarded": [],
+    "problems": [
+      {
+        "field": "creationDate",
+        "text": "19 Dhu\u0027l hijja 797 (4 Ottobre 1395)",
+        "reason": "The date is not understood: give it a year range in the dates step, or correct it in the workbook."
+      }
+    ],
+    "warnings": [],
+    "placeText": "Egitto",
+    "dateText": "19 Dhu\u0027l hijja 797 (4 Ottobre 1395)",
+    "dateUnresolved": true,
+    "listTexts": [
+      "CollectionGroup/CollectionGroup: CINA",
+      "Dynasty/Dynasty: Mamelucco"
+    ],
+    "dimensionsUnclear": false,
+    "request": {
+      "inventoryNumber": "CER-01-10",
+      "title": "Piatto",
+      "collectionGroupId": "fd308037-eacb-78c9-2521-4fa293bd3645",
+      "placeOfProduction": {
+        "text": "Egitto"
+      },
+      "dynastyId": "3fccd05b-5bec-0187-17b0-2a2897d89067",
+      "exhibitions": []
+    }
+  },
+  "date-lookalike": {
+    "inventoryNumber": "CER-01-11",
+    "status": "Ready",
+    "mapped": [
+      {
+        "field": "GroupNumber",
+        "text": "01",
+        "column": 1,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "Title",
+        "text": "Piatto",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "ItemNumber",
+        "text": "11",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "PlaceOfProduction",
+        "text": "Qinghai Dulan VIII",
+        "column": 4,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "CreationDate",
+        "text": "VII - VIII",
+        "column": 4,
+        "line": 1,
+        "parsed": {
+          "text": "VII - VIII",
+          "interpretation": {
+            "earliest": 601,
+            "latest": 800,
+            "precision": "century"
+          }
+        },
+        "guessed": false
+      },
+      {
+        "field": "Dynasty",
+        "text": "Tang",
+        "column": 4,
+        "line": 2,
+        "guessed": false
+      }
+    ],
+    "dropped": [],
+    "discarded": [],
+    "problems": [],
+    "warnings": [],
+    "placeText": "Qinghai Dulan VIII",
+    "dateText": "VII - VIII",
+    "dateUnresolved": false,
+    "listTexts": [
+      "CollectionGroup/CollectionGroup: CINA",
+      "Dynasty/Dynasty: Tang"
+    ],
+    "dimensionsUnclear": false,
+    "request": {
+      "inventoryNumber": "CER-01-11",
+      "title": "Piatto",
+      "creationDate": {
+        "text": "VII - VIII"
+      },
+      "collectionGroupId": "fd308037-eacb-78c9-2521-4fa293bd3645",
+      "placeOfProduction": {
+        "text": "Qinghai Dulan VIII"
+      },
+      "dynastyId": "254c9226-8d21-bf0f-c4db-32876d840cb9",
+      "exhibitions": []
+    }
+  },
+  "unknown-date": {
+    "inventoryNumber": "CER-01-12",
+    "status": "Ready",
+    "mapped": [
+      {
+        "field": "GroupNumber",
+        "text": "01",
+        "column": 1,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "Title",
+        "text": "Corano",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "ItemNumber",
+        "text": "12",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "CreationDate",
+        "text": "met\u00E0 XV",
+        "column": 4,
+        "line": 0,
+        "parsed": {
+          "text": "met\u00E0 XV",
+          "interpretation": {
+            "earliest": 1434,
+            "latest": 1466,
+            "precision": "century"
+          }
+        },
+        "guessed": false
+      },
+      {
+        "field": "Dynasty",
+        "text": "Ottomana?",
+        "column": 4,
+        "line": 1,
+        "guessed": false
+      },
+      {
+        "field": "Dynasty",
+        "text": "A TIMURID QUR\u0027AN JUZ\u0027",
+        "column": 4,
+        "line": 2,
+        "guessed": false
+      },
+      {
+        "field": "Dynasty",
+        "text": "AH 871/FEBRUARY 1467",
+        "column": 4,
+        "line": 3,
+        "guessed": false
+      }
+    ],
+    "dropped": [],
+    "discarded": [],
+    "problems": [],
+    "warnings": [],
+    "dateText": "met\u00E0 XV",
+    "dateUnresolved": false,
+    "listTexts": [
+      "CollectionGroup/CollectionGroup: CINA",
+      "Dynasty/Dynasty: Ottomana? A TIMURID QUR\u0027AN JUZ\u0027 AH 871/FEBRUARY 1467"
+    ],
+    "dimensionsUnclear": false,
+    "request": {
+      "inventoryNumber": "CER-01-12",
+      "title": "Corano",
+      "creationDate": {
+        "text": "met\u00E0 XV"
+      },
+      "collectionGroupId": "fd308037-eacb-78c9-2521-4fa293bd3645",
+      "dynastyId": "5c220a54-f945-7039-609c-df0f7116b134",
+      "exhibitions": []
+    }
+  },
+  "century-only": {
+    "inventoryNumber": "CER-01-13",
+    "status": "Ready",
+    "mapped": [
+      {
+        "field": "GroupNumber",
+        "text": "01",
+        "column": 1,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "Title",
+        "text": "Corano",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "ItemNumber",
+        "text": "13",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "CreationDate",
+        "text": "XIII",
+        "column": 4,
+        "line": 0,
+        "parsed": {
+          "text": "XIII",
+          "interpretation": {
+            "earliest": 1201,
+            "latest": 1300,
+            "precision": "century"
+          }
+        },
+        "guessed": false
+      }
+    ],
+    "dropped": [],
+    "discarded": [],
+    "problems": [],
+    "warnings": [],
+    "dateText": "XIII",
+    "dateUnresolved": false,
+    "listTexts": [
+      "CollectionGroup/CollectionGroup: CINA"
+    ],
+    "dimensionsUnclear": false,
+    "request": {
+      "inventoryNumber": "CER-01-13",
+      "title": "Corano",
+      "creationDate": {
+        "text": "XIII"
+      },
+      "collectionGroupId": "fd308037-eacb-78c9-2521-4fa293bd3645",
+      "exhibitions": []
+    }
+  },
+  "place-in-brackets": {
+    "inventoryNumber": "CER-01-14",
+    "status": "Problem",
+    "mapped": [
+      {
+        "field": "GroupNumber",
+        "text": "01",
+        "column": 1,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "Title",
+        "text": "Corano",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "ItemNumber",
+        "text": "14",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "PlaceOfProduction",
+        "text": "Cina nord-orientale",
+        "column": 4,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "PlaceOfProduction",
+        "text": "(Qinghai, Xinjiang)",
+        "column": 4,
+        "line": 1,
+        "guessed": false
+      },
+      {
+        "field": "CreationDate",
+        "text": "VI secolo ?",
+        "column": 4,
+        "line": 2,
+        "parsed": {
+          "text": "VI secolo ?"
+        },
+        "guessed": false
+      }
+    ],
+    "dropped": [],
+    "discarded": [],
+    "problems": [
+      {
+        "field": "creationDate",
+        "text": "VI secolo ?",
+        "reason": "The date is not understood: give it a year range in the dates step, or correct it in the workbook."
+      }
+    ],
+    "warnings": [],
+    "placeText": "Cina nord-orientale (Qinghai, Xinjiang)",
+    "dateText": "VI secolo ?",
+    "dateUnresolved": true,
+    "listTexts": [
+      "CollectionGroup/CollectionGroup: CINA"
+    ],
+    "dimensionsUnclear": false,
+    "request": {
+      "inventoryNumber": "CER-01-14",
+      "title": "Corano",
+      "collectionGroupId": "fd308037-eacb-78c9-2521-4fa293bd3645",
+      "placeOfProduction": {
+        "text": "Cina nord-orientale (Qinghai, Xinjiang)"
+      },
+      "exhibitions": []
+    }
+  },
+  "acquisition-auction": {
+    "inventoryNumber": "CER-01-15",
+    "status": "Ready",
+    "mapped": [
+      {
+        "field": "GroupNumber",
+        "text": "01",
+        "column": 1,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "Title",
+        "text": "Coppa",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "ItemNumber",
+        "text": "15",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "AcquisitionSource",
+        "text": "Sotheby\u0027s London",
+        "column": 5,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "AcquisitionDate",
+        "text": "12 06 1990",
+        "column": 5,
+        "line": 1,
+        "parsed": "1990-06-12",
+        "guessed": false
+      },
+      {
+        "field": "AcquisitionLot",
+        "text": "170",
+        "column": 5,
+        "line": 2,
+        "guessed": false
+      },
+      {
+        "field": "AcquisitionPrice",
+        "text": "\u00A3 7.865",
+        "column": 5,
+        "line": 2,
+        "parsed": {
+          "amount": 7865,
+          "currency": "GBP"
+        },
+        "guessed": true
+      }
+    ],
+    "dropped": [],
+    "discarded": [],
+    "problems": [],
+    "warnings": [],
+    "dateUnresolved": false,
+    "listTexts": [
+      "CollectionGroup/CollectionGroup: CINA",
+      "Party/AcquisitionSource: Sotheby\u0027s London"
+    ],
+    "dimensionsUnclear": false,
+    "request": {
+      "inventoryNumber": "CER-01-15",
+      "title": "Coppa",
+      "acquisition": {
+        "method": "purchase",
+        "date": "1990-06-12",
+        "sourceId": "814bdbef-1fba-d162-f019-321880c16a08",
+        "price": {
+          "amount": 7865,
+          "currency": "GBP"
+        },
+        "lot": "170",
+        "note": "\u00A3 7.865"
+      },
+      "collectionGroupId": "fd308037-eacb-78c9-2521-4fa293bd3645",
+      "exhibitions": []
+    }
+  },
+  "acquisition-note": {
+    "inventoryNumber": "CER-01-16",
+    "status": "Ready",
+    "mapped": [
+      {
+        "field": "GroupNumber",
+        "text": "01",
+        "column": 1,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "Title",
+        "text": "Coppa",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "ItemNumber",
+        "text": "16",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "AcquisitionDate",
+        "text": "2 Maggio 2019",
+        "column": 5,
+        "line": 0,
+        "parsed": "2019-05-02",
+        "guessed": false
+      },
+      {
+        "field": "AcquisitionSource",
+        "text": "Christie\u0027s",
+        "column": 5,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "AcquisitionLot",
+        "text": "285",
+        "column": 5,
+        "line": 1,
+        "guessed": false
+      },
+      {
+        "field": "AcquisitionNote",
+        "text": "acquistato fuori asta",
+        "column": 5,
+        "line": 2,
+        "guessed": false
+      }
+    ],
+    "dropped": [],
+    "discarded": [],
+    "problems": [],
+    "warnings": [],
+    "dateUnresolved": false,
+    "listTexts": [
+      "CollectionGroup/CollectionGroup: CINA",
+      "Party/AcquisitionSource: Christie\u0027s"
+    ],
+    "dimensionsUnclear": false,
+    "request": {
+      "inventoryNumber": "CER-01-16",
+      "title": "Coppa",
+      "acquisition": {
+        "method": "purchase",
+        "date": "2019-05-02",
+        "sourceId": "695832c9-479d-31f4-e43c-a66ba8f70e07",
+        "lot": "285",
+        "note": "acquistato fuori asta"
+      },
+      "collectionGroupId": "fd308037-eacb-78c9-2521-4fa293bd3645",
+      "exhibitions": []
+    }
+  },
+  "acquisition-private": {
+    "inventoryNumber": "CER-01-17",
+    "status": "Ready",
+    "mapped": [
+      {
+        "field": "GroupNumber",
+        "text": "01",
+        "column": 1,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "Title",
+        "text": "Coppa",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "ItemNumber",
+        "text": "17",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "AcquisitionSource",
+        "text": "Mario Bianchi",
+        "column": 5,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "AcquisitionDate",
+        "text": "18 09 2007",
+        "column": 5,
+        "line": 1,
+        "parsed": "2007-09-18",
+        "guessed": false
+      },
+      {
+        "field": "AcquisitionNote",
+        "text": "fatt 02 e 03 2007",
+        "column": 5,
+        "line": 1,
+        "guessed": false
+      },
+      {
+        "field": "AcquisitionPrice",
+        "text": "\u00A3 99.000",
+        "column": 5,
+        "line": 2,
+        "parsed": {
+          "amount": 99000,
+          "currency": "GBP"
+        },
+        "guessed": true
+      },
+      {
+        "field": "AcquisitionNote",
+        "text": "Carbon dating AD 770-1000",
+        "column": 5,
+        "line": 3,
+        "guessed": false
+      }
+    ],
+    "dropped": [],
+    "discarded": [],
+    "problems": [],
+    "warnings": [],
+    "dateUnresolved": false,
+    "listTexts": [
+      "CollectionGroup/CollectionGroup: CINA",
+      "Party/AcquisitionSource: Mario Bianchi"
+    ],
+    "dimensionsUnclear": false,
+    "request": {
+      "inventoryNumber": "CER-01-17",
+      "title": "Coppa",
+      "acquisition": {
+        "method": "purchase",
+        "date": "2007-09-18",
+        "sourceId": "c0cb13f3-732a-4346-77fb-53ae7e398a93",
+        "price": {
+          "amount": 99000,
+          "currency": "GBP"
+        },
+        "note": "fatt 02 e 03 2007\nCarbon dating AD 770-1000\n\u00A3 99.000"
+      },
+      "collectionGroupId": "fd308037-eacb-78c9-2521-4fa293bd3645",
+      "exhibitions": []
+    }
+  },
+  "acquisition-francs": {
+    "inventoryNumber": "CER-01-18",
+    "status": "Ready",
+    "mapped": [
+      {
+        "field": "GroupNumber",
+        "text": "01",
+        "column": 1,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "Title",
+        "text": "Coppa",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "ItemNumber",
+        "text": "18",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "AcquisitionSource",
+        "text": "Paris, Drouot-Richelieu",
+        "column": 5,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "AcquisitionSource",
+        "text": "Jean Dupont, Paris",
+        "column": 5,
+        "line": 1,
+        "guessed": false
+      },
+      {
+        "field": "AcquisitionDate",
+        "text": "21 02 1992",
+        "column": 5,
+        "line": 2,
+        "parsed": "1992-02-21",
+        "guessed": false
+      },
+      {
+        "field": "AcquisitionLot",
+        "text": "112",
+        "column": 5,
+        "line": 3,
+        "guessed": false
+      },
+      {
+        "field": "AcquisitionPrice",
+        "text": "Fr. 62.000",
+        "column": 5,
+        "line": 3,
+        "parsed": {
+          "amount": 62000,
+          "currency": "FRF"
+        },
+        "guessed": true
+      }
+    ],
+    "dropped": [],
+    "discarded": [],
+    "problems": [],
+    "warnings": [],
+    "dateUnresolved": false,
+    "listTexts": [
+      "CollectionGroup/CollectionGroup: CINA",
+      "Party/AcquisitionSource: Paris, Drouot-Richelieu Jean Dupont, Paris"
+    ],
+    "dimensionsUnclear": false,
+    "request": {
+      "inventoryNumber": "CER-01-18",
+      "title": "Coppa",
+      "acquisition": {
+        "method": "purchase",
+        "date": "1992-02-21",
+        "sourceId": "83d514fc-ac70-dc3c-30dd-7be7baff68d0",
+        "price": {
+          "amount": 62000,
+          "currency": "FRF"
+        },
+        "lot": "112",
+        "note": "Fr. 62.000"
+      },
+      "collectionGroupId": "fd308037-eacb-78c9-2521-4fa293bd3645",
+      "exhibitions": []
+    }
+  },
+  "acquisition-decimals": {
+    "inventoryNumber": "CER-01-19",
+    "status": "Ready",
+    "mapped": [
+      {
+        "field": "GroupNumber",
+        "text": "01",
+        "column": 1,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "Title",
+        "text": "Coppa",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "ItemNumber",
+        "text": "19",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "AcquisitionSource",
+        "text": "Christie\u0027s London",
+        "column": 5,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "AcquisitionDate",
+        "text": "4 aprile 2006",
+        "column": 5,
+        "line": 1,
+        "parsed": "2006-04-04",
+        "guessed": false
+      },
+      {
+        "field": "AcquisitionLot",
+        "text": "3",
+        "column": 5,
+        "line": 1,
+        "guessed": false
+      },
+      {
+        "field": "AcquisitionPrice",
+        "text": "\u00A3 8,645.00",
+        "column": 5,
+        "line": 2,
+        "parsed": {
+          "amount": 8645.00,
+          "currency": "GBP"
+        },
+        "guessed": false
+      }
+    ],
+    "dropped": [],
+    "discarded": [],
+    "problems": [],
+    "warnings": [],
+    "dateUnresolved": false,
+    "listTexts": [
+      "CollectionGroup/CollectionGroup: CINA",
+      "Party/AcquisitionSource: Christie\u0027s London"
+    ],
+    "dimensionsUnclear": false,
+    "request": {
+      "inventoryNumber": "CER-01-19",
+      "title": "Coppa",
+      "acquisition": {
+        "method": "purchase",
+        "date": "2006-04-04",
+        "sourceId": "a29e065d-df1c-0dca-e0ff-4cb6ff0eddc2",
+        "price": {
+          "amount": 8645.00,
+          "currency": "GBP"
+        },
+        "lot": "3"
+      },
+      "collectionGroupId": "fd308037-eacb-78c9-2521-4fa293bd3645",
+      "exhibitions": []
+    }
+  },
+  "acquisition-dashes": {
+    "inventoryNumber": "CER-01-20",
+    "status": "Ready",
+    "mapped": [
+      {
+        "field": "GroupNumber",
+        "text": "01",
+        "column": 1,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "Title",
+        "text": "Coppa",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "ItemNumber",
+        "text": "20",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "AcquisitionSource",
+        "text": "ADER, Paris",
+        "column": 5,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "AcquisitionDate",
+        "text": "27-11-2018",
+        "column": 5,
+        "line": 1,
+        "parsed": "2018-11-27",
+        "guessed": false
+      },
+      {
+        "field": "AcquisitionLot",
+        "text": "147",
+        "column": 5,
+        "line": 2,
+        "guessed": false
+      }
+    ],
+    "dropped": [],
+    "discarded": [],
+    "problems": [],
+    "warnings": [],
+    "dateUnresolved": false,
+    "listTexts": [
+      "CollectionGroup/CollectionGroup: CINA",
+      "Party/AcquisitionSource: ADER, Paris"
+    ],
+    "dimensionsUnclear": false,
+    "request": {
+      "inventoryNumber": "CER-01-20",
+      "title": "Coppa",
+      "acquisition": {
+        "method": "purchase",
+        "date": "2018-11-27",
+        "sourceId": "ed8fbf87-30aa-9344-8c29-fa31e91586d9",
+        "lot": "147"
+      },
+      "collectionGroupId": "fd308037-eacb-78c9-2521-4fa293bd3645",
+      "exhibitions": []
+    }
+  },
+  "exhibitions": {
+    "inventoryNumber": "CER-01-21",
+    "status": "Ready",
+    "mapped": [
+      {
+        "field": "GroupNumber",
+        "text": "01",
+        "column": 1,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "Title",
+        "text": "Coppa",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "ItemNumber",
+        "text": "21",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "Exhibitions",
+        "text": "IL MONTEFELTRO E L\u0027ORIENTE, Palazzo Ducale, Urbino, Giugno - Ottobre 2018",
+        "column": 7,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "Exhibitions",
+        "text": "ARTE OTTOMANA, Genova",
+        "column": 7,
+        "line": 3,
+        "guessed": false
+      }
+    ],
+    "dropped": [],
+    "discarded": [],
+    "problems": [],
+    "warnings": [],
+    "dateUnresolved": false,
+    "listTexts": [
+      "CollectionGroup/CollectionGroup: CINA"
+    ],
+    "dimensionsUnclear": false,
+    "request": {
+      "inventoryNumber": "CER-01-21",
+      "title": "Coppa",
+      "collectionGroupId": "fd308037-eacb-78c9-2521-4fa293bd3645",
+      "exhibitions": [
+        "IL MONTEFELTRO E L\u0027ORIENTE, Palazzo Ducale, Urbino, Giugno - Ottobre 2018",
+        "ARTE OTTOMANA, Genova"
+      ]
+    }
+  },
+  "catalogue-entry": {
+    "inventoryNumber": "CER-01-22",
+    "status": "Ready",
+    "mapped": [
+      {
+        "field": "GroupNumber",
+        "text": "01",
+        "column": 1,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "Title",
+        "text": "Coppa",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "ItemNumber",
+        "text": "22",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "CatalogueEntry",
+        "text": "A PARCEL GILT SILVER BOWL\nOTTOMAN BALKANS, 16TH CENTURY",
+        "column": 8,
+        "line": 0,
+        "guessed": false
+      }
+    ],
+    "dropped": [],
+    "discarded": [],
+    "problems": [],
+    "warnings": [],
+    "dateUnresolved": false,
+    "listTexts": [
+      "CollectionGroup/CollectionGroup: CINA"
+    ],
+    "dimensionsUnclear": false,
+    "request": {
+      "inventoryNumber": "CER-01-22",
+      "title": "Coppa",
+      "collectionGroupId": "fd308037-eacb-78c9-2521-4fa293bd3645",
+      "exhibitions": [],
+      "catalogueEntries": {
+        "en": "A PARCEL GILT SILVER BOWL\nOTTOMAN BALKANS, 16TH CENTURY"
+      }
+    }
+  },
+  "labelled-dimensions": {
+    "inventoryNumber": "CER-01-23",
+    "status": "Ready",
+    "mapped": [
+      {
+        "field": "GroupNumber",
+        "text": "01",
+        "column": 1,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "Title",
+        "text": "Vaso",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "ItemNumber",
+        "text": "23",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "Dimensions",
+        "text": "h 30 x l 45 cm",
+        "column": 2,
+        "line": 1,
+        "guessed": false
+      }
+    ],
+    "dropped": [],
+    "discarded": [],
+    "problems": [],
+    "warnings": [],
+    "dateUnresolved": false,
+    "listTexts": [
+      "CollectionGroup/CollectionGroup: CINA"
+    ],
+    "dimensionsText": "h 30 x l 45 cm",
+    "dimensionsUnclear": false,
+    "request": {
+      "inventoryNumber": "CER-01-23",
+      "title": "Vaso",
+      "dimensions": "h 30 x l 45 cm",
+      "collectionGroupId": "fd308037-eacb-78c9-2521-4fa293bd3645",
+      "exhibitions": [],
+      "height": {
+        "value": 30,
+        "unitId": "0193a1c0-0000-7000-8000-000000000002"
+      },
+      "length": {
+        "value": 45,
+        "unitId": "0193a1c0-0000-7000-8000-000000000002"
+      }
+    }
+  },
+  "unclear-dimensions": {
+    "inventoryNumber": "CER-01-24",
+    "status": "Problem",
+    "mapped": [
+      {
+        "field": "GroupNumber",
+        "text": "01",
+        "column": 1,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "Title",
+        "text": "Vaso",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "ItemNumber",
+        "text": "24",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "Dimensions",
+        "text": "h 30 x aperto 45 cm",
+        "column": 2,
+        "line": 1,
+        "guessed": false
+      }
+    ],
+    "dropped": [],
+    "discarded": [],
+    "problems": [
+      {
+        "field": "dimensions",
+        "text": "h 30 x aperto 45 cm",
+        "reason": "The measurements could not be read: enter them, or keep the text only, in the dimensions step."
+      }
+    ],
+    "warnings": [],
+    "dateUnresolved": false,
+    "listTexts": [
+      "CollectionGroup/CollectionGroup: CINA"
+    ],
+    "dimensionsText": "h 30 x aperto 45 cm",
+    "dimensionsUnclear": true,
+    "request": {
+      "inventoryNumber": "CER-01-24",
+      "title": "Vaso",
+      "dimensions": "h 30 x aperto 45 cm",
+      "collectionGroupId": "fd308037-eacb-78c9-2521-4fa293bd3645",
+      "exhibitions": []
+    }
+  },
+  "empty-row": {
+    "status": "Problem",
+    "mapped": [
+      {
+        "field": "GroupNumber",
+        "text": "01",
+        "column": 1,
+        "line": 0,
+        "guessed": false
+      }
+    ],
+    "dropped": [],
+    "discarded": [],
+    "problems": [
+      {
+        "field": "title",
+        "reason": "The row has no title."
+      },
+      {
+        "field": "inventoryNumber",
+        "reason": "The inventory number pattern \u0022{sheet}-{group:2}-{item:2}\u0022 needs a value this row does not have."
+      }
+    ],
+    "warnings": [],
+    "dateUnresolved": false,
+    "listTexts": [
+      "CollectionGroup/CollectionGroup: CINA"
+    ],
+    "dimensionsUnclear": false,
+    "request": {
+      "collectionGroupId": "fd308037-eacb-78c9-2521-4fa293bd3645",
+      "exhibitions": []
+    }
+  },
+  "group-from-heading-only": {
+    "inventoryNumber": "CER-03-25",
+    "status": "Ready",
+    "mapped": [
+      {
+        "field": "Title",
+        "text": "Coppa",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      },
+      {
+        "field": "ItemNumber",
+        "text": "25",
+        "column": 2,
+        "line": 0,
+        "guessed": false
+      }
+    ],
+    "dropped": [],
+    "discarded": [],
+    "problems": [],
+    "warnings": [],
+    "dateUnresolved": false,
+    "listTexts": [
+      "CollectionGroup/CollectionGroup: CINA"
+    ],
+    "dimensionsUnclear": false,
+    "request": {
+      "inventoryNumber": "CER-03-25",
+      "title": "Coppa",
+      "collectionGroupId": "fd308037-eacb-78c9-2521-4fa293bd3645",
+      "exhibitions": []
+    }
+  }
+}

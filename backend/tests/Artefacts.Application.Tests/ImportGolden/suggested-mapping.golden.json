@@ -1,0 +1,125 @@
+{
+  "columns": [
+    {
+      "column": 1,
+      "heading": "Gruppo e numero",
+      "lines": [
+        {
+          "target": "groupNumber",
+          "detector": "groupNumber",
+          "continues": false
+        },
+        {
+          "target": "catalogueNumber",
+          "detector": "catalogueNumber",
+          "continues": false
+        },
+        {
+          "target": "storageLocation",
+          "detector": "locationCode",
+          "continues": false
+        }
+      ],
+      "rest": "holder"
+    },
+    {
+      "column": 2,
+      "heading": "Nome File",
+      "lines": [
+        {
+          "target": "title",
+          "detector": "itemTitle",
+          "continues": true
+        },
+        {
+          "target": "dimensions",
+          "detector": "dimensions",
+          "continues": false
+        },
+        {
+          "target": "title",
+          "position": 0,
+          "continues": true
+        }
+      ],
+      "rest": "description"
+    },
+    {
+      "column": 3,
+      "heading": "Immagine"
+    },
+    {
+      "column": 4,
+      "heading": "Zona di Produzione\nData\nDinastia",
+      "lines": [
+        {
+          "target": "creationDate",
+          "detector": "historicalDate",
+          "continues": false
+        },
+        {
+          "target": "placeOfProduction",
+          "position": 0,
+          "continues": true
+        }
+      ],
+      "rest": "dynasty"
+    },
+    {
+      "column": 5,
+      "heading": "Provenienza",
+      "lines": [
+        {
+          "target": "acquisitionDate",
+          "detector": "calendarDate",
+          "continues": false
+        },
+        {
+          "target": "acquisitionLot",
+          "detector": "lot",
+          "continues": false
+        },
+        {
+          "target": "acquisitionPrice",
+          "detector": "money",
+          "continues": false
+        },
+        {
+          "target": "acquisitionSource",
+          "position": 0,
+          "continues": true
+        }
+      ],
+      "rest": "acquisitionNote"
+    },
+    {
+      "column": 6,
+      "heading": "Formato Immagine"
+    },
+    {
+      "column": 7,
+      "heading": "Mostre",
+      "target": "exhibitions"
+    },
+    {
+      "column": 8,
+      "heading": "William",
+      "target": "catalogueEntry",
+      "language": "en"
+    }
+  ],
+  "inventoryNumber": {
+    "pattern": "{sheet}-{group:2}-{item:2}",
+    "prefer": "catalogueNumber"
+  },
+  "language": "it",
+  "acquisitionMethod": "purchase",
+  "locationPatterns": [
+    "^(MI|GE|FI|RM|TO|VE|MO|BO)(\\s\u002B[A-Z]?\\d\u002B[A-Z]?)?$",
+    "^cella\\s*\\d\u002B$",
+    "^Beta\\s*\\d\u002B$"
+  ],
+  "dimensions": {
+    "defaultUnitId": "0193a1c0-0000-7000-8000-000000000002"
+  }
+}

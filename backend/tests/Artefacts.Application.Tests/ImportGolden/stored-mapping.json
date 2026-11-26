@@ -1,0 +1,101 @@
+{
+  "columns": [
+    {
+      "column": 2,
+      "heading": "Nome File",
+      "lines": [
+        {
+          "target": "itemNumber",
+          "detector": "itemTitle",
+          "continues": true
+        },
+        {
+          "target": "dimensions",
+          "detector": "dimensions",
+          "continues": false
+        },
+        {
+          "detector": "groupNumber",
+          "continues": false
+        }
+      ],
+      "rest": "description"
+    },
+    {
+      "column": 5,
+      "heading": "Provenienza",
+      "lines": [
+        {
+          "target": "acquisitionDate",
+          "detector": "calendarDate",
+          "continues": false
+        },
+        {
+          "target": "acquisitionLot",
+          "detector": "lot",
+          "continues": false
+        },
+        {
+          "target": "acquisitionPrice",
+          "detector": "money",
+          "continues": false
+        },
+        {
+          "target": "storageLocation",
+          "detector": "locationCode",
+          "continues": false
+        },
+        {
+          "target": "catalogueNumber",
+          "position": 0,
+          "continues": false
+        }
+      ],
+      "rest": "acquisitionSource"
+    },
+    {
+      "column": 4,
+      "heading": "Zona",
+      "lines": [
+        {
+          "target": "creationDate",
+          "detector": "historicalDate",
+          "continues": false
+        }
+      ],
+      "rest": "placeOfProduction"
+    },
+    {
+      "column": 7,
+      "heading": "Mostre",
+      "target": "exhibitions"
+    },
+    {
+      "column": 8,
+      "heading": "William",
+      "target": "catalogueEntry",
+      "language": "en"
+    },
+    {
+      "column": 9,
+      "heading": "Valore",
+      "target": "valuation"
+    }
+  ],
+  "inventoryNumber": {
+    "pattern": "{sheet}-{group:2}-{item:2}",
+    "prefer": "catalogueNumber"
+  },
+  "language": "it",
+  "acquisitionMethod": "purchase",
+  "locationPatterns": [
+    "^cella\\s*\\d+$"
+  ],
+  "dimensions": {
+    "defaultUnitId": "11111111-1111-1111-1111-111111111111",
+    "unlabelledOrder": [
+      "height",
+      "width"
+    ]
+  }
+}
