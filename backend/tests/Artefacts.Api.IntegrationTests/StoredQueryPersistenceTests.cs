@@ -62,6 +62,6 @@ public class StoredQueryPersistenceTests(ApiFactory factory)
         Assert.False(copy.IsSystem);
         Assert.Equal("query { artefacts { total } }", copy.Document);
         Assert.Equal("query { language }", system.Document);
-        await SaveAsync(system, copy);
+        await SaveAsync(copy); // not the system query: it would join the shared database's system list
     }
 }
