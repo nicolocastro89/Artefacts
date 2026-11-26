@@ -135,7 +135,7 @@ public class DiscardRuleTests
     public void Line_discarded_by_content()
     {
         var acquisition = MappingSuggestion.Rules.Acquisition(2, "Provenienza");
-        var rule = acquisition with { Lines = [new(null, LineDetector.Money), .. acquisition.Lines!] };
+        var rule = acquisition with { Lines = [new(null, DetectorIds.Money), .. acquisition.Lines!] };
 
         var mapped = Map(rule, "Sotheby's London\n12 06 1990\n£ 7.865");
 

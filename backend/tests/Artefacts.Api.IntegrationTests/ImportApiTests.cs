@@ -43,7 +43,7 @@ public class ImportApiTests(ApiFactory factory)
 
         var columns = await (await _client.GetAsync($"/api/imports/{job.Id}/columns")).ReadAsync<ImportColumnsDto>();
         Assert.Contains(columns.Columns, c => c.Heading == "Nome File" && c.Samples.Contains("02. Piatto Celadon"));
-        Assert.True(columns.Columns.Single(c => c.Column == 2).HitRates[LineDetector.ItemTitle] > 0);
+        Assert.True(columns.Columns.Single(c => c.Column == 2).HitRates[DetectorIds.ItemTitle] > 0);
         Assert.True(File.Exists(Path.Combine(StagingDirectory(job.Id), "pictures", "1.jpg")));
     }
 

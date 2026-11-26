@@ -128,7 +128,7 @@ public class ImportMappingTests
     public void A_column_without_a_rest_field_reports_its_unmatched_lines()
     {
         var mapping = new ImportMapping(
-            [new ColumnRule(5, "Provenienza", Lines: [new LineRule(ImportField.AcquisitionLot, LineDetector.Lot)])],
+            [new ColumnRule(5, "Provenienza", Lines: [new LineRule(ImportField.AcquisitionLot, DetectorIds.Lot)])],
             new InventoryNumberPattern("X-{row}"));
 
         var mapped = MappingEngine.Map(new Dictionary<int, string> { [5] = "lot 3\nacquistato fuori asta" }, mapping, Headings);

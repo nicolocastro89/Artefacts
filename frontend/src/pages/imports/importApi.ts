@@ -8,7 +8,8 @@ export type ImportMapping = Schemas['ImportMapping']
 export type ColumnRule = Schemas['ColumnRule']
 export type LineRule = Schemas['LineRule']
 export type ImportField = NonNullable<Schemas['ImportField']>
-export type LineDetector = NonNullable<Schemas['LineDetector']>
+/** A detector's identifier: a built-in one (see DETECTORS) or, later, a user-defined one. */
+export type LineDetector = string
 export type ColumnSummary = Schemas['ColumnSummary']
 export type ImportReview = Schemas['ImportReviewDto']
 export type ReviewRow = Schemas['ReviewRowDto']

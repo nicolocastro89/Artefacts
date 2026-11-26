@@ -36,12 +36,12 @@ public enum ImportField
 }
 
 /// <summary>
-/// One line rule of a column: lines recognised by <see cref="Detector"/>, or the line at <see cref="Position"/>
+/// One line rule of a column: lines recognised by the detector with the identifier <see cref="Detector"/> (see <see cref="DetectorRegistry"/>), or the line at <see cref="Position"/>
 /// (0-based among the cell's non-empty lines), go to <see cref="Target"/>. A rule without a target discards the lines
 /// it matches: they are imported nowhere. With <see cref="Continues"/>, unmatched lines that directly follow go to the
 /// same field (a title or a place written over several lines); a discarding rule cannot continue.
 /// </summary>
-public sealed record LineRule(ImportField? Target, LineDetector? Detector = null, int? Position = null, bool Continues = false)
+public sealed record LineRule(ImportField? Target, string? Detector = null, int? Position = null, bool Continues = false)
 {
     [JsonIgnore] public bool Discards => Target is null;
 }

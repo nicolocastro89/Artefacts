@@ -44,8 +44,10 @@ public static class MappingEngine
 
     private static string Key(string heading) => SheetLayoutReader.Clean(heading).ToLowerInvariant();
 
-    public static MappedRecord Map(IReadOnlyDictionary<int, string> cells, ImportMapping mapping, IReadOnlyDictionary<int, string> headings)
+    public static MappedRecord Map(IReadOnlyDictionary<int, string> cells, ImportMapping mapping, IReadOnlyDictionary<int, string> headings,
+        DetectorRegistry? detectors = null)
     {
+        detectors ??= DetectorRegistry.BuiltIn;
         var values = new List<MappedValue>();
         var dropped = new List<string>();
         var discarded = new List<string>();
@@ -53,9 +55,9 @@ public static class MappingEngine
         {
             if (rule.Ignored || !cells.TryGetValue(column, out var text) || string.IsNullOrWhiteSpace(text)) continue;
             if (rule.UsesLines)
-                new LineAssigner(column, rule, mapping, values, dropped, discarded, headings.GetValueOrDefault(column)).Assign(text);
+                new LineAssigner(column, rule, mapping, detectors, values, dropped, discarded, headings.GetValueOrDefault(column)).Assign(text);
             else
-                MapWholeCell(column, rule.Target!.Value, text, mapping, values);
+                MapWholeCell(column, rule.Target!.Value, text, detectors, values);
         }
 
         return new MappedRecord(values, dropped, discarded);
@@ -85,7 +87,7 @@ public static class MappingEngine
         return result;
     }
 
-    private static void MapWholeCell(int column, ImportField field, string text, ImportMapping mapping, List<MappedValue> values)
+    private static void MapWholeCell(int column, ImportField field, string text, DetectorRegistry detectors, List<MappedValue> values)
     {
         var lines = Lines(text);
         if (lines.Count == 0) return;
@@ -107,21 +109,22 @@ public static class MappingEngine
             : string.Join(" ", lines.Select(l => l.Text));
         var detection = field switch
         {
-            ImportField.CreationDate => Detectors.Detect(LineDetector.HistoricalDate, joined)
+            ImportField.CreationDate => detectors.Detect(DetectorIds.HistoricalDate, joined)
                                         ?? new Detection(joined, new ParsedDateText(joined, null)),
-            ImportField.AcquisitionDate => Detectors.Detect(LineDetector.CalendarDate, joined),
-            ImportField.AcquisitionPrice or ImportField.Valuation => Detectors.Detect(LineDetector.Money, joined),
-            ImportField.CatalogueNumber => Detectors.Detect(LineDetector.CatalogueNumber, joined),
+            ImportField.AcquisitionDate => detectors.Detect(DetectorIds.CalendarDate, joined),
+            ImportField.AcquisitionPrice or ImportField.Valuation => detectors.Detect(DetectorIds.Money, joined),
+            ImportField.CatalogueNumber => detectors.Detect(DetectorIds.CatalogueNumber, joined),
             _ => null,
         };
         values.Add(new MappedValue(field, joined, column, 0, detection?.Parsed, detection?.Guessed ?? false));
     }
 
     private sealed class LineAssigner(
-        int column, ColumnRule rule, ImportMapping mapping, List<MappedValue> values, List<string> dropped, List<string> discarded,
+        int column, ColumnRule rule, ImportMapping mapping, DetectorRegistry detectors, List<MappedValue> values, List<string> dropped, List<string> discarded,
         string? heading)
     {
         private readonly int _firstValue = values.Count;
+        private readonly DetectionContext context = DetectionContext.For(mapping);
 
         /// <summary>True when some line of the cell is a date the rules understand.</summary>
         private bool _cellHasDate;
@@ -168,14 +171,14 @@ public static class MappingEngine
                 if (lineRule.Detector is { } detector)
                 {
                     // One item number per row: a later numbered line ("2 Khorassan sezione") is text of its own.
-                    if (detector == LineDetector.ItemTitle && Filled(ImportField.ItemNumber)) continue;
+                    if (detector == DetectorIds.ItemTitle && Filled(ImportField.ItemNumber)) continue;
                     var consumedNext = false;
-                    var detection = Detectors.Detect(detector, text, mapping.LocationPatterns);
+                    var detection = detectors.Detect(detector, text, context);
                     if (detection is null) continue;
                     // A line that only looks like a date gives way to a real date elsewhere in the cell.
                     if (detection.Parsed is ParsedDateText { Interpretation: null } && _cellHasDate && !JoinsWithNext(detection, next)) continue;
 
-                    if (detector == LineDetector.HistoricalDate && next is not null && JoinsDate(detection, next, out var joined))
+                    if (detector == DetectorIds.HistoricalDate && next is not null && JoinsDate(detection, next, out var joined))
                     {
                         detection = joined;
                         consumedNext = true;

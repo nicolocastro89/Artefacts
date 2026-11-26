@@ -5962,20 +5962,6 @@
           }
         }
       },
-      "LineDetector": {
-        "enum": [
-          "itemTitle",
-          "groupNumber",
-          "dimensions",
-          "historicalDate",
-          "calendarDate",
-          "lot",
-          "money",
-          "catalogueNumber",
-          "locationCode",
-          null
-        ]
-      },
       "LineRule": {
         "required": [
           "target"
@@ -5993,13 +5979,9 @@
             ]
           },
           "detector": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "$ref": "#/components/schemas/LineDetector"
-              }
+            "type": [
+              "null",
+              "string"
             ]
           },
           "position": {

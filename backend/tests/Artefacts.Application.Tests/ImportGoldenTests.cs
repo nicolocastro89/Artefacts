@@ -99,7 +99,7 @@ public class ImportGoldenTests
         Assert.Equal(Normalise(mappingJson), Normalise(ImportJson.Write(mapping)));
         Assert.Equal(Normalise(decisionsJson), Normalise(ImportJson.Write(decisions)));
         // Every field and detector the fixture names is a real one: renaming either would orphan stored mappings.
-        Assert.Contains(mapping.Columns.SelectMany(c => c.Lines ?? []), l => l.Detector == LineDetector.Money && l.Target == ImportField.AcquisitionPrice);
+        Assert.Contains(mapping.Columns.SelectMany(c => c.Lines ?? []), l => l.Detector == DetectorIds.Money && l.Target == ImportField.AcquisitionPrice);
         Assert.Contains(mapping.Columns, c => c.Target == ImportField.CatalogueEntry && c.Language == "en");
         Assert.NotEmpty(decisions.Places);
         Assert.NotEmpty(decisions.Dates);

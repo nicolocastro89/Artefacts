@@ -4,7 +4,7 @@ namespace Artefacts.Application.Tests;
 
 public class ImportDetectorTests
 {
-    private static Detection? Detect(LineDetector detector, string line) => Detectors.Detect(detector, line);
+    private static Detection? Detect(string detector, string line) => DetectorRegistry.BuiltIn.Detect(detector, line);
 
     [Theory]
     [InlineData("01. Coppa Celadon", "01", "Coppa Celadon")]
@@ -20,7 +20,7 @@ public class ImportDetectorTests
     [InlineData("29b-B20C sezione di tappeto", "29b", "B20C sezione di tappeto")]
     public void Item_title_gives_number_and_title(string line, string item, string title)
     {
-        var d = Detect(LineDetector.ItemTitle, line)!;
+        var d = Detect(DetectorIds.ItemTitle, line)!;
         Assert.Equal(item, d.ItemNumber);
         Assert.Equal(title, d.Text);
     }
@@ -31,7 +31,7 @@ public class ImportDetectorTests
     [InlineData("con circoli")]
     [InlineData("01.")]
     public void Item_title_ignores_measurements_and_plain_text(string line) =>
-        Assert.Null(Detect(LineDetector.ItemTitle, line));
+        Assert.Null(Detect(DetectorIds.ItemTitle, line));
 
     [Theory]
     [InlineData("diam 17,6 x h 7")]
@@ -41,13 +41,13 @@ public class ImportDetectorTests
     [InlineData("cm. 13,9 x 19,9")]
     [InlineData("diam 34,6")]
     [InlineData("27,9 x 36 cm")]
-    public void Dimensions_are_recognised(string line) => Assert.NotNull(Detect(LineDetector.Dimensions, line));
+    public void Dimensions_are_recognised(string line) => Assert.NotNull(Detect(DetectorIds.Dimensions, line));
 
     [Theory]
     [InlineData("con circoli")]
     [InlineData("DA MONTARE")]
     [InlineData("Sotheby's London")]
-    public void Plain_text_is_not_dimensions(string line) => Assert.Null(Detect(LineDetector.Dimensions, line));
+    public void Plain_text_is_not_dimensions(string line) => Assert.Null(Detect(DetectorIds.Dimensions, line));
 
     [Theory]
     [InlineData("12 06 1990", 1990, 6, 12, null)]
@@ -59,7 +59,7 @@ public class ImportDetectorTests
     [InlineData("21 02 14", 2014, 2, 21, null)]
     public void Calendar_dates_are_found_anywhere_and_leave_the_rest(string line, int y, int m, int d, string? rest)
     {
-        var detection = Detect(LineDetector.CalendarDate, line)!;
+        var detection = Detect(DetectorIds.CalendarDate, line)!;
         Assert.Equal(new DateOnly(y, m, d), detection.Parsed);
         Assert.Equal(rest, detection.Remainder);
     }
@@ -69,7 +69,7 @@ public class ImportDetectorTests
     [InlineData("Carbon dating AD 527-621")]
     [InlineData("£ 7.865")]
     public void Impossible_or_absent_dates_are_not_calendar_dates(string line) =>
-        Assert.Null(Detect(LineDetector.CalendarDate, line));
+        Assert.Null(Detect(DetectorIds.CalendarDate, line));
 
     [Theory]
     [InlineData("lot 170 £ 7.865", "170", "£ 7.865")]
@@ -78,7 +78,7 @@ public class ImportDetectorTests
     [InlineData("lot 112  Fr. 62.000", "112", "Fr. 62.000")]
     public void Lot_passes_on_the_rest_of_the_line(string line, string lot, string? rest)
     {
-        var d = Detect(LineDetector.Lot, line)!;
+        var d = Detect(DetectorIds.Lot, line)!;
         Assert.Equal(lot, d.Text);
         Assert.Equal(rest, d.Remainder);
     }
@@ -94,7 +94,7 @@ public class ImportDetectorTests
     [InlineData("1.200 euro", 1200, "EUR", true)]
     public void Money_reads_currency_and_separators(string line, double amount, string currency, bool guessed)
     {
-        var d = Detect(LineDetector.Money, line)!;
+        var d = Detect(DetectorIds.Money, line)!;
         Assert.Equal(new ParsedMoney((decimal)amount, currency), d.Parsed);
         Assert.Equal(guessed, d.Guessed);
     }
@@ -103,13 +103,13 @@ public class ImportDetectorTests
     [InlineData("Galleria C4486")]
     [InlineData("Carbon dating AD 527-621")]
     [InlineData("acquistato fuori asta")]
-    public void Text_without_a_currency_is_not_money(string line) => Assert.Null(Detect(LineDetector.Money, line));
+    public void Text_without_a_currency_is_not_money(string line) => Assert.Null(Detect(DetectorIds.Money, line));
 
     [Theory]
     [InlineData("W.389", "W.389")]
     [InlineData("W. 390", "W.390")]
     public void Catalogue_numbers_are_recognised(string line, string expected) =>
-        Assert.Equal(expected, Detect(LineDetector.CatalogueNumber, line)!.Text);
+        Assert.Equal(expected, Detect(DetectorIds.CatalogueNumber, line)!.Text);
 
     [Theory]
     [InlineData("MI F3", true)]
@@ -119,7 +119,7 @@ public class ImportDetectorTests
     [InlineData("Rossetti", false)]
     [InlineData("AB", false)]
     public void Location_codes_follow_the_patterns(string line, bool expected) =>
-        Assert.Equal(expected, Detect(LineDetector.LocationCode, line) is not null);
+        Assert.Equal(expected, Detect(DetectorIds.LocationCode, line) is not null);
 
     [Theory]
     [InlineData("fine XII inizio XIII", true)]
@@ -128,7 +128,7 @@ public class ImportDetectorTests
     [InlineData("Joumada I 966", false)]
     public void Historical_date_lines_include_ones_the_rules_do_not_understand(string line, bool understood)
     {
-        var d = Detect(LineDetector.HistoricalDate, line)!;
+        var d = Detect(DetectorIds.HistoricalDate, line)!;
         Assert.Equal(understood, ((ParsedDateText)d.Parsed!).Interpretation is not null);
     }
 
@@ -138,11 +138,11 @@ public class ImportDetectorTests
     [InlineData("Qinghai Dulan VIII")]
     [InlineData("Sung")]
     [InlineData("Dominicus Custos")]
-    public void Places_and_dynasties_are_not_dates(string line) => Assert.Null(Detect(LineDetector.HistoricalDate, line));
+    public void Places_and_dynasties_are_not_dates(string line) => Assert.Null(Detect(DetectorIds.HistoricalDate, line));
 
     [Theory]
     [InlineData("01.")]
     [InlineData("01. ")]
     [InlineData("1")]
-    public void Group_numbers_are_recognised(string line) => Assert.Equal(line.Trim().TrimEnd('.'), Detect(LineDetector.GroupNumber, line)!.Text);
+    public void Group_numbers_are_recognised(string line) => Assert.Equal(line.Trim().TrimEnd('.'), Detect(DetectorIds.GroupNumber, line)!.Text);
 }

@@ -4,37 +4,6 @@ using Artefacts.Domain.Dating;
 
 namespace Artefacts.Application.Imports;
 
-/// <summary>What a line can be recognised as.</summary>
-public enum LineDetector
-{
-    /// <summary>"NN. Title": an item number and a title.</summary>
-    ItemTitle = 0,
-
-    /// <summary>A bare group number such as "01.".</summary>
-    GroupNumber = 1,
-
-    /// <summary>Measurements: cm, diam, h, or "n x n".</summary>
-    Dimensions = 2,
-
-    /// <summary>A historical date, or text that looks like one (to be resolved in the dates step).</summary>
-    HistoricalDate = 3,
-
-    /// <summary>A calendar date (dd mm yyyy, dd-mm-yyyy, d month yyyy) anywhere in the line.</summary>
-    CalendarDate = 4,
-
-    /// <summary>An auction lot ("lot 170", "lotto 12") anywhere in the line.</summary>
-    Lot = 5,
-
-    /// <summary>An amount with a currency symbol or word anywhere in the line.</summary>
-    Money = 6,
-
-    /// <summary>A catalogue number such as "W.389".</summary>
-    CatalogueNumber = 7,
-
-    /// <summary>A storage location code matching one of the mapping's location patterns.</summary>
-    LocationCode = 8,
-}
-
 /// <summary>
 /// A recognised line: the recognised text, the parsed value when there is one, and the text left over (before and
 /// after the match) for further rules. <see cref="Guessed"/> marks a parse that relied on a convention, such as a
@@ -58,23 +27,16 @@ public static partial class Detectors
         @"^Beta\s*\d+$",
     ];
 
-    public static Detection? Detect(LineDetector detector, string line, IReadOnlyList<string>? locationPatterns = null) => detector switch
-    {
-        LineDetector.ItemTitle => ItemTitle(line),
-        LineDetector.GroupNumber => GroupNumberRegex().IsMatch(line) ? new Detection(line.Trim().TrimEnd('.').Trim()) : null,
-        LineDetector.Dimensions => IsDimensions(line) ? new Detection(line.Trim()) : null,
-        LineDetector.HistoricalDate => HistoricalDate(line),
-        LineDetector.CalendarDate => CalendarDate(line),
-        LineDetector.Lot => Lot(line),
-        LineDetector.Money => Money(line),
-        LineDetector.CatalogueNumber => CatalogueNumber(line),
-        LineDetector.LocationCode => LocationCode(line, locationPatterns ?? DefaultLocationPatterns),
-        _ => null,
-    };
+    // The per-kind recognisers below are registered as detectors in DetectorRegistry.BuiltIn.
+
+    public static Detection? GroupNumber(string line) =>
+        GroupNumberRegex().IsMatch(line) ? new Detection(line.Trim().TrimEnd('.').Trim()) : null;
+
+    public static Detection? Dimensions(string line) => IsDimensions(line) ? new Detection(line.Trim()) : null;
 
     // ---------- item title: "01. Coppa Celadon", "02a Frammento", "01.Corano" ----------
 
-    private static Detection? ItemTitle(string line)
+    public static Detection? ItemTitle(string line)
     {
         var m = ItemTitleRegex().Match(line.Trim());
         // "27.5 x 30" and "3 x 4" are measurements, not item 27 or 3x; "05. 2 piastrelle" is item 5.
@@ -96,7 +58,7 @@ public static partial class Detectors
     /// A line the date rules interpret, or one that looks like a date they do not know (it starts with a number, a
     /// Roman numeral or a date word, or is a short line with a year in it), so that it reaches the dates step.
     /// </summary>
-    private static Detection? HistoricalDate(string line)
+    public static Detection? HistoricalDate(string line)
     {
         var text = line.Trim();
         var parsed = HistoricalDateParser.TryParse(text);
@@ -124,7 +86,7 @@ public static partial class Detectors
         ["sep"] = 9, ["sept"] = 9, ["oct"] = 10, ["dec"] = 12,
     };
 
-    private static Detection? CalendarDate(string line)
+    public static Detection? CalendarDate(string line)
     {
         foreach (Match m in NumericDateRegex().Matches(line))
         {
@@ -158,7 +120,7 @@ public static partial class Detectors
 
     // ---------- lot ----------
 
-    private static Detection? Lot(string line)
+    public static Detection? Lot(string line)
     {
         var m = LotRegex().Match(line);
         return m.Success ? Found(line, m, null, m.Groups["n"].Value) : null;
@@ -174,7 +136,7 @@ public static partial class Detectors
         ["eur"] = "EUR", ["euro"] = "EUR", ["gbp"] = "GBP", ["usd"] = "USD",
     };
 
-    private static Detection? Money(string line)
+    public static Detection? Money(string line)
     {
         var m = MoneyBeforeRegex().Match(line);
         if (!m.Success) m = MoneyAfterRegex().Match(line);
@@ -227,13 +189,13 @@ public static partial class Detectors
 
     // ---------- catalogue number and location codes ----------
 
-    private static Detection? CatalogueNumber(string line)
+    public static Detection? CatalogueNumber(string line)
     {
         var m = CatalogueNumberRegex().Match(line.Trim());
         return m.Success ? new Detection($"{m.Groups["p"].Value}.{m.Groups["n"].Value}") : null;
     }
 
-    private static Detection? LocationCode(string line, IReadOnlyList<string> patterns)
+    public static Detection? LocationCode(string line, IReadOnlyList<string> patterns)
     {
         var text = line.Trim();
         foreach (var pattern in patterns)

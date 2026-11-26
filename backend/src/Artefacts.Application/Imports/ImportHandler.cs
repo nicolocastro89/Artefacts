@@ -116,7 +116,7 @@ public sealed class ImportHandler(
         return new ImportColumnsDto(
             MappingSuggestion.Summarise(Headings(job), records),
             Enum.GetNames<ImportField>().Select(JsonName).ToList(),
-            Enum.GetNames<LineDetector>().Select(JsonName).ToList());
+            DetectorRegistry.BuiltIn.Ids);
     }
 
     public async Task<ImportMappingResult> SetMappingAsync(Guid id, ImportMapping? mapping, CancellationToken ct)
@@ -156,6 +156,8 @@ public sealed class ImportHandler(
                 var line = c.Lines![j];
                 if ((line.Detector is null) == (line.Position is null))
                     v.Add($"{key}.lines[{j}]", "A line rule recognises lines either by content or by position.");
+                if (line.Detector is { } detector && !DetectorRegistry.BuiltIn.Contains(detector))
+                    v.Add($"{key}.lines[{j}].detector", $"\"{detector}\" is not a known detector.");
                 if (line.Position is < 0) v.Add($"{key}.lines[{j}].position", "Line positions start at 0.");
                 if (line.Discards && line.Continues)
                     v.Add($"{key}.lines[{j}].continues", "A rule that discards lines cannot continue into the lines that follow.");

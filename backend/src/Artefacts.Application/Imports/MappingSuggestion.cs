@@ -9,24 +9,26 @@ public sealed record ColumnSummary(
     string Heading,
     IReadOnlyList<string> Samples,
     int FilledRows,
-    IReadOnlyDictionary<LineDetector, double> HitRates);
+    IReadOnlyDictionary<string, double> HitRates);
 
 /// <summary>Suggests a mapping from the column headings and the content of the first rows.</summary>
 public static class MappingSuggestion
 {
     public const int SampleRows = 20;
 
-    public static IReadOnlyList<ColumnSummary> Summarise(IReadOnlyDictionary<int, string> headings, IReadOnlyList<SheetRecord> records)
+    public static IReadOnlyList<ColumnSummary> Summarise(IReadOnlyDictionary<int, string> headings, IReadOnlyList<SheetRecord> records,
+        DetectorRegistry? detectors = null)
     {
+        detectors ??= DetectorRegistry.BuiltIn;
         var sample = records.Take(SampleRows).ToList();
         var columns = headings.Keys.Concat(records.SelectMany(r => r.Cells.Keys)).Distinct().Order();
         return columns.Select(column =>
         {
             var cells = sample.Select(r => r.Cells.GetValueOrDefault(column)).Where(c => !string.IsNullOrWhiteSpace(c)).Select(c => c!).ToList();
             var lines = cells.SelectMany(c => MappingEngine.Lines(c).Select(l => l.Text)).ToList();
-            var rates = Enum.GetValues<LineDetector>().ToDictionary(
-                d => d,
-                d => lines.Count == 0 ? 0 : Math.Round(lines.Count(l => Detectors.Detect(d, l) is not null) / (double)lines.Count, 2));
+            var rates = detectors.Ids.ToDictionary(
+                id => id,
+                id => lines.Count == 0 ? 0 : Math.Round(lines.Count(l => detectors.Detect(id, l) is not null) / (double)lines.Count, 2));
             return new ColumnSummary(column, headings.GetValueOrDefault(column) ?? "", cells.Take(3).ToList(),
                 records.Count(r => r.Cells.ContainsKey(column)), rates);
         }).ToList();
@@ -50,23 +52,23 @@ public static class MappingSuggestion
     public static class Rules
     {
         public static ColumnRule Holding(int column, string? heading) => new(column, heading,
-            Lines: [new(ImportField.GroupNumber, LineDetector.GroupNumber), new(ImportField.CatalogueNumber, LineDetector.CatalogueNumber),
-                new(ImportField.StorageLocation, LineDetector.LocationCode)],
+            Lines: [new(ImportField.GroupNumber, DetectorIds.GroupNumber), new(ImportField.CatalogueNumber, DetectorIds.CatalogueNumber),
+                new(ImportField.StorageLocation, DetectorIds.LocationCode)],
             Rest: ImportField.Holder);
 
         public static ColumnRule Title(int column, string? heading) => new(column, heading,
-            Lines: [new(ImportField.Title, LineDetector.ItemTitle, Continues: true), new(ImportField.Dimensions, LineDetector.Dimensions),
+            Lines: [new(ImportField.Title, DetectorIds.ItemTitle, Continues: true), new(ImportField.Dimensions, DetectorIds.Dimensions),
                 // A title written without its item number.
                 new(ImportField.Title, Position: 0, Continues: true)],
             Rest: ImportField.Description);
 
         public static ColumnRule Origin(int column, string? heading) => new(column, heading,
-            Lines: [new(ImportField.CreationDate, LineDetector.HistoricalDate), new(ImportField.PlaceOfProduction, Position: 0, Continues: true)],
+            Lines: [new(ImportField.CreationDate, DetectorIds.HistoricalDate), new(ImportField.PlaceOfProduction, Position: 0, Continues: true)],
             Rest: ImportField.Dynasty);
 
         public static ColumnRule Acquisition(int column, string? heading) => new(column, heading,
-            Lines: [new(ImportField.AcquisitionDate, LineDetector.CalendarDate), new(ImportField.AcquisitionLot, LineDetector.Lot),
-                new(ImportField.AcquisitionPrice, LineDetector.Money), new(ImportField.AcquisitionSource, Position: 0, Continues: true)],
+            Lines: [new(ImportField.AcquisitionDate, DetectorIds.CalendarDate), new(ImportField.AcquisitionLot, DetectorIds.Lot),
+                new(ImportField.AcquisitionPrice, DetectorIds.Money), new(ImportField.AcquisitionSource, Position: 0, Continues: true)],
             Rest: ImportField.AcquisitionNote);
     }
 
@@ -79,7 +81,7 @@ public static class MappingSuggestion
         var h = Fold(s.Heading);
         bool Has(params string[] words) => words.Any(h.Contains);
 
-        if (isFirst && (Has("gruppo", "numero", "colonna", "group", "number") || s.HitRates[LineDetector.GroupNumber] > 0.3))
+        if (isFirst && (Has("gruppo", "numero", "colonna", "group", "number") || s.HitRates[DetectorIds.GroupNumber] > 0.3))
             return Rules.Holding(s.Column, s.Heading);
         if (Has("nome", "titolo", "title", "oggetto")) return Rules.Title(s.Column, s.Heading);
         if (Has("zona", "produzione", "origine", "luogo")) return Rules.Origin(s.Column, s.Heading);
@@ -99,8 +101,8 @@ public static class MappingSuggestion
 
         // Unknown heading: an empty column is ignored; otherwise the content decides, and text is never lost.
         if (s.FilledRows == 0) return new ColumnRule(s.Column, s.Heading);
-        if (s.HitRates[LineDetector.Money] > 0.5) return Whole(s, ImportField.Valuation);
-        if (s.HitRates[LineDetector.Dimensions] > 0.5) return Whole(s, ImportField.Dimensions);
+        if (s.HitRates[DetectorIds.Money] > 0.5) return Whole(s, ImportField.Valuation);
+        if (s.HitRates[DetectorIds.Dimensions] > 0.5) return Whole(s, ImportField.Dimensions);
         return Whole(s, ImportField.Description);
     }
 

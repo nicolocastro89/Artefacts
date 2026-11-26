@@ -1257,11 +1257,9 @@ export interface components {
             /** Format: int32 */
             position: number;
         };
-        /** @enum {unknown} */
-        LineDetector: "itemTitle" | "groupNumber" | "dimensions" | "historicalDate" | "calendarDate" | "lot" | "money" | "catalogueNumber" | "locationCode" | null;
         LineRule: {
             target: null | components["schemas"]["ImportField"];
-            detector?: null | components["schemas"]["LineDetector"];
+            detector?: null | string;
             /** Format: int32 */
             position?: null | number;
             /** @default false */
