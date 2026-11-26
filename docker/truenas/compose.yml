@@ -1,0 +1,92 @@
+# Artefacts on TrueNAS SCALE: Apps > Discover Apps > Custom App > Install via YAML, then paste this file.
+# Before installing, edit the values under x-settings and the two host paths below (see README.md next to this file).
+#
+#   app       the catalogue (API + web pages)          http://<nas>:30080
+#   imgproxy  resized images, read straight from media  http://<nas>:30081 (the browser loads pictures from here)
+#   postgres  the database
+#
+# Pictures are plain files under the media path; the database holds everything else. Back up both.
+name: artefacts
+
+x-settings:
+  # Generate each with:  openssl rand -hex 32
+  db-password: &db-password "CHANGE-ME-database-password"
+  imgproxy-key: &imgproxy-key "CHANGE-ME-64-hex-characters"
+  imgproxy-salt: &imgproxy-salt "CHANGE-ME-64-hex-characters"
+  # The address browsers use to reach imgproxy: the NAS's name or IP and the imgproxy port below.
+  image-url: &image-url "http://truenas.local:30081"
+
+services:
+  postgres:
+    image: postgres:17.12
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: artefacts
+      POSTGRES_DB: artefacts
+      POSTGRES_PASSWORD: *db-password
+    volumes:
+      - /mnt/tank/apps/artefacts/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U artefacts -d artefacts"]
+      interval: 10s
+      timeout: 3s
+      retries: 30
+
+  # The app runs as UID 1654, not root: make the media directory its own before it starts.
+  media-permissions:
+    image: busybox:1.37
+    command: ["chown", "1654:1654", "/data/media"]
+    volumes:
+      - /mnt/tank/apps/artefacts/media:/data/media
+    restart: "no"
+
+  app:
+    # Built and loaded by hand (README.md, step 1); never pulled from a registry.
+    image: artefacts:0.1.0
+    pull_policy: never
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      media-permissions:
+        condition: service_completed_successfully
+    environment:
+      ConnectionStrings__Collection: "Host=postgres;Database=artefacts;Username=artefacts"
+      PGPASSWORD: *db-password # Npgsql reads the password from here, so it is written once above
+      Imgproxy__PublicBaseUrl: *image-url
+      Imgproxy__Key: *imgproxy-key
+      Imgproxy__Salt: *imgproxy-salt
+      # Already the image's defaults; listed so the file says how the app is set up.
+      Database__MigrateOnStartup: "true"
+      Storage__Provider: FileSystem
+      Storage__FileSystem__Root: /data/media
+    volumes:
+      - /mnt/tank/apps/artefacts/media:/data/media
+    ports:
+      - "30080:8080"
+
+  imgproxy:
+    image: darthsim/imgproxy:v4.0.24
+    restart: unless-stopped
+    environment:
+      IMGPROXY_BIND: ":8080"
+      IMGPROXY_KEY: *imgproxy-key
+      IMGPROXY_SALT: *imgproxy-salt
+      IMGPROXY_LOCAL_FILESYSTEM_ROOT: /media
+      IMGPROXY_ONLY_PRESETS: "true"
+      IMGPROXY_PRESETS: "thumb=resizing_type:fit/width:400/height:400/quality:80,web=resizing_type:fit/width:1600/height:1600/quality:85,print=resizing_type:fit/width:3000/height:3000/quality:92/format:jpg"
+      IMGPROXY_AUTO_WEBP: "true"
+      IMGPROXY_AUTO_ROTATE: "true"
+      IMGPROXY_STRIP_COLOR_PROFILE: "true"
+      IMGPROXY_MAX_SRC_RESOLUTION: "250"
+      IMGPROXY_MAX_SRC_FILE_SIZE: "262144000"
+      IMGPROXY_ALLOW_ORIGIN: "*"
+    volumes:
+      - /mnt/tank/apps/artefacts/media:/media:ro
+    ports:
+      - "30081:8080"
+    healthcheck:
+      test: ["CMD", "imgproxy", "health"]
+      interval: 10s
+      timeout: 3s
+      retries: 20

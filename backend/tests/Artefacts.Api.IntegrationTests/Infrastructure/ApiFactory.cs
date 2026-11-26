@@ -27,6 +27,9 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 
     public string MediaRoot { get; } = Path.Combine(Path.GetTempPath(), "artefacts-tests", Guid.NewGuid().ToString("N"));
 
+    /// <summary>A stand-in frontend build (index.html and one fingerprinted asset) served by the API.</summary>
+    public string FrontendRoot { get; } = CreateFrontendBuild();
+
     public string ConnectionString => _db.GetConnectionString();
 
     /// <summary>The SQL commands the API executes, for tests that count them.</summary>
@@ -47,7 +50,20 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
             ["Imgproxy:Salt"] = "68656C6C6F",
             ["Media:MaxUploadBytes"] = MaxUploadBytes.ToString(),
             ["Imports:PollSeconds"] = "1",
+            ["Frontend:Root"] = FrontendRoot,
         }));
+    }
+
+    public const string FrontendIndex = "<!doctype html><title>Artefacts</title>";
+    public const string FrontendAsset = "/assets/index-abc123.js";
+
+    private static string CreateFrontendBuild()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "artefacts-tests", "frontend-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(Path.Combine(root, "assets"));
+        File.WriteAllText(Path.Combine(root, "index.html"), FrontendIndex);
+        File.WriteAllText(Path.Combine(root, FrontendAsset.TrimStart('/')), "console.log('artefacts')");
+        return root;
     }
 
     public async ValueTask InitializeAsync()
@@ -61,6 +77,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         await base.DisposeAsync();
         await _db.DisposeAsync();
         try { Directory.Delete(MediaRoot, recursive: true); } catch (DirectoryNotFoundException) { }
+        try { Directory.Delete(FrontendRoot, recursive: true); } catch (DirectoryNotFoundException) { }
     }
 }
 

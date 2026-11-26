@@ -8,6 +8,9 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 
+if (args is ["--health-check"])
+    return await HealthProbe.RunAsync();
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Build-time OpenAPI generation (GetDocument.Insider) builds the host without real configuration;
@@ -67,13 +70,14 @@ app.MapQueryEndpoints();
 app.MapPageEndpoints();
 app.MapSupportEndpoints();
 app.MapGraphQL("/graphql");
+app.MapFrontend();
 
 // Build step (see Artefacts.Api.csproj): write the GraphQL schema as SDL, next to the OpenAPI document, and exit.
 if (args is ["--export-graphql-schema", var schemaPath])
 {
     var executor = await app.Services.GetRequiredService<HotChocolate.Execution.IRequestExecutorProvider>().GetExecutorAsync();
     await File.WriteAllTextAsync(schemaPath, executor.Schema.ToString() + "\n");
-    return;
+    return 0;
 }
 
 if (app.Configuration.GetValue("Database:MigrateOnStartup", false))
@@ -82,6 +86,7 @@ if (app.Configuration.GetValue("Database:MigrateOnStartup", false))
     await scope.ServiceProvider.GetRequiredService<CollectionDbContext>().Database.MigrateAsync();
 }
 
-app.Run();
+await app.RunAsync();
+return 0;
 
 public partial class Program;
