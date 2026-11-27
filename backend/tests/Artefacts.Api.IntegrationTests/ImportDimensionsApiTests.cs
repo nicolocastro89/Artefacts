@@ -15,11 +15,10 @@ public class ImportDimensionsApiTests(ApiFactory factory)
 
     private async Task<Guid> ObjectTypeAsync() => (await _client.AddObjectTypeAsync(HttpExtensions.Unique("Ceramics"))).Id;
 
-    private async Task<List<ImportDimensionsDto>> DimensionsAsync(Guid id) =>
-        await (await _client.GetAsync($"/api/imports/{id}/dimensions")).ReadAsync<List<ImportDimensionsDto>>();
+    private Task<List<ImportResolutionItemDto>> DimensionsAsync(Guid id) => _client.ResolutionsAsync(id, ResolutionKindIds.Dimensions);
 
-    private async Task<List<ImportDimensionsDto>> SetDimensionsAsync(Guid id, params DimensionResolution[] resolutions) =>
-        await (await _client.PutJsonAsync($"/api/imports/{id}/dimensions", new SetDimensionResolutionsRequest(resolutions))).ReadAsync<List<ImportDimensionsDto>>();
+    private async Task<List<ImportResolutionItemDto>> SetDimensionsAsync(Guid id, params ImportResolution[] resolutions) =>
+        await (await _client.PutResolutionsAsync(id, ResolutionKindIds.Dimensions, resolutions)).ReadAsync<List<ImportResolutionItemDto>>();
 
     [Fact]
     public async Task Unclear_texts_are_listed_and_resolved_by_measurements_or_kept_as_text()
@@ -40,14 +39,14 @@ public class ImportDimensionsApiTests(ApiFactory factory)
         Assert.Contains(held.Rows.Single(r => r.SheetRow == 5).Fields, f => f.Field == ImportField.Dimensions && f.Value == "diam 17,6 x h 7 → H 7 cm · Ø 17.6 cm");
 
         var resolved = await SetDimensionsAsync(job.Id,
-            new DimensionResolution(unclear.Text, Height: new MeasurementInput(12, Cm), Width: new MeasurementInput(8, Cm)));
+            ResolutionTestHelpers.Measures(unclear.Text, height: new MeasurementInput(12, Cm), width: new MeasurementInput(8, Cm)));
 
-        Assert.Equal(12m, Assert.Single(resolved).Resolution!.Height!.Value);
+        Assert.Equal(12m, Assert.Single(resolved).Measurements().Height!.Value);
         var review = await _client.ReviewAsync(job.Id);
         Assert.Equal(3, review.Counts.Ready);
         Assert.Contains(review.Rows.Single(r => r.SheetRow == 3).Fields, f => f.Value == "chiuso 12 x 8; aperto 24 x 8 → H 12 cm · W 8 cm");
 
-        await SetDimensionsAsync(job.Id, new DimensionResolution(unclear.Text, KeepTextOnly: true));
+        await SetDimensionsAsync(job.Id, ResolutionTestHelpers.KeepText(unclear.Text));
         Assert.Contains((await _client.ReviewAsync(job.Id)).Rows.Single(r => r.SheetRow == 3).Fields, f => f.Value.EndsWith("(text only)"));
     }
 
@@ -56,12 +55,21 @@ public class ImportDimensionsApiTests(ApiFactory factory)
     {
         var job = await _client.StartImportAsync(ImportTestData.Ceramics(("01. Scatola\nmisure varie", "Cina\nXV", null)).Build(), await ObjectTypeAsync());
 
-        var empty = await _client.PutJsonAsync($"/api/imports/{job.Id}/dimensions", new SetDimensionResolutionsRequest([new DimensionResolution("misure varie")]));
+        var empty = await _client.PutResolutionsAsync(job.Id, ResolutionKindIds.Dimensions, ResolutionTestHelpers.Measures("misure varie"));
         Assert.Equal(HttpStatusCode.BadRequest, empty.StatusCode);
 
-        var badUnit = await _client.PutJsonAsync($"/api/imports/{job.Id}/dimensions", new SetDimensionResolutionsRequest(
-            [new DimensionResolution("misure varie", Height: new MeasurementInput(3, Guid.NewGuid()))]));
-        Assert.Contains("dimensions[0].height.unitId", (await badUnit.ValidationErrorsAsync()).Keys);
+        var badUnit = await _client.PutResolutionsAsync(job.Id, ResolutionKindIds.Dimensions,
+            ResolutionTestHelpers.Measures("misure varie", height: new MeasurementInput(3, Guid.NewGuid())));
+        Assert.Contains("resolutions[0].payload.height.unitId", (await badUnit.ValidationErrorsAsync()).Keys);
+    }
+
+    [Fact]
+    public async Task An_unknown_kind_of_resolution_is_not_found()
+    {
+        var job = await _client.StartImportAsync(ImportTestData.Ceramics(("01. Coppa", "Cina XV", null)).Build(), await ObjectTypeAsync());
+
+        Assert.Equal(HttpStatusCode.NotFound, (await _client.GetAsync($"/api/imports/{job.Id}/resolutions/colours")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await _client.PutResolutionsAsync(job.Id, "colours")).StatusCode);
     }
 
     [Fact]
@@ -129,13 +137,13 @@ public class ImportDimensionsApiTests(ApiFactory factory)
         var first = await _client.StartImportAsync(ImportTestData.Ceramics(($"01. Scatola\n{text}", "Cina\nXV", null)).Build(), type, templateId: template.Id);
         await _client.UseUniqueNumbersAsync(first);
         Assert.Single(await DimensionsAsync(first.Id));
-        await SetDimensionsAsync(first.Id, new DimensionResolution(text, Length: new MeasurementInput(12, Cm)));
+        await SetDimensionsAsync(first.Id, ResolutionTestHelpers.Measures(text, length: new MeasurementInput(12, Cm)));
         Assert.Equal(1, (await _client.CommitAndWaitAsync(first.Id)).ImportedRows);
 
         var second = await _client.StartImportAsync(ImportTestData.Ceramics(($"01. Vaso\n{text}", "Cina\nXV", null)).Build(), type, "tessuti.xlsx", template.Id);
 
         Assert.Equal([MeasureKind.Height], second.Mapping!.Dimensions!.UnlabelledOrder);
         var decided = Assert.Single(await DimensionsAsync(second.Id));
-        Assert.Equal(12m, decided.Resolution!.Length!.Value);
+        Assert.Equal(12m, decided.Measurements().Length!.Value);
     }
 }

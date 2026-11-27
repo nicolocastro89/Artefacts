@@ -2829,12 +2829,13 @@
         }
       }
     },
-    "/api/imports/{id}/dates": {
+    "/api/imports/{id}/resolutions/{kind}": {
       "get": {
         "tags": [
           "Imports"
         ],
-        "operationId": "getImportDates",
+        "summary": "The texts of one kind (dates, dimensions) the import cannot settle by rule, with their rows and decisions.",
+        "operationId": "getImportResolutions",
         "parameters": [
           {
             "name": "id",
@@ -2843,6 +2844,14 @@
             "schema": {
               "type": "string",
               "format": "uuid"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -2854,7 +2863,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ImportDateDto"
+                    "$ref": "#/components/schemas/ImportResolutionItemDto"
                   }
                 }
               }
@@ -2876,7 +2885,7 @@
         "tags": [
           "Imports"
         ],
-        "operationId": "setImportDates",
+        "operationId": "setImportResolutions",
         "parameters": [
           {
             "name": "id",
@@ -2886,13 +2895,21 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "kind",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SetDateResolutionsRequest"
+                "$ref": "#/components/schemas/SetImportResolutionsRequest"
               }
             }
           },
@@ -2906,124 +2923,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ImportDateDto"
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/imports/{id}/dimensions": {
-      "get": {
-        "tags": [
-          "Imports"
-        ],
-        "summary": "Dimensions texts whose measurements could not be read clearly, with their rows and decisions.",
-        "operationId": "getImportDimensions",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ImportDimensionsDto"
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Imports"
-        ],
-        "operationId": "setImportDimensions",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SetDimensionResolutionsRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ImportDimensionsDto"
+                    "$ref": "#/components/schemas/ImportResolutionItemDto"
                   }
                 }
               }
@@ -5866,36 +5766,6 @@
           }
         }
       },
-      "ImportDateDto": {
-        "required": [
-          "text",
-          "sheetRows",
-          "resolution"
-        ],
-        "type": "object",
-        "properties": {
-          "text": {
-            "type": "string"
-          },
-          "sheetRows": {
-            "type": "array",
-            "items": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          "resolution": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "$ref": "#/components/schemas/DateResolution"
-              }
-            ]
-          }
-        }
-      },
       "ImportDecisions": {
         "required": [
           "places",
@@ -5973,36 +5843,6 @@
               "string"
             ],
             "format": "date-time"
-          }
-        }
-      },
-      "ImportDimensionsDto": {
-        "required": [
-          "text",
-          "sheetRows",
-          "resolution"
-        ],
-        "type": "object",
-        "properties": {
-          "text": {
-            "type": "string"
-          },
-          "sheetRows": {
-            "type": "array",
-            "items": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          "resolution": {
-            "oneOf": [
-              {
-                "type": "null"
-              },
-              {
-                "$ref": "#/components/schemas/DimensionResolution"
-              }
-            ]
           }
         }
       },
@@ -6512,6 +6352,52 @@
             "items": {
               "type": "string"
             }
+          }
+        }
+      },
+      "ImportResolution": {
+        "required": [
+          "text",
+          "action"
+        ],
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "payload": { }
+        }
+      },
+      "ImportResolutionItemDto": {
+        "required": [
+          "text",
+          "sheetRows",
+          "resolution"
+        ],
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "sheetRows": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "resolution": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ImportResolution"
+              }
+            ]
           }
         }
       },
@@ -7616,36 +7502,19 @@
           }
         }
       },
-      "SetDateResolutionsRequest": {
+      "SetImportResolutionsRequest": {
         "required": [
-          "dates"
+          "resolutions"
         ],
         "type": "object",
         "properties": {
-          "dates": {
+          "resolutions": {
             "type": [
               "null",
               "array"
             ],
             "items": {
-              "$ref": "#/components/schemas/DateResolution"
-            }
-          }
-        }
-      },
-      "SetDimensionResolutionsRequest": {
-        "required": [
-          "dimensions"
-        ],
-        "type": "object",
-        "properties": {
-          "dimensions": {
-            "type": [
-              "null",
-              "array"
-            ],
-            "items": {
-              "$ref": "#/components/schemas/DimensionResolution"
+              "$ref": "#/components/schemas/ImportResolution"
             }
           }
         }

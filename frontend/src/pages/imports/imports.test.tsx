@@ -338,11 +338,11 @@ describe('places and dates steps', () => {
     const user = userEvent.setup()
     const { calls } = mockFetch({
       'GET /api/imports/j1': () => job({ state: 'readyForReview' }),
-      'GET /api/imports/j1/dates': () => [
+      'GET /api/imports/j1/resolutions/dates': () => [
         { text: "19 Dhu'l hijja 797 (4 Ottobre 1395)", sheetRows: [37], resolution: null },
-        { text: 'datato 1491', sheetRows: [12, 14], resolution: { text: 'datato 1491', earliestYear: 1491, latestYear: 1491 } },
+        { text: 'datato 1491', sheetRows: [12, 14], resolution: { text: 'datato 1491', action: 'range', payload: { earliestYear: 1491, latestYear: 1491 } } },
       ],
-      'PUT /api/imports/j1/dates': () => [],
+      'PUT /api/imports/j1/resolutions/dates': () => [],
     })
     renderWizard('/imports/j1?step=dates')
 
@@ -353,9 +353,9 @@ describe('places and dates steps', () => {
 
     await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true))
     expect(calls.find((c) => c.method === 'PUT')!.body).toEqual({
-      dates: [
-        { text: "19 Dhu'l hijja 797 (4 Ottobre 1395)", earliestYear: 1395, latestYear: 1395 },
-        { text: 'datato 1491', earliestYear: 1491, latestYear: 1491 },
+      resolutions: [
+        { text: "19 Dhu'l hijja 797 (4 Ottobre 1395)", action: 'range', payload: { earliestYear: 1395, latestYear: 1395 } },
+        { text: 'datato 1491', action: 'range', payload: { earliestYear: 1491, latestYear: 1491 } },
       ],
     })
   })
@@ -371,12 +371,12 @@ describe('dimensions step', () => {
     ...importFieldsRoute,
     ...importDetectorsRoute,
       'GET /api/imports/j1': () => job({ state: 'readyForReview', mapping: { ...mapping, dimensions: { defaultUnitId: 'u-cm', unlabelledOrder: [] } } }),
-      'GET /api/imports/j1/dimensions': () => [
+      'GET /api/imports/j1/resolutions/dimensions': () => [
         { text: 'chiuso 12 x 8; aperto 24 x 8', sheetRows: [4, 9], resolution: null },
         { text: 'misure varie', sheetRows: [12], resolution: null },
         { text: '30 x 20', sheetRows: [15], resolution: null },
       ],
-      'PUT /api/imports/j1/dimensions': () => [],
+      'PUT /api/imports/j1/resolutions/dimensions': () => [],
       'GET /api/imports/j1/review': () => review,
     })
     renderWizard('/imports/j1?step=dimensions')
@@ -394,17 +394,14 @@ describe('dimensions step', () => {
 
     await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true))
     expect(calls.find((c) => c.method === 'PUT')!.body).toEqual({
-      dimensions: [
+      resolutions: [
         {
           text: 'chiuso 12 x 8; aperto 24 x 8',
-          keepTextOnly: false,
-          height: { value: 12, unitId: 'u-cm' },
-          width: { value: 8, unitId: 'u-cm' },
-          length: null,
-          diameter: null,
+          action: 'measure',
+          payload: { height: { value: 12, unitId: 'u-cm' }, width: { value: 8, unitId: 'u-cm' }, length: null, diameter: null },
         },
-        { text: 'misure varie', keepTextOnly: true },
-        { text: '30 x 20', keepTextOnly: true },
+        { text: 'misure varie', action: 'keepText' },
+        { text: '30 x 20', action: 'keepText' },
       ],
     })
   })
@@ -413,7 +410,7 @@ describe('dimensions step', () => {
     mockFetch({ ...unitsRoute, ...importFieldsRoute,
     ...importDetectorsRoute,
     ...importFieldsRoute,
-    ...importDetectorsRoute, 'GET /api/imports/j1': () => job({ state: 'readyForReview' }), 'GET /api/imports/j1/dimensions': () => [] })
+    ...importDetectorsRoute, 'GET /api/imports/j1': () => job({ state: 'readyForReview' }), 'GET /api/imports/j1/resolutions/dimensions': () => [] })
     renderWizard('/imports/j1?step=dimensions')
 
     expect(await screen.findByText('The measurements of every dimensions text could be read.')).toBeInTheDocument()

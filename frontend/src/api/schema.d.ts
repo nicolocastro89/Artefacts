@@ -581,32 +581,16 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/imports/{id}/dates": {
+    "/api/imports/{id}/resolutions/{kind}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["getImportDates"];
-        put: operations["setImportDates"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/imports/{id}/dimensions": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Dimensions texts whose measurements could not be read clearly, with their rows and decisions. */
-        get: operations["getImportDimensions"];
-        put: operations["setImportDimensions"];
+        /** The texts of one kind (dates, dimensions) the import cannot settle by rule, with their rows and decisions. */
+        get: operations["getImportResolutions"];
+        put: operations["setImportResolutions"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1256,11 +1240,6 @@ export interface components {
             /** Format: int32 */
             imported: number;
         };
-        ImportDateDto: {
-            text: string;
-            sheetRows: number[];
-            resolution: null | components["schemas"]["DateResolution"];
-        };
         ImportDecisions: {
             places: components["schemas"]["PlaceDecision"][];
             dates: components["schemas"]["DateResolution"][];
@@ -1276,11 +1255,6 @@ export interface components {
             definition?: null | components["schemas"]["DetectorDefinition"];
             /** Format: date-time */
             updatedAt?: null | string;
-        };
-        ImportDimensionsDto: {
-            text: string;
-            sheetRows: number[];
-            resolution: null | components["schemas"]["DimensionResolution"];
         };
         /** @enum {unknown} */
         ImportField: "title" | "itemNumber" | "groupNumber" | "catalogueNumber" | "inventoryNumber" | "dimensions" | "medium" | "maker" | "description" | "placeOfProduction" | "creationDate" | "dynasty" | "acquisitionSource" | "acquisitionDate" | "acquisitionLot" | "acquisitionPrice" | "acquisitionNote" | "exhibitions" | "catalogueEntry" | "holder" | "storageLocation" | "valuation" | "collectionGroup" | null;
@@ -1394,6 +1368,16 @@ export interface components {
             artefactId: null | string;
             problems: components["schemas"]["RowProblem"][];
             warnings: string[];
+        };
+        ImportResolution: {
+            text: string;
+            action: string;
+            payload?: unknown;
+        };
+        ImportResolutionItemDto: {
+            text: string;
+            sheetRows: number[];
+            resolution: null | components["schemas"]["ImportResolution"];
         };
         ImportReviewDto: {
             counts: components["schemas"]["ImportCountsDto"];
@@ -1679,11 +1663,8 @@ export interface components {
         SetCaptionRequest: {
             caption: null | string;
         };
-        SetDateResolutionsRequest: {
-            dates: null | components["schemas"]["DateResolution"][];
-        };
-        SetDimensionResolutionsRequest: {
-            dimensions: null | components["schemas"]["DimensionResolution"][];
+        SetImportResolutionsRequest: {
+            resolutions: null | components["schemas"]["ImportResolution"][];
         };
         SetLanguageOrderRequest: {
             codes: null | string[];
@@ -3939,12 +3920,13 @@ export interface operations {
             };
         };
     };
-    getImportDates: {
+    getImportResolutions: {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 id: string;
+                kind: string;
             };
             cookie?: never;
         };
@@ -3956,7 +3938,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ImportDateDto"][];
+                    "application/json": components["schemas"]["ImportResolutionItemDto"][];
                 };
             };
             /** @description Not Found */
@@ -3970,18 +3952,19 @@ export interface operations {
             };
         };
     };
-    setImportDates: {
+    setImportResolutions: {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 id: string;
+                kind: string;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["SetDateResolutionsRequest"];
+                "application/json": components["schemas"]["SetImportResolutionsRequest"];
             };
         };
         responses: {
@@ -3991,91 +3974,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ImportDateDto"][];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-        };
-    };
-    getImportDimensions: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ImportDimensionsDto"][];
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProblemDetails"];
-                };
-            };
-        };
-    };
-    setImportDimensions: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SetDimensionResolutionsRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ImportDimensionsDto"][];
+                    "application/json": components["schemas"]["ImportResolutionItemDto"][];
                 };
             };
             /** @description Bad Request */

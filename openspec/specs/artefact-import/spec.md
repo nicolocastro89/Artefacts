@@ -29,7 +29,7 @@ The system SHALL read the first non-empty row of the chosen sheet as column head
 - **THEN** both are attached to that record, the left one first
 
 ### Requirement: Column and line mapping with saved templates
-The system SHALL let a user map each column to a catalogue field or ignore it. For a column whose cells contain several lines, the user SHALL be able to map lines instead: by what a line contains (an item-numbered title such as "02. Piatto Celadon", dimensions, a historical date, an auction lot, a price with currency, a catalogue number such as "W.389", a storage location code) or by position, plus a target for all remaining lines. A line rule's target SHALL be either a field or "Discard": lines a discarding rule matches are dropped in every row and imported nowhere. Every other line of a mapped column MUST end up in a field: lines that match no rule go to the column's remaining-lines target, and the user SHALL be told before import if a column has no such target. The system SHALL suggest a mapping from the column headings and from the content of the first rows; it never suggests "Discard". A mapping SHALL be saveable as a named template, from the mapping step or from the review step, and reusable for other workbooks; a template stores the column mapping, the line rules (including discarding rules), the inventory number pattern, the dimensions options, the place decisions, the date resolutions, the dimensions decisions, and the list and party decisions.
+The system SHALL let a user map each column to a catalogue field or ignore it. For a column whose cells contain several lines, the user SHALL be able to map lines instead: by what a line contains (an item-numbered title such as "02. Piatto Celadon", dimensions, a historical date, an auction lot, a price with currency, a catalogue number such as "W.389", a storage location code, or a detector the user defined) or by position, plus a target for all remaining lines. A line rule's target SHALL be either a field or "Discard": lines a discarding rule matches are dropped in every row and imported nowhere. Every other line of a mapped column MUST end up in a field: lines that match no rule go to the column's remaining-lines target, and the user SHALL be told before import if a column has no such target. The system SHALL suggest a mapping from the column headings and from the content of the first rows; it never suggests "Discard". A mapping SHALL be saveable as a named template, from the mapping step or from the review step, and reusable for other workbooks; a template stores the column mapping, the line rules (including discarding rules), the inventory number pattern, the dimensions options, the place decisions, the date resolutions, the dimensions decisions, and the list and party decisions.
 
 #### Scenario: Multi-line title cell
 - **WHEN** the title column holds "01. Coppa Celadon" on the first line and "diam 17,6 x h 7" on the second
@@ -58,6 +58,62 @@ The system SHALL let a user map each column to a catalogue field or ignore it. F
 #### Scenario: Template saved after review
 - **WHEN** a user decides places, dates, dimensions and list values and then saves a template from the review step
 - **THEN** the template holds those decisions
+
+### Requirement: User-defined line detectors
+The system SHALL let a user define detectors for the lines of a multi-line cell, in addition to the built-in ones, and use them in line rules like a built-in detector. A detector has a name, unique ignoring case and spacing, and is either a pattern or a list of keywords. A pattern is a regular expression, optionally ignoring case, whose named groups say what is recognised: `value` is the recognised text (the whole match when absent), `remainder` is what is left of the line for other rules (what lies outside the match when absent), and `item` is an item number. A pattern's value MAY be read as a number, a calendar date, a historical date or an amount of money; a line whose value cannot be read that way is not recognised. A keyword detector recognises a whole line that contains, starts with, or equals one of its keywords, ignoring case. The system MUST reject a definition that is not valid, a pattern that matches empty text, a pattern longer than 500 characters, and a keyword list that is empty or longer than 200 keywords, with a validation error on the field; a pattern that takes more than 100 ms on a line SHALL not recognise that line. A line rule refers to a user detector by a stable identifier, so renaming it does not break saved mappings. A detector used by a template or by an import that is not finished SHALL not be deleted, and the error names what uses it. The built-in detectors SHALL be read-only; those that can be written as a pattern (group number, auction lot, catalogue number) SHALL be copyable to a user detector with the same definition, and the others, which only exist as code, SHALL not be copyable.
+
+#### Scenario: Pattern detector in a line rule
+- **WHEN** a user defines the detector "Insurance" with the pattern `^ass\.\s*(?<value>.+)$` and uses it for the acquisition column's line rule to the acquisition note
+- **THEN** a line "ass. Lloyd's 1999" is recognised with the text "Lloyd's 1999" and the rest of the cell goes to the other rules
+
+#### Scenario: Pattern that matches everything
+- **WHEN** a user saves a detector whose pattern matches empty text
+- **THEN** the system rejects it with a validation error on the pattern
+
+#### Scenario: Detector in use is kept
+- **WHEN** a user deletes a detector that template "Collection workbook 2024" uses
+- **THEN** the system refuses and names the template
+
+#### Scenario: Built-in detector copied
+- **WHEN** a user copies the built-in detector "Auction lot"
+- **THEN** a user detector with the same pattern exists, which the user can change, and the built-in detector is unchanged
+
+#### Scenario: Detector written in code
+- **WHEN** a user tries to copy the built-in detector "Price with currency"
+- **THEN** the system refuses, saying it is written in code
+
+### Requirement: Trying a detector
+The system SHALL let a user run a detector definition against up to 50 sample lines without saving it, and report for each line whether it is recognised, the recognised text, the value as read, what is left of the line, the item number, and whether the reading was a guess. An invalid definition SHALL be reported as a validation error. The frontend SHALL run the definition being edited against the sample lines as it changes, so the user sees the effect before saving.
+
+#### Scenario: Live feedback
+- **WHEN** a user edits a pattern with the sample lines "ass. Lloyd's, 1999" and "something else"
+- **THEN** the first line shows its recognised text and remainder and the second shows that it is not recognised, without anything being saved
+
+### Requirement: Editable lookup tables
+The system SHALL read month names, currency words (before and after an amount), measurement labels and spellings of the inch from lookup tables, each made of built-in entries and the entries users added. A user entry SHALL extend a table or replace a built-in entry with the same word (matched ignoring case); saving a table's user entries replaces all of them, and saving none restores the built-in table. Entries MUST fit their table: a month is a number from 1 to 12, a currency a code of three capital letters, a measurement label one of width, height, length or diameter, and a spelling of the inch has the value "in"; a word is not empty, at most 40 characters, and appears once. A table holds at most 500 user entries. Errors SHALL be reported against the entry and field. Imports SHALL use the merged tables when reading dates, prices and dimensions, so a user's word is recognised like a built-in one; an entry that no longer fits its table is ignored.
+
+#### Scenario: Extra month name
+- **WHEN** a user adds the entry "mai" with the value 5 to the month names
+- **THEN** a date "12 mai 1990" in a later import is read as 12 May 1990
+
+#### Scenario: Changed built-in entry
+- **WHEN** a user gives the currency word "l" the code GBP, replacing the built-in code ITL
+- **THEN** "l. 50" is read as an amount in GBP and the table still shows the built-in value ITL next to the change
+
+#### Scenario: Value that does not fit
+- **WHEN** a user saves the month entry "mai" with the value 13
+- **THEN** the system rejects it with a validation error on that entry's value
+
+#### Scenario: Table restored
+- **WHEN** a user saves a table with no entries
+- **THEN** it contains only the built-in entries again
+
+### Requirement: Parsing rules page
+The frontend SHALL provide a page under Import, "Parsing", with the detectors and the lookup tables. The detectors list SHALL show built-in detectors as read-only and the user's as editable, duplicable and deletable, offering "duplicate" on built-in detectors that have a definition; the editor SHALL show the definition's fields for its kind, the field errors the server reports, and the live trial of the sample lines. Each lookup table SHALL show its built-in entries and an editable list of the user's entries, where a built-in word can be changed by adding it again with a new value.
+
+#### Scenario: Duplicate to customise
+- **WHEN** a user duplicates "Auction lot" from the detectors list
+- **THEN** the new detector appears in the list as the user's own, with an edit action
 
 ### Requirement: Inventory numbers from a pattern
 The system SHALL assign each imported record an inventory number built from a user-defined pattern. The pattern can combine fixed text with the group number, the item number, the sheet row number, a three-letter prefix taken from the sheet name (so one template serves several workbooks), and the value of a mapped field (such as a detected catalogue number), with optional zero padding, and can name a mapped field to use instead when it has a value. The system MUST report, as a problem for the later row, any two rows that produce the same inventory number, and any row whose pattern produces no value.
@@ -99,6 +155,13 @@ The system SHALL list every distinct date text that the historical date rules ca
 #### Scenario: Range supplied for an unusual date
 - **WHEN** the date "19 Dhu'l hijja 797" is not understood and the user enters 1395 to 1395
 - **THEN** rows with that date are imported with the display text "19 Dhu'l hijja 797" and the year range 1395 to 1395
+
+### Requirement: Decisions about unreadable texts share one flow
+Dates the rules cannot interpret and dimensions that could not be read clearly SHALL be settled the same way: the system lists the distinct texts of the kind with the rows using them and the decision in force, the user decides each text once and the decision applies to every row with it, and a text without a decision keeps its rows out of the import. The frontend SHALL show them in one kind-driven step in which only the editor of a single text depends on the kind, and the stored decisions SHALL stay compatible with templates and imports saved before.
+
+#### Scenario: Same behaviour for both kinds
+- **WHEN** a user saves decisions for some dates and some dimensions texts and leaves one of each undecided
+- **THEN** rows using the decided texts are ready and rows using the undecided ones are listed as problems, whichever kind the text is
 
 ### Requirement: Review before import
 The system SHALL show, before anything is saved, every record row as it will be imported (inventory number, mapped fields with the names of the linked list entries and parties, and picture thumbnails), together with counts of rows that are ready, rows whose inventory number already exists in the catalogue (to be skipped), and rows with problems, and the problems of each row. Changing the mapping, pattern, place, date, list or party decisions SHALL update the review.

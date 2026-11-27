@@ -44,6 +44,12 @@ public interface ILineDetector
     /// <summary>A line it recognises, shown next to the label.</summary>
     string? Example => null;
 
+    /// <summary>
+    /// The definition that recognises the same lines, for a detector whose rules can be written as one, so it can be
+    /// copied and changed; null for detectors that only exist as code.
+    /// </summary>
+    DetectorDefinition? Definition => null;
+
     /// <summary>The recognised text and what is left of the line, or null when the line is not of this kind.</summary>
     Detection? Detect(string line, DetectionContext context);
 }
@@ -63,13 +69,16 @@ public sealed class DetectorRegistry
     public static DetectorRegistry BuiltIn { get; } = new(
     [
         new BuiltInDetector(DetectorIds.ItemTitle, "Numbered title", "01. Coppa Celadon", (line, _) => Imports.Detectors.ItemTitle(line)),
-        new BuiltInDetector(DetectorIds.GroupNumber, "Group number", "01.", (line, _) => Imports.Detectors.GroupNumber(line)),
+        new BuiltInDetector(DetectorIds.GroupNumber, "Group number", "01.", (line, _) => Imports.Detectors.GroupNumber(line),
+            new DetectorDefinition(DetectorKind.Regex, @"^\s*(?<value>\d{1,3})\s*\.?\s*$", Example: "01.")),
         new BuiltInDetector(DetectorIds.Dimensions, "Dimensions", "diam 17,6 x h 7", (line, _) => Imports.Detectors.Dimensions(line)),
         new BuiltInDetector(DetectorIds.HistoricalDate, "Historical date", "fine XII inizio XIII", (line, _) => Imports.Detectors.HistoricalDate(line)),
         new BuiltInDetector(DetectorIds.CalendarDate, "Calendar date", "12 06 1990", (line, context) => Imports.Detectors.CalendarDate(line, context.Lookup)),
-        new BuiltInDetector(DetectorIds.Lot, "Auction lot", "lot 170", (line, _) => Imports.Detectors.Lot(line)),
+        new BuiltInDetector(DetectorIds.Lot, "Auction lot", "lot 170", (line, _) => Imports.Detectors.Lot(line),
+            new DetectorDefinition(DetectorKind.Regex, @"\b(?:lotto|lot)\b\.?\s*(?:n[.°]?\s*)?(?<value>\d+[a-zA-Z]?)\b", Example: "lot 170")),
         new BuiltInDetector(DetectorIds.Money, "Price with currency", "£ 7.865", (line, context) => Imports.Detectors.Money(line, context.Lookup)),
-        new BuiltInDetector(DetectorIds.CatalogueNumber, "Catalogue number", "W.389", (line, _) => Imports.Detectors.CatalogueNumber(line)),
+        new BuiltInDetector(DetectorIds.CatalogueNumber, "Catalogue number", "W.389", (line, _) => Imports.Detectors.CatalogueNumber(line),
+            new DetectorDefinition(DetectorKind.Regex, @"^\s*(?<value>[A-Z]{1,3}\.\s?\d{1,5}[a-z]?)\s*$", IgnoreCase: false, Example: "W.389")),
         new BuiltInDetector(DetectorIds.LocationCode, "Location code", "MI F3", (line, context) => Imports.Detectors.LocationCode(line, context.LocationPatterns)),
     ]);
 
@@ -89,8 +98,11 @@ public sealed class DetectorRegistry
 }
 
 /// <summary>A detector whose rules are written in code.</summary>
-public sealed class BuiltInDetector(string id, string label, string example, Func<string, DetectionContext, Detection?> detect) : ILineDetector
+public sealed class BuiltInDetector(
+    string id, string label, string example, Func<string, DetectionContext, Detection?> detect, DetectorDefinition? definition = null) : ILineDetector
 {
+    public DetectorDefinition? Definition => definition;
+
     public string Id => id;
 
     public string Label => label;

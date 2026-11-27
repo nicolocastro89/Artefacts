@@ -4,14 +4,13 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { api } from '../../api/client'
 import { unwrap } from '../../api/problem'
-import { DatesStep } from './DatesStep'
-import { DimensionsStep } from './DimensionsStep'
 import { errorMessage, formatBytes, isEditable, useImportJob, type ImportJob } from './importApi'
 import { ListsStep } from './ListsStep'
 import { MappingStep } from './MappingStep'
 import { StateChip } from './parts'
 import { PlacesStep } from './PlacesStep'
 import { ProgressView } from './ProgressView'
+import { ResolutionStep } from './ResolutionStep'
 import { ReviewStep } from './ReviewStep'
 import './imports.css'
 
@@ -137,8 +136,8 @@ function Body({ job }: { job: ImportJob }) {
       {step === 'mapping' && <MappingStep job={job} onDone={() => go('places')} />}
       {step === 'places' && <PlacesStep job={job} onDone={() => go('lists')} />}
       {step === 'lists' && <ListsStep job={job} onDone={() => go('dates')} />}
-      {step === 'dates' && <DatesStep job={job} onDone={() => go('dimensions')} />}
-      {step === 'dimensions' && <DimensionsStep job={job} onDone={() => go('review')} />}
+      {step === 'dates' && <ResolutionStep job={job} kind="dates" onDone={() => go('dimensions')} />}
+      {step === 'dimensions' && <ResolutionStep job={job} kind="dimensions" onDone={() => go('review')} />}
       {step === 'review' && <ReviewStep job={job} />}
     </>
   )

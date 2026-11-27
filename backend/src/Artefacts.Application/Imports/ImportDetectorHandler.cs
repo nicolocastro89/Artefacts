@@ -27,7 +27,7 @@ public sealed class ImportDetectorHandler(
 {
     public async Task<IReadOnlyList<ImportDetectorDto>> ListAsync(CancellationToken ct)
     {
-        var system = DetectorRegistry.BuiltIn.Detectors.Select(d => new ImportDetectorDto(d.Id, d.Label, d.Example));
+        var system = DetectorRegistry.BuiltIn.Detectors.Select(d => new ImportDetectorDto(d.Id, d.Label, d.Example, Definition: d.Definition));
         var user = (await detectors.ListAsync(ct)).OrderBy(d => d.Name, StringComparer.CurrentCultureIgnoreCase).Select(ToDto);
         return [.. system, .. user];
     }
@@ -66,10 +66,16 @@ public sealed class ImportDetectorHandler(
         await unitOfWork.SaveChangesAsync(ct);
     }
 
-    /// <summary>A new detector with the definition of a stored one. The built-in detectors are code, not definitions, so they cannot be copied.</summary>
+    /// <summary>
+    /// A new detector with the definition of a stored one, or of a built-in one that has a definition. The other built-in
+    /// detectors only exist as code, so they cannot be copied.
+    /// </summary>
     public async Task<ImportDetectorDto> DuplicateAsync(string id, DuplicateImportDetectorRequest request, CancellationToken ct)
     {
-        var copy = (await LoadAsync(id, ct)).Duplicate(request.Name, clock.GetUtcNow());
+        var copy = DetectorRegistry.BuiltIn.Detectors.FirstOrDefault(d => d.Id == id) is { } builtIn
+            ? ImportDetector.Create(request.Name, ImportJson.Write(builtIn.Definition
+                ?? throw new ConflictException("system_detector", $"\"{builtIn.Label}\" is written in code and cannot be copied.")), clock.GetUtcNow())
+            : (await LoadAsync(id, ct)).Duplicate(request.Name, clock.GetUtcNow());
         detectors.Add(copy);
         await unitOfWork.SaveChangesAsync(ct);
         return ToDto(copy);

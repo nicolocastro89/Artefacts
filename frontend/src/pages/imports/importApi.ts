@@ -17,7 +17,8 @@ export type ReviewRow = Schemas['ReviewRowDto']
 export type ImportRowStatus = Schemas['ImportRowStatus']
 export type ImportPlace = Schemas['ImportPlaceDto']
 export type PlaceDecision = Schemas['PlaceDecision']
-export type ImportDate = Schemas['ImportDateDto']
+export type ImportResolution = Schemas['ImportResolution']
+export type ImportResolutionItem = Schemas['ImportResolutionItemDto']
 export type ImportList = Schemas['ImportList']
 export type ImportListGroup = Schemas['ImportListGroupDto']
 export type ImportListValue = Schemas['ImportListValueDto']
@@ -32,7 +33,6 @@ export type TryDetectorLine = Schemas['TryImportDetectorLine']
 export type ImportLookupTable = Schemas['ImportLookupTableDto']
 export type ImportLookupEntry = Schemas['ImportLookupEntryDto']
 export type DimensionResolution = Schemas['DimensionResolution']
-export type ImportDimensions = Schemas['ImportDimensionsDto']
 
 /** Measurements in the order the import shows them, with their labels. */
 export const MEASURE_KINDS: { value: MeasureKind; label: string; short: string }[] = [

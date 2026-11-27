@@ -146,25 +146,14 @@ internal static class ImportEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);
 
-        g.MapGet("/{id:guid}/dates",async (Guid id, ImportHandler h, CancellationToken ct) => TypedResults.Ok(await h.DatesAsync(id, ct)))
-            .WithName("getImportDates")
+        g.MapGet("/{id:guid}/resolutions/{kind}", async (Guid id, string kind, ImportHandler h, CancellationToken ct) => TypedResults.Ok(await h.ResolutionsAsync(id, kind, ct)))
+            .WithName("getImportResolutions")
+            .WithSummary("The texts of one kind (dates, dimensions) the import cannot settle by rule, with their rows and decisions.")
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-        g.MapPut("/{id:guid}/dates", async (Guid id, SetDateResolutionsRequest request, ImportHandler h, CancellationToken ct) =>
-                TypedResults.Ok(await h.SetDatesAsync(id, request, ct)))
-            .WithName("setImportDates")
-            .ProducesValidationProblem()
-            .ProducesProblem(StatusCodes.Status404NotFound)
-            .ProducesProblem(StatusCodes.Status409Conflict);
-
-        g.MapGet("/{id:guid}/dimensions", async (Guid id, ImportHandler h, CancellationToken ct) => TypedResults.Ok(await h.DimensionsAsync(id, ct)))
-            .WithName("getImportDimensions")
-            .WithSummary("Dimensions texts whose measurements could not be read clearly, with their rows and decisions.")
-            .ProducesProblem(StatusCodes.Status404NotFound);
-
-        g.MapPut("/{id:guid}/dimensions", async (Guid id, SetDimensionResolutionsRequest request, ImportHandler h, CancellationToken ct) =>
-                TypedResults.Ok(await h.SetDimensionsAsync(id, request, ct)))
-            .WithName("setImportDimensions")
+        g.MapPut("/{id:guid}/resolutions/{kind}", async (Guid id, string kind, SetImportResolutionsRequest request, ImportHandler h, CancellationToken ct) =>
+                TypedResults.Ok(await h.SetResolutionsAsync(id, kind, request, ct)))
+            .WithName("setImportResolutions")
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict);

@@ -23,12 +23,15 @@ const months = {
 
 describe('Parsing page', () => {
   it('lists built-in detectors read-only and user detectors with actions', async () => {
-    mockFetch({ 'GET /api/imports/detectors': () => [...importDetectorsRoute['GET /api/imports/detectors']().map((d) => ({ ...d, isSystem: true })), userDetector] })
+    mockFetch({ 'GET /api/imports/detectors': () => [...importDetectorsRoute['GET /api/imports/detectors']().map((d) => ({ ...d, isSystem: true, definition: d.id === 'lot' ? { kind: 'regex', pattern: 'lot', ignoreCase: true } : null })), userDetector] })
     renderWithProviders(<ParsingPage />)
 
     expect(await screen.findByText('Insurance')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Edit Insurance' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Edit Money' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Duplicate Price with currency' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Duplicate Auction lot' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Edit Auction lot' })).not.toBeInTheDocument()
     expect(screen.getAllByText('Built-in').length).toBeGreaterThan(5)
   })
 

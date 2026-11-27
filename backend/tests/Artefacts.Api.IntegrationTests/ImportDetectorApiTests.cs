@@ -125,4 +125,22 @@ public class ImportDetectorApiTests(ApiFactory factory)
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Contains("definition.pattern", (await response.ValidationErrorsAsync()).Keys);
     }
+
+    [Fact]
+    public async Task A_built_in_detector_with_a_definition_is_copied_and_one_written_in_code_is_not()
+    {
+        var list = await (await _client.GetAsync("/api/imports/detectors")).ReadAsync<List<ImportDetectorDto>>();
+        var lot = list.Single(d => d.Id == DetectorIds.Lot);
+        Assert.True(lot.IsSystem);
+        Assert.NotNull(lot.Definition);
+        Assert.Null(list.Single(d => d.Id == DetectorIds.Money).Definition);
+
+        var name = HttpExtensions.Unique("My lot");
+        var copy = await (await _client.PostJsonAsync($"/api/imports/detectors/{DetectorIds.Lot}/duplicate", new DuplicateImportDetectorRequest(name))).ReadAsync<ImportDetectorDto>();
+
+        Assert.False(copy.IsSystem);
+        Assert.Equal(name, copy.Label);
+        Assert.Equal(lot.Definition!.Pattern, copy.Definition!.Pattern);
+        Assert.Equal(HttpStatusCode.Conflict, (await _client.PostJsonAsync($"/api/imports/detectors/{DetectorIds.Money}/duplicate", new DuplicateImportDetectorRequest("Copy"))).StatusCode);
+    }
 }

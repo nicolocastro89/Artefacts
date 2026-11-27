@@ -128,19 +128,23 @@ function DetectorsSection() {
                 </td>
                 <td data-label="Example">{d.example}</td>
                 <td>
-                  {d.isSystem ? (
-                    <span className="field__hint">Read-only</span>
+                  {d.isSystem && !d.definition ? (
+                    <span className="field__hint">Written in code</span>
                   ) : (
                     <>
-                      <button type="button" className="btn btn--sm" aria-label={`Edit ${d.label}`} onClick={() => setEditing(d)}>
-                        <Pencil aria-hidden="true" /> Edit
-                      </button>
+                      {!d.isSystem && (
+                        <button type="button" className="btn btn--sm" aria-label={`Edit ${d.label}`} onClick={() => setEditing(d)}>
+                          <Pencil aria-hidden="true" /> Edit
+                        </button>
+                      )}
                       <button type="button" className="btn btn--sm" aria-label={`Duplicate ${d.label}`} onClick={() => void duplicate(d)}>
                         <Copy aria-hidden="true" /> Duplicate
                       </button>
-                      <button type="button" className="btn btn--sm btn--danger" aria-label={`Delete ${d.label}`} onClick={() => void remove(d)}>
-                        <Trash2 aria-hidden="true" /> Delete
-                      </button>
+                      {!d.isSystem && (
+                        <button type="button" className="btn btn--sm btn--danger" aria-label={`Delete ${d.label}`} onClick={() => void remove(d)}>
+                          <Trash2 aria-hidden="true" /> Delete
+                        </button>
+                      )}
                     </>
                   )}
                 </td>

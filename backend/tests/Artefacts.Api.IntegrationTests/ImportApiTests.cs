@@ -166,15 +166,15 @@ public class ImportApiTests(ApiFactory factory)
             await ObjectTypeAsync());
         await _client.UseUniqueNumbersAsync(job);
 
-        var dates = await (await _client.GetAsync($"/api/imports/{job.Id}/dates")).ReadAsync<List<ImportDateDto>>();
+        var dates = await _client.ResolutionsAsync(job.Id, ResolutionKindIds.Dates);
         var date = Assert.Single(dates);
         Assert.Equal([3, 4], date.SheetRows);
         Assert.Equal(2, (await _client.ReviewAsync(job.Id)).Counts.Problems);
 
-        var resolved = await (await _client.PutJsonAsync($"/api/imports/{job.Id}/dates",
-            new SetDateResolutionsRequest([new DateResolution(date.Text, 1395, 1395)]))).ReadAsync<List<ImportDateDto>>();
+        var resolved = await (await _client.PutResolutionsAsync(job.Id, ResolutionKindIds.Dates, ResolutionTestHelpers.DateRange(date.Text, 1395, 1395)))
+            .ReadAsync<List<ImportResolutionItemDto>>();
 
-        Assert.Equal(1395, Assert.Single(resolved).Resolution!.EarliestYear);
+        Assert.Equal(1395, Assert.Single(resolved).Range().EarliestYear);
         var review = await _client.ReviewAsync(job.Id);
         Assert.Equal(2, review.Counts.Ready);
         Assert.Contains(review.Rows[0].Fields, f => f.Field == ImportField.CreationDate && f.Value.Contains("1395"));

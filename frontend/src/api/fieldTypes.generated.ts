@@ -991,32 +991,16 @@ export const responseFieldTypes = {
     "[].values[].suggestions[]": "list",
     "[].values[].text": "text"
   },
-  "getImportDates": {
+  "getImportResolutions": {
     "[]": "list",
-    "[].resolution.earliestYear": "number",
-    "[].resolution.latestYear": "number",
+    "[].resolution.action": "text",
     "[].resolution.text": "text",
     "[].sheetRows[]": "number",
     "[].text": "text"
   },
-  "setImportDates": {
+  "setImportResolutions": {
     "[]": "list",
-    "[].resolution.earliestYear": "number",
-    "[].resolution.latestYear": "number",
-    "[].resolution.text": "text",
-    "[].sheetRows[]": "number",
-    "[].text": "text"
-  },
-  "getImportDimensions": {
-    "[]": "list",
-    "[].resolution.keepTextOnly": "boolean",
-    "[].resolution.text": "text",
-    "[].sheetRows[]": "number",
-    "[].text": "text"
-  },
-  "setImportDimensions": {
-    "[]": "list",
-    "[].resolution.keepTextOnly": "boolean",
+    "[].resolution.action": "text",
     "[].resolution.text": "text",
     "[].sheetRows[]": "number",
     "[].text": "text"
@@ -1576,21 +1560,13 @@ export const operations = {
     "method": "PUT",
     "path": "/api/imports/{id}/lists"
   },
-  "getImportDates": {
+  "getImportResolutions": {
     "method": "GET",
-    "path": "/api/imports/{id}/dates"
+    "path": "/api/imports/{id}/resolutions/{kind}"
   },
-  "setImportDates": {
+  "setImportResolutions": {
     "method": "PUT",
-    "path": "/api/imports/{id}/dates"
-  },
-  "getImportDimensions": {
-    "method": "GET",
-    "path": "/api/imports/{id}/dimensions"
-  },
-  "setImportDimensions": {
-    "method": "PUT",
-    "path": "/api/imports/{id}/dimensions"
+    "path": "/api/imports/{id}/resolutions/{kind}"
   },
   "getImportReview": {
     "method": "GET",

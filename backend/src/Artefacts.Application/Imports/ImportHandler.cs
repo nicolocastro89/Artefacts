@@ -376,97 +376,33 @@ public sealed class ImportHandler(
             ? await parties.GetAsync(new PartyId(id), ct) is not null
             : await listEntries.GetAsync(ListKindOf(list), new ReferenceEntryId(id), ct) is not null;
 
-    // ---------- dates ----------
+    // ---------- resolutions (dates, dimensions) ----------
 
-    public async Task<IReadOnlyList<ImportDateDto>> DatesAsync(Guid id, CancellationToken ct)
+    /// <summary>The texts of a kind the import cannot settle by rule, once per distinct text, with the rows using them and the decisions in force.</summary>
+    public async Task<IReadOnlyList<ImportResolutionItemDto>> ResolutionsAsync(Guid id, string kindId, CancellationToken ct)
     {
+        var kind = ResolutionKinds.Find(kindId) ?? throw new NotFoundException("Resolution kind", kindId);
         var job = await LoadAsync(id, ct);
-        var evaluation = await EvaluateAsync(job, null, ct);
-        var resolutions = Decisions(job).Dates.ToDictionary(d => RowEvaluator.DateKey(d.Text));
-        return evaluation.Rows
-            .Where(r => r.DateText is not null)
-            .Where(r => r.DateUnresolved || (r.Mapped.First(ImportField.CreationDate)?.Parsed is ParsedDateText { Interpretation: null }))
-            .GroupBy(r => RowEvaluator.DateKey(r.DateText!))
-            .Select(g => new ImportDateDto(g.First().DateText!, g.Select(r => r.Row.SheetRow).ToList(), resolutions.GetValueOrDefault(g.Key)))
-            .OrderByDescending(d => d.SheetRows.Count)
-            .ThenBy(d => d.Text, StringComparer.CurrentCultureIgnoreCase)
+        var evaluation = await EvaluateAsync(job, null, ct, validate: kind.ValidatesRows);
+        return kind.Pending(evaluation, Decisions(job))
+            .OrderByDescending(p => p.SheetRows.Count)
+            .ThenBy(p => p.Text, StringComparer.CurrentCultureIgnoreCase)
+            .Select(p => new ImportResolutionItemDto(p.Text, p.SheetRows, p.Resolution))
             .ToList();
     }
 
-    public async Task<IReadOnlyList<ImportDateDto>> SetDatesAsync(Guid id, SetDateResolutionsRequest request, CancellationToken ct)
+    /// <summary>Saves decisions of a kind; decisions for texts not in the request are kept.</summary>
+    public async Task<IReadOnlyList<ImportResolutionItemDto>> SetResolutionsAsync(Guid id, string kindId, SetImportResolutionsRequest request, CancellationToken ct)
     {
+        var kind = ResolutionKinds.Find(kindId) ?? throw new NotFoundException("Resolution kind", kindId);
         var job = await LoadAsync(id, ct);
+        var resolutions = request.Resolutions ?? [];
         var v = new ValidationCollector();
-        var dates = request.Dates ?? [];
-        for (var i = 0; i < dates.Count; i++)
-        {
-            var d = dates[i];
-            if (string.IsNullOrWhiteSpace(d.Text)) v.Add($"dates[{i}].text", "The date text is required.");
-            if (d.EarliestYear is < HistoricalDateParser.MinYear or > HistoricalDateParser.MaxYear)
-                v.Add($"dates[{i}].earliestYear", $"Years must be between {HistoricalDateParser.MinYear} and {HistoricalDateParser.MaxYear}.");
-            if (d.LatestYear is < HistoricalDateParser.MinYear or > HistoricalDateParser.MaxYear)
-                v.Add($"dates[{i}].latestYear", $"Years must be between {HistoricalDateParser.MinYear} and {HistoricalDateParser.MaxYear}.");
-            if (d.EarliestYear > d.LatestYear) v.Add($"dates[{i}].latestYear", "The latest year must not be before the earliest year.");
-        }
-
+        kind.Validate(resolutions, (await units.ListAsync(ct)).Select(u => u.Id.Value).ToHashSet(), v);
         v.ThrowIfAny();
-        var decisions = Decisions(job);
-        var byKey = decisions.Dates.ToDictionary(d => RowEvaluator.DateKey(d.Text));
-        foreach (var d in dates) byKey[RowEvaluator.DateKey(d.Text)] = d with { Text = d.Text.Trim() };
-        job.SetDecisions(ImportJson.Write(decisions with { Dates = byKey.Values.ToList() }), clock.GetUtcNow());
+        job.SetDecisions(ImportJson.Write(kind.Apply(Decisions(job), resolutions)), clock.GetUtcNow());
         await unitOfWork.SaveChangesAsync(ct);
-        return await DatesAsync(id, ct);
-    }
-
-    // ---------- dimensions ----------
-
-    public async Task<IReadOnlyList<ImportDimensionsDto>> DimensionsAsync(Guid id, CancellationToken ct)
-    {
-        var job = await LoadAsync(id, ct);
-        var evaluation = await EvaluateAsync(job, null, ct, validate: false);
-        var resolutions = (Decisions(job).Dimensions ?? []).ToDictionary(d => RowEvaluator.DateKey(d.Text));
-        return evaluation.Rows
-            .Where(r => r.DimensionsUnclear && r.DimensionsText is not null)
-            .GroupBy(r => RowEvaluator.DateKey(r.DimensionsText!))
-            .Select(g => new ImportDimensionsDto(g.First().DimensionsText!, g.Select(r => r.Row.SheetRow).ToList(),
-                g.First().DimensionsResolution ?? resolutions.GetValueOrDefault(g.Key)))
-            .OrderByDescending(d => d.SheetRows.Count)
-            .ThenBy(d => d.Text, StringComparer.CurrentCultureIgnoreCase)
-            .ToList();
-    }
-
-    /// <summary>Saves dimensions decisions; decisions for texts not in the request are kept.</summary>
-    public async Task<IReadOnlyList<ImportDimensionsDto>> SetDimensionsAsync(Guid id, SetDimensionResolutionsRequest request, CancellationToken ct)
-    {
-        var job = await LoadAsync(id, ct);
-        var v = new ValidationCollector();
-        var items = request.Dimensions ?? [];
-        var known = (await units.ListAsync(ct)).Select(u => u.Id.Value).ToHashSet();
-        for (var i = 0; i < items.Count; i++)
-        {
-            var d = items[i];
-            var key = $"dimensions[{i}]";
-            if (string.IsNullOrWhiteSpace(d.Text)) v.Add($"{key}.text", "The dimensions text is required.");
-            if (d.KeepTextOnly) continue;
-            if (!d.Measurements.Any()) v.Add(key, "Enter at least one measurement, or keep the text only.");
-            foreach (var (kind, input) in d.Measurements)
-            {
-                var field = $"{key}.{JsonName(kind.ToString())}";
-                v.Try(field, () => Domain.Measures.Measurement.Create(input.Value, input.UnitId));
-                if (input.UnitId is { } unitId && !known.Contains(unitId)) v.Add($"{field}.unitId", "The unit does not exist.");
-            }
-        }
-
-        v.ThrowIfAny();
-        var decisions = Decisions(job);
-        var byKey = (decisions.Dimensions ?? []).ToDictionary(d => RowEvaluator.DateKey(d.Text));
-        foreach (var d in items)
-            byKey[RowEvaluator.DateKey(d.Text)] = d.KeepTextOnly
-                ? new DimensionResolution(d.Text.Trim(), KeepTextOnly: true)
-                : d with { Text = d.Text.Trim() };
-        job.SetDecisions(ImportJson.Write(decisions with { Dimensions = byKey.Values.ToList() }), clock.GetUtcNow());
-        await unitOfWork.SaveChangesAsync(ct);
-        return await DimensionsAsync(id, ct);
+        return await ResolutionsAsync(id, kindId, ct);
     }
 
     // ---------- review, commit, discard ----------

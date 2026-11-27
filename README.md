@@ -59,6 +59,12 @@ Development settings live in `backend/src/Artefacts.Api/appsettings.Development.
 
 The seed script is safe to rerun: regions are matched by name, and artefacts whose inventory number already exists are skipped. Point it at another API with `--api <url>` or `ARTEFACTS_API_URL`. The top of `scripts/seed/data.mjs` lists the records that exist to exercise particular cases (a provenance table long enough to split across pages, a 26 MB TIFF master, a multi-page description, records without images or dates).
 
+## Importing from Excel
+
+Open **Import** in the app, upload an `.xlsx` workbook and follow the wizard: map columns and lines, settle places, list values, dates and dimensions, review every row, then import. Mappings and decisions can be saved as templates.
+
+How lines and words are read is editable under **Import → Parsing rules**: your own detectors (a pattern with named captures, or keywords) can be tried against sample lines before saving, built-in detectors that are patterns can be duplicated to customise them, and the lookup tables (month names, currency words, measurement labels, spellings of the inch) accept extra entries. The behaviour is specified in `openspec/specs/artefact-import/spec.md`.
+
 ## Installing
 
 The `Dockerfile` at the root builds the whole app as one image: the API serving the built frontend on port 8080. [`docker/truenas/`](docker/truenas/README.md) has a Compose file and install guide for TrueNAS SCALE (PostgreSQL, the app and imgproxy, with pictures on a dataset), which works the same with plain `docker compose` on any host.

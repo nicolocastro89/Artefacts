@@ -36,7 +36,7 @@ public sealed record ImportJobDto(
 public sealed record ImportColumnsDto(IReadOnlyList<ColumnSummary> Columns);
 
 /// <summary>
-/// A detector a line rule can use: built-in ones (<see cref="IsSystem"/>, written in code, read-only, no definition) and
+/// A detector a line rule can use: built-in ones (<see cref="IsSystem"/>, written in code and read-only; some come with a definition that can be copied) and
 /// the user's stored ones, with the definition they were saved with. <see cref="Id"/> is what a line rule stores.
 /// </summary>
 public sealed record ImportDetectorDto(string Id, string Label, string? Example, bool IsSystem = true, DetectorDefinition? Definition = null, DateTimeOffset? UpdatedAt = null);
@@ -109,18 +109,10 @@ public sealed record ImportListGroupDto(ImportList List, IReadOnlyList<ImportLis
 
 public sealed record SetListDecisionsRequest(IReadOnlyList<ListDecision>? Lists);
 
-/// <summary>A distinct date text the historical date rules cannot interpret, with the rows using it.</summary>
-public sealed record ImportDateDto(string Text, IReadOnlyList<int> SheetRows, DateResolution? Resolution);
+/// <summary>A distinct text of a kind of resolution (dates the rules cannot read, dimensions that were unclear) with the rows using it and the decision in force (none means undecided).</summary>
+public sealed record ImportResolutionItemDto(string Text, IReadOnlyList<int> SheetRows, ImportResolution? Resolution);
 
-public sealed record SetDateResolutionsRequest(IReadOnlyList<DateResolution>? Dates);
-
-/// <summary>
-/// A distinct dimensions text whose measurements could not be read clearly, with the rows using it and the decision
-/// in force (none means undecided).
-/// </summary>
-public sealed record ImportDimensionsDto(string Text, IReadOnlyList<int> SheetRows, DimensionResolution? Resolution);
-
-public sealed record SetDimensionResolutionsRequest(IReadOnlyList<DimensionResolution>? Dimensions);
+public sealed record SetImportResolutionsRequest(IReadOnlyList<ImportResolution>? Resolutions);
 
 // ---------- Review ----------
 
