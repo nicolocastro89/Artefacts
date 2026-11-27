@@ -8,20 +8,6 @@ namespace Artefacts.Application.Imports;
 /// </summary>
 public static class MappingEngine
 {
-    /// <summary>Fields that take one value; further values found by line rules go to the rest field instead.</summary>
-    public static readonly IReadOnlySet<ImportField> SingleValued = new HashSet<ImportField>
-    {
-        ImportField.CreationDate, ImportField.AcquisitionDate, ImportField.AcquisitionLot, ImportField.AcquisitionPrice,
-        ImportField.Valuation, ImportField.ItemNumber, ImportField.GroupNumber, ImportField.CatalogueNumber,
-        ImportField.InventoryNumber,
-    };
-
-    /// <summary>Long text fields: values are joined with line breaks rather than spaces.</summary>
-    public static readonly IReadOnlySet<ImportField> LongText = new HashSet<ImportField>
-    {
-        ImportField.Description, ImportField.AcquisitionNote, ImportField.CatalogueEntry,
-    };
-
     /// <summary>
     /// The workbook column each rule applies to: the column with the rule's heading, else the column at the rule's
     /// index, unless another rule claims that column by its heading (a template from a workbook with a "Valore"
@@ -45,9 +31,10 @@ public static class MappingEngine
     private static string Key(string heading) => SheetLayoutReader.Clean(heading).ToLowerInvariant();
 
     public static MappedRecord Map(IReadOnlyDictionary<int, string> cells, ImportMapping mapping, IReadOnlyDictionary<int, string> headings,
-        DetectorRegistry? detectors = null)
+        DetectorRegistry? detectors = null, FieldRegistry? fields = null, LookupTables? tables = null)
     {
         detectors ??= DetectorRegistry.BuiltIn;
+        fields ??= FieldRegistry.BuiltIn;
         var values = new List<MappedValue>();
         var dropped = new List<string>();
         var discarded = new List<string>();
@@ -55,9 +42,9 @@ public static class MappingEngine
         {
             if (rule.Ignored || !cells.TryGetValue(column, out var text) || string.IsNullOrWhiteSpace(text)) continue;
             if (rule.UsesLines)
-                new LineAssigner(column, rule, mapping, detectors, values, dropped, discarded, headings.GetValueOrDefault(column)).Assign(text);
+                new LineAssigner(column, rule, mapping, detectors, fields, tables, values, dropped, discarded, headings.GetValueOrDefault(column)).Assign(text);
             else
-                MapWholeCell(column, rule.Target!.Value, text, detectors, values);
+                MapWholeCell(column, fields.Get(rule.Target!.Value), text, detectors, DetectionContext.For(mapping, tables), values);
         }
 
         return new MappedRecord(values, dropped, discarded);
@@ -87,44 +74,35 @@ public static class MappingEngine
         return result;
     }
 
-    private static void MapWholeCell(int column, ImportField field, string text, DetectorRegistry detectors, List<MappedValue> values)
+    private static void MapWholeCell(int column, FieldDefinition field, string text, DetectorRegistry detectors, DetectionContext context, List<MappedValue> values)
     {
         var lines = Lines(text);
         if (lines.Count == 0) return;
 
-        if (field == ImportField.Exhibitions)
+        if (field.Shape == CellShape.Paragraphs)
         {
-            // One exhibition per paragraph, its lines joined.
             foreach (var paragraph in lines.GroupBy(l => l.Paragraph))
             {
                 var entry = string.Join(", ", paragraph.Select(l => Detectors.Tidy(l.Text)));
-                values.Add(new MappedValue(field, entry, column, lines.IndexOf(paragraph.First())));
+                values.Add(new MappedValue(field.Id, entry, column, lines.IndexOf(paragraph.First())));
             }
 
             return;
         }
 
-        var joined = LongText.Contains(field)
+        var joined = field.Shape == CellShape.Text
             ? string.Join("\n", text.Split('\n').Select(l => l.TrimEnd())).Trim()
             : string.Join(" ", lines.Select(l => l.Text));
-        var detection = field switch
-        {
-            ImportField.CreationDate => detectors.Detect(DetectorIds.HistoricalDate, joined)
-                                        ?? new Detection(joined, new ParsedDateText(joined, null)),
-            ImportField.AcquisitionDate => detectors.Detect(DetectorIds.CalendarDate, joined),
-            ImportField.AcquisitionPrice or ImportField.Valuation => detectors.Detect(DetectorIds.Money, joined),
-            ImportField.CatalogueNumber => detectors.Detect(DetectorIds.CatalogueNumber, joined),
-            _ => null,
-        };
-        values.Add(new MappedValue(field, joined, column, 0, detection?.Parsed, detection?.Guessed ?? false));
+        var detection = field.Parse?.Invoke(joined, detectors, context);
+        values.Add(new MappedValue(field.Id, joined, column, 0, detection?.Parsed, detection?.Guessed ?? false));
     }
 
     private sealed class LineAssigner(
-        int column, ColumnRule rule, ImportMapping mapping, DetectorRegistry detectors, List<MappedValue> values, List<string> dropped, List<string> discarded,
+        int column, ColumnRule rule, ImportMapping mapping, DetectorRegistry detectors, FieldRegistry fields, LookupTables? tables, List<MappedValue> values, List<string> dropped, List<string> discarded,
         string? heading)
     {
         private readonly int _firstValue = values.Count;
-        private readonly DetectionContext context = DetectionContext.For(mapping);
+        private readonly DetectionContext context = DetectionContext.For(mapping, tables);
 
         /// <summary>True when some line of the cell is a date the rules understand.</summary>
         private bool _cellHasDate;
@@ -235,7 +213,7 @@ public static class MappingEngine
         }
 
         private bool Filled(ImportField field) =>
-            MappingEngine.SingleValued.Contains(field) && values.Skip(_firstValue).Any(v => v.Field == field);
+            fields.IsSingleValued(field) && values.Skip(_firstValue).Any(v => v.Field == field);
 
         private void Add(ImportField field, string text, int line, object? parsed = null, bool guessed = false) =>
             values.Add(new MappedValue(field, text, column, line, parsed, guessed));

@@ -31,6 +31,9 @@ export function ImportsPage() {
           <h1>Import</h1>
           <p className="page-head__sub">Bring records and their pictures in from an Excel workbook. Nothing is added to the catalogue until you have reviewed every row.</p>
         </div>
+        <Link to="/imports/parsing" className="btn">
+          Parsing rules
+        </Link>
       </div>
 
       <UploadForm />

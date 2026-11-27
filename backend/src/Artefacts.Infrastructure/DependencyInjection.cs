@@ -69,6 +69,8 @@ public static class DependencyInjection
         services.AddArtefactsGraph();
         services.AddScoped<IImportRepository, ImportRepository>();
         services.AddScoped<IImportTemplateRepository, ImportTemplateRepository>();
+        services.AddScoped<IImportDetectorRepository, ImportDetectorRepository>();
+        services.AddScoped<IImportLookupRepository, ImportLookupRepository>();
         services.AddSingleton<IImportSignal, ImportSignal>();
         services.AddSingleton<IWorkbookReader, OpenXmlWorkbookReader>();
         services.AddSingleton<IImportReportWriter, XlsxImportReportWriter>();

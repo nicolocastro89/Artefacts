@@ -18,11 +18,15 @@ public static class DetectorIds
 }
 
 /// <summary>What a detector may need from the mapping it runs under.</summary>
-public sealed record DetectionContext(IReadOnlyList<string> LocationPatterns)
+public sealed record DetectionContext(IReadOnlyList<string> LocationPatterns, LookupTables? Tables = null)
 {
+    /// <summary>The lookup tables the detectors read (the built-in ones unless the context brings its own).</summary>
+    public LookupTables Lookup => Tables ?? LookupTables.BuiltIn;
+
     public static readonly DetectionContext Default = new(Detectors.DefaultLocationPatterns);
 
-    public static DetectionContext For(ImportMapping mapping) => new(mapping.LocationPatterns ?? Detectors.DefaultLocationPatterns);
+    public static DetectionContext For(ImportMapping mapping, LookupTables? tables = null) =>
+        new(mapping.LocationPatterns ?? Detectors.DefaultLocationPatterns, tables);
 }
 
 /// <summary>
@@ -33,6 +37,12 @@ public interface ILineDetector
 {
     /// <summary>The stable identifier stored in mappings.</summary>
     string Id { get; }
+
+    /// <summary>What the mapping step calls this detector.</summary>
+    string Label => Id;
+
+    /// <summary>A line it recognises, shown next to the label.</summary>
+    string? Example => null;
 
     /// <summary>The recognised text and what is left of the line, or null when the line is not of this kind.</summary>
     Detection? Detect(string line, DetectionContext context);
@@ -52,16 +62,20 @@ public sealed class DetectorRegistry
     /// <summary>The detectors that ship with the application.</summary>
     public static DetectorRegistry BuiltIn { get; } = new(
     [
-        new BuiltInDetector(DetectorIds.ItemTitle, (line, _) => Imports.Detectors.ItemTitle(line)),
-        new BuiltInDetector(DetectorIds.GroupNumber, (line, _) => Imports.Detectors.GroupNumber(line)),
-        new BuiltInDetector(DetectorIds.Dimensions, (line, _) => Imports.Detectors.Dimensions(line)),
-        new BuiltInDetector(DetectorIds.HistoricalDate, (line, _) => Imports.Detectors.HistoricalDate(line)),
-        new BuiltInDetector(DetectorIds.CalendarDate, (line, _) => Imports.Detectors.CalendarDate(line)),
-        new BuiltInDetector(DetectorIds.Lot, (line, _) => Imports.Detectors.Lot(line)),
-        new BuiltInDetector(DetectorIds.Money, (line, _) => Imports.Detectors.Money(line)),
-        new BuiltInDetector(DetectorIds.CatalogueNumber, (line, _) => Imports.Detectors.CatalogueNumber(line)),
-        new BuiltInDetector(DetectorIds.LocationCode, (line, context) => Imports.Detectors.LocationCode(line, context.LocationPatterns)),
+        new BuiltInDetector(DetectorIds.ItemTitle, "Numbered title", "01. Coppa Celadon", (line, _) => Imports.Detectors.ItemTitle(line)),
+        new BuiltInDetector(DetectorIds.GroupNumber, "Group number", "01.", (line, _) => Imports.Detectors.GroupNumber(line)),
+        new BuiltInDetector(DetectorIds.Dimensions, "Dimensions", "diam 17,6 x h 7", (line, _) => Imports.Detectors.Dimensions(line)),
+        new BuiltInDetector(DetectorIds.HistoricalDate, "Historical date", "fine XII inizio XIII", (line, _) => Imports.Detectors.HistoricalDate(line)),
+        new BuiltInDetector(DetectorIds.CalendarDate, "Calendar date", "12 06 1990", (line, context) => Imports.Detectors.CalendarDate(line, context.Lookup)),
+        new BuiltInDetector(DetectorIds.Lot, "Auction lot", "lot 170", (line, _) => Imports.Detectors.Lot(line)),
+        new BuiltInDetector(DetectorIds.Money, "Price with currency", "£ 7.865", (line, context) => Imports.Detectors.Money(line, context.Lookup)),
+        new BuiltInDetector(DetectorIds.CatalogueNumber, "Catalogue number", "W.389", (line, _) => Imports.Detectors.CatalogueNumber(line)),
+        new BuiltInDetector(DetectorIds.LocationCode, "Location code", "MI F3", (line, context) => Imports.Detectors.LocationCode(line, context.LocationPatterns)),
     ]);
+
+    /// <summary>This registry with more detectors (such as the user's stored ones); an identifier already taken keeps the detector it has.</summary>
+    public DetectorRegistry With(IEnumerable<ILineDetector> more) =>
+        new([.. Detectors, .. more.Where(d => !_byId.ContainsKey(d.Id))]);
 
     public IReadOnlyList<ILineDetector> Detectors { get; }
 
@@ -75,9 +89,13 @@ public sealed class DetectorRegistry
 }
 
 /// <summary>A detector whose rules are written in code.</summary>
-public sealed class BuiltInDetector(string id, Func<string, DetectionContext, Detection?> detect) : ILineDetector
+public sealed class BuiltInDetector(string id, string label, string example, Func<string, DetectionContext, Detection?> detect) : ILineDetector
 {
     public string Id => id;
+
+    public string Label => label;
+
+    public string? Example => example;
 
     public Detection? Detect(string line, DetectionContext context) => detect(line, context);
 }

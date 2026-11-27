@@ -2,7 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Route, Routes } from 'react-router'
 import { vi } from 'vitest'
-import { languagesRoute, mockFetch, unitsRoute } from '../../test/fetchMock'
+import { importDetectorsRoute, importFieldsRoute, languagesRoute, mockFetch, unitsRoute } from '../../test/fetchMock'
 import { renderWithProviders } from '../../test/render'
 import type { ImportJob, ImportMapping, ImportReview } from './importApi'
 import { ImportsPage } from './ImportsPage'
@@ -191,6 +191,8 @@ describe('mapping step', () => {
   const routes = (current = job()) => ({
     ...languagesRoute,
     ...unitsRoute,
+    ...importFieldsRoute,
+    ...importDetectorsRoute,
     'GET /api/imports/j1': () => current,
     'GET /api/imports/j1/columns': () => ({
       columns: [
@@ -198,7 +200,6 @@ describe('mapping step', () => {
         { column: 2, heading: 'Nome File', samples: ['01. Coppa Celadon\ndiam 17,6 x h 7'], filledRows: 70, hitRates: { itemTitle: 0.5, dimensions: 0.5 } },
         { column: 6, heading: 'Formato Immagine', samples: ['png'], filledRows: 70, hitRates: {} },
       ],
-      fields: [],
       detectors: [],
     }),
     'POST /api/imports/j1/preview': () => review,
@@ -223,6 +224,26 @@ describe('mapping step', () => {
     expect(title.lines![1]).toEqual({ target: 'medium', detector: 'dimensions', continues: false })
     expect(title.lines).toHaveLength(3)
     expect(title.rest).toBe('description')
+  })
+
+  it('offers a detector the frontend does not know and saves its identifier in the rule', async () => {
+    const user = userEvent.setup()
+    const { calls } = mockFetch({
+      ...routes(),
+      'GET /api/imports/detectors': () => [...importDetectorsRoute['GET /api/imports/detectors'](), { id: 'insurance', label: 'Insurance value', example: 'ass. 1.000' }],
+    })
+    renderWizard('/imports/j1')
+
+    expect(await screen.findByRole('heading', { name: 'Nome File' })).toBeInTheDocument()
+    const rules = screen.getByRole('list', { name: 'Line rules of Nome File' })
+    const picker = within(rules).getByRole('combobox', { name: 'Rule 2: lines' })
+    await within(picker).findByRole('option', { name: /Insurance value/ })
+    await user.selectOptions(picker, 'd:insurance')
+    await user.click(screen.getByRole('button', { name: 'Save mapping' }))
+
+    await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true))
+    const body = calls.find((c) => c.method === 'PUT')!.body as ImportMapping
+    expect(body.columns.find((c) => c.heading === 'Nome File')!.lines![1]?.detector).toBe('insurance')
   })
 
   it('adds a rule that discards a line in every row, and sets how measurements are read', async () => {
@@ -347,6 +368,8 @@ describe('dimensions step', () => {
     const user = userEvent.setup()
     const { calls } = mockFetch({
       ...unitsRoute,
+    ...importFieldsRoute,
+    ...importDetectorsRoute,
       'GET /api/imports/j1': () => job({ state: 'readyForReview', mapping: { ...mapping, dimensions: { defaultUnitId: 'u-cm', unlabelledOrder: [] } } }),
       'GET /api/imports/j1/dimensions': () => [
         { text: 'chiuso 12 x 8; aperto 24 x 8', sheetRows: [4, 9], resolution: null },
@@ -387,7 +410,10 @@ describe('dimensions step', () => {
   })
 
   it('says so when every text could be read', async () => {
-    mockFetch({ ...unitsRoute, 'GET /api/imports/j1': () => job({ state: 'readyForReview' }), 'GET /api/imports/j1/dimensions': () => [] })
+    mockFetch({ ...unitsRoute, ...importFieldsRoute,
+    ...importDetectorsRoute,
+    ...importFieldsRoute,
+    ...importDetectorsRoute, 'GET /api/imports/j1': () => job({ state: 'readyForReview' }), 'GET /api/imports/j1/dimensions': () => [] })
     renderWizard('/imports/j1?step=dimensions')
 
     expect(await screen.findByText('The measurements of every dimensions text could be read.')).toBeInTheDocument()

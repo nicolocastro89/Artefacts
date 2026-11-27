@@ -21,6 +21,8 @@ namespace Artefacts.Application.Imports;
 public sealed class ImportHandler(
     IImportRepository imports,
     IImportTemplateRepository templates,
+    IImportDetectorRepository detectors,
+    IImportLookupRepository lookupTables,
     IObjectTypeRepository objectTypes,
     IRegionRepository regions,
     IReferenceEntryRepository listEntries,
@@ -108,15 +110,17 @@ public sealed class ImportHandler(
 
     // ---------- mapping ----------
 
+    /// <summary>The fields a column can be mapped to, in the order the mapping step offers them.</summary>
+    public static IReadOnlyList<ImportFieldDto> Fields() =>
+        FieldRegistry.BuiltIn.Ordered.Select(f => new ImportFieldDto(f.Id, f.Label, f.Cardinality == FieldCardinality.Single, f.List is not null)).ToList();
+
     public async Task<ImportColumnsDto> ColumnsAsync(Guid id, CancellationToken ct)
     {
         var job = await LoadAsync(id, ct);
         var rows = await StagedRowsAsync(job, ct);
         var records = rows.Select(r => new SheetRecord(r.SheetRow, r.GroupNumber, r.GroupLabel, r.Cells, [], [])).ToList();
         return new ImportColumnsDto(
-            MappingSuggestion.Summarise(Headings(job), records),
-            Enum.GetNames<ImportField>().Select(JsonName).ToList(),
-            DetectorRegistry.BuiltIn.Ids);
+            MappingSuggestion.Summarise(Headings(job), records, await DetectorCatalogue.LoadAsync(detectors, ct)));
     }
 
     public async Task<ImportMappingResult> SetMappingAsync(Guid id, ImportMapping? mapping, CancellationToken ct)
@@ -144,6 +148,7 @@ public sealed class ImportHandler(
         if (mapping is null) throw new DomainValidationException("mapping", "A mapping is required.");
         var warnings = new List<string>();
 
+        var registry = await DetectorCatalogue.LoadAsync(detectors, ct);
         var columns = mapping.Columns ?? [];
         var resolved = MappingEngine.Resolve(mapping with { Columns = columns }, headings);
         for (var i = 0; i < columns.Count; i++)
@@ -156,7 +161,7 @@ public sealed class ImportHandler(
                 var line = c.Lines![j];
                 if ((line.Detector is null) == (line.Position is null))
                     v.Add($"{key}.lines[{j}]", "A line rule recognises lines either by content or by position.");
-                if (line.Detector is { } detector && !DetectorRegistry.BuiltIn.Contains(detector))
+                if (line.Detector is { } detector && !registry.Contains(detector))
                     v.Add($"{key}.lines[{j}].detector", $"\"{detector}\" is not a known detector.");
                 if (line.Position is < 0) v.Add($"{key}.lines[{j}].position", "Line positions start at 0.");
                 if (line.Discards && line.Continues)
@@ -543,7 +548,8 @@ public sealed class ImportHandler(
         var unitList = await units.ListAsync(ct);
         var parserUnits = unitList.Select(u => new ParserUnit(u.Id.Value, u.Abbreviation, u.Names.Select(n => n.Name).ToList())).ToList();
         var context = new EvaluationContext(mapping, Headings(job), job.ObjectTypeId.Value, new HashSet<string>(), places.Resolve, dates,
-            job.SheetName, lists.Resolve, parserUnits, dimensions);
+            job.SheetName, lists.Resolve, parserUnits, dimensions, Detectors: await DetectorCatalogue.LoadAsync(detectors, ct),
+            Tables: await LookupTableCatalogue.LoadAsync(lookupTables, ct));
 
         var evaluated = RowEvaluator.Evaluate(rows, context);
         var numbers = evaluated.Where(r => r.InventoryNumber is not null).Select(r => r.InventoryNumber!).ToList();

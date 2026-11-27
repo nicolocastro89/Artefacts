@@ -75,19 +75,9 @@ public static partial class Detectors
 
     // ---------- calendar dates ----------
 
-    private static readonly Dictionary<string, int> Months = new(StringComparer.OrdinalIgnoreCase)
+    public static Detection? CalendarDate(string line, LookupTables? tables = null)
     {
-        ["gennaio"] = 1, ["febbraio"] = 2, ["marzo"] = 3, ["aprile"] = 4, ["maggio"] = 5, ["giugno"] = 6,
-        ["luglio"] = 7, ["agosto"] = 8, ["settembre"] = 9, ["ottobre"] = 10, ["novembre"] = 11, ["dicembre"] = 12,
-        ["january"] = 1, ["february"] = 2, ["march"] = 3, ["april"] = 4, ["may"] = 5, ["june"] = 6,
-        ["july"] = 7, ["august"] = 8, ["september"] = 9, ["october"] = 10, ["november"] = 11, ["december"] = 12,
-        ["gen"] = 1, ["feb"] = 2, ["mar"] = 3, ["apr"] = 4, ["mag"] = 5, ["giu"] = 6, ["lug"] = 7, ["ago"] = 8,
-        ["set"] = 9, ["ott"] = 10, ["nov"] = 11, ["dic"] = 12, ["jan"] = 1, ["jun"] = 6, ["jul"] = 7, ["aug"] = 8,
-        ["sep"] = 9, ["sept"] = 9, ["oct"] = 10, ["dec"] = 12,
-    };
-
-    public static Detection? CalendarDate(string line)
-    {
+        tables ??= LookupTables.BuiltIn;
         foreach (Match m in NumericDateRegex().Matches(line))
         {
             if (ToDate(m.Groups["d"].Value, int.Parse(m.Groups["m"].Value), m.Groups["y"].Value) is { } date)
@@ -96,7 +86,7 @@ public static partial class Detectors
 
         foreach (Match m in NamedMonthDateRegex().Matches(line))
         {
-            if (Months.TryGetValue(m.Groups["mon"].Value.TrimEnd('.'), out var month) &&
+            if (tables.Month(m.Groups["mon"].Value.TrimEnd('.')) is { } month &&
                 ToDate(m.Groups["d"].Value, month, m.Groups["y"].Value) is { } date)
                 return Found(line, m, date);
         }
@@ -128,20 +118,13 @@ public static partial class Detectors
 
     // ---------- money ----------
 
-    private static readonly Dictionary<string, string> CurrencyWords = new(StringComparer.OrdinalIgnoreCase)
+    public static Detection? Money(string line, LookupTables? tables = null)
     {
-        ["£"] = "GBP", ["€"] = "EUR", ["$"] = "USD", ["us$"] = "USD",
-        ["lire"] = "ITL", ["lira"] = "ITL", ["lit"] = "ITL", ["l"] = "ITL", ["itl"] = "ITL",
-        ["fr"] = "FRF", ["frs"] = "FRF", ["frf"] = "FRF", ["chf"] = "CHF", ["dm"] = "DEM",
-        ["eur"] = "EUR", ["euro"] = "EUR", ["gbp"] = "GBP", ["usd"] = "USD",
-    };
-
-    public static Detection? Money(string line)
-    {
-        var m = MoneyBeforeRegex().Match(line);
-        if (!m.Success) m = MoneyAfterRegex().Match(line);
+        tables ??= LookupTables.BuiltIn;
+        var m = tables.MoneyBefore.Match(line);
+        if (!m.Success) m = tables.MoneyAfter.Match(line);
         if (!m.Success) return null;
-        var currency = CurrencyWords[m.Groups["cur"].Value.TrimEnd('.')];
+        if (tables.Currency(m.Groups["cur"].Value.TrimEnd('.')) is not { } currency) return null;
         var amount = ParseAmount(m.Groups["amt"].Value, out var guessed);
         return amount is null ? null : Found(line, m, new ParsedMoney(amount.Value, currency), guessed: guessed);
     }
@@ -229,9 +212,12 @@ public static partial class Detectors
 
     // ---------- helpers ----------
 
+    /// <summary>What is left of a line outside a match, tidied.</summary>
+    internal static string RemainderOf(string line, Match m) => Tidy(line[..m.Index] + " " + line[(m.Index + m.Length)..]);
+
     private static Detection Found(string line, Match m, object? parsed, string? text = null, bool guessed = false)
     {
-        var remainder = Tidy(line[..m.Index] + " " + line[(m.Index + m.Length)..]);
+        var remainder = RemainderOf(line, m);
         return new Detection(text ?? m.Value.Trim(), parsed, remainder.Length == 0 ? null : remainder, Guessed: guessed);
     }
 
@@ -269,12 +255,6 @@ public static partial class Detectors
 
     [GeneratedRegex(@"\b(?:lotto|lot)\b\.?\s*(?:n[.°]?\s*)?(?<n>\d+[a-zA-Z]?)\b", RegexOptions.IgnoreCase)]
     private static partial Regex LotRegex();
-
-    [GeneratedRegex(@"(?<cur>£|€|US\$|\$|\b(?:lire|lira|lit|itl|frs?|frf|chf|dm|eur|euro|gbp|usd)\b\.?|\bL\.)\s*(?<amt>\d{1,3}(?:[.,' ]\d{3})+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?)(?!\d)", RegexOptions.IgnoreCase)]
-    private static partial Regex MoneyBeforeRegex();
-
-    [GeneratedRegex(@"(?<![\d.,])(?<amt>\d{1,3}(?:[.,' ]\d{3})+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?)\s*(?<cur>€|£|\$|\b(?:euro|eur|lire|gbp|usd|chf)\b)", RegexOptions.IgnoreCase)]
-    private static partial Regex MoneyAfterRegex();
 
     [GeneratedRegex(@"^(?<p>[A-Z]{1,3})\.\s?(?<n>\d{1,5}[a-z]?)$")]
     private static partial Regex CatalogueNumberRegex();

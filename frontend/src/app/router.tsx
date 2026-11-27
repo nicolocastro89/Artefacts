@@ -3,6 +3,7 @@ import { artefactEditPage, artefactNewPage } from '../pages/definitions/artefact
 import { CustomPageRoute, PageNotFound, PageRoute } from '../pages/PageRoute'
 import { ImportsPage } from '../pages/imports/ImportsPage'
 import { ImportWizard } from '../pages/imports/ImportWizard'
+import { ParsingPage } from '../pages/imports/ParsingPage'
 import { LanguagesPage } from '../pages/LanguagesPage'
 import { UnitsPage } from '../pages/UnitsPage'
 import { ListPage } from '../pages/ListPage'
@@ -43,6 +44,7 @@ export const routes = [
       { path: 'reference/units', element: <UnitsPage /> },
       { path: 'reference/languages', element: <LanguagesPage /> },
       { path: 'imports', element: <ImportsPage /> },
+      { path: 'imports/parsing', element: <ParsingPage /> },
       { path: 'imports/:id', element: <ImportWizard /> },
       { path: '*', element: <PageNotFound /> },
     ],

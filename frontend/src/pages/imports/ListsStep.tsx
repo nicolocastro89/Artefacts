@@ -7,7 +7,7 @@ import { useContentLanguages } from '../../app/languages'
 import { ReferencePicker, type RefSource } from '../../widgets/builtin/form/ReferencePicker'
 import { listSources, partySource } from '../../widgets/builtin/form/pickerSources'
 import { partyKindLabels } from '../lists'
-import { errorMessage, fieldLabel, type ImportJob, type ImportList, type ImportListGroup, type ImportListValue, type ListDecision } from './importApi'
+import { errorMessage, useFieldLabel, type ImportJob, type ImportList, type ImportListGroup, type ImportListValue, type ListDecision } from './importApi'
 
 type Choice =
   | { kind: 'undecided' }
@@ -281,6 +281,7 @@ function ValueRow({
     else onChange({ kind: 'undecided' })
   }
 
+  const fieldLabel = useFieldLabel()
   const uses = list === 'party' ? value.fields.map((f) => (f === 'acquisitionSource' ? 'source' : f === 'holder' ? 'holder' : fieldLabel(f))).join(' and ') : null
 
   return (

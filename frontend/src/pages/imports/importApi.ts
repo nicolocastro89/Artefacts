@@ -8,7 +8,8 @@ export type ImportMapping = Schemas['ImportMapping']
 export type ColumnRule = Schemas['ColumnRule']
 export type LineRule = Schemas['LineRule']
 export type ImportField = NonNullable<Schemas['ImportField']>
-/** A detector's identifier: a built-in one (see DETECTORS) or, later, a user-defined one. */
+export type ImportFieldInfo = Omit<Schemas['ImportFieldDto'], 'id'> & { id: ImportField }
+/** A detector's identifier: a built-in one or a user-defined one, as listed by the detector registry. */
 export type LineDetector = string
 export type ColumnSummary = Schemas['ColumnSummary']
 export type ImportReview = Schemas['ImportReviewDto']
@@ -25,6 +26,11 @@ export type ImportTemplate = Schemas['ImportTemplateDto']
 export type ImportReport = Schemas['ImportReportDto']
 export type MeasureKind = Schemas['MeasureKind']
 export type DimensionsOptions = Schemas['DimensionsOptions']
+export type ImportDetector = Schemas['ImportDetectorDto']
+export type DetectorDefinition = Schemas['DetectorDefinition']
+export type TryDetectorLine = Schemas['TryImportDetectorLine']
+export type ImportLookupTable = Schemas['ImportLookupTableDto']
+export type ImportLookupEntry = Schemas['ImportLookupEntryDto']
 export type DimensionResolution = Schemas['DimensionResolution']
 export type ImportDimensions = Schemas['ImportDimensionsDto']
 
@@ -48,48 +54,6 @@ export const UNLABELLED_ORDERS: MeasureKind[][] = [
 
 export const orderLabel = (order: MeasureKind[]) => order.map((k) => MEASURE_KINDS.find((m) => m.value === k)!.label.toLowerCase()).join(' × ')
 
-/** Fields in the order the mapping step offers them. */
-export const FIELDS: { value: ImportField; label: string }[] = [
-  { value: 'title', label: 'Title' },
-  { value: 'itemNumber', label: 'Item number' },
-  { value: 'groupNumber', label: 'Group number' },
-  { value: 'catalogueNumber', label: 'Catalogue number' },
-  { value: 'inventoryNumber', label: 'Inventory number' },
-  { value: 'dimensions', label: 'Dimensions' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'maker', label: 'Maker' },
-  { value: 'description', label: 'Description' },
-  { value: 'placeOfProduction', label: 'Place of production' },
-  { value: 'creationDate', label: 'Date' },
-  { value: 'dynasty', label: 'Dynasty' },
-  { value: 'acquisitionSource', label: 'Acquired from' },
-  { value: 'acquisitionDate', label: 'Acquisition date' },
-  { value: 'acquisitionLot', label: 'Lot' },
-  { value: 'acquisitionPrice', label: 'Price' },
-  { value: 'acquisitionNote', label: 'Acquisition note' },
-  { value: 'exhibitions', label: 'Exhibitions' },
-  { value: 'catalogueEntry', label: 'Catalogue entry' },
-  { value: 'holder', label: 'Holder' },
-  { value: 'storageLocation', label: 'Storage location' },
-  { value: 'valuation', label: 'Valuation' },
-  { value: 'collectionGroup', label: 'Collection group' },
-]
-
-export const DETECTORS: { value: LineDetector; label: string; example: string }[] = [
-  { value: 'itemTitle', label: 'Numbered title', example: '01. Coppa Celadon' },
-  { value: 'groupNumber', label: 'Group number', example: '01.' },
-  { value: 'dimensions', label: 'Dimensions', example: 'diam 17,6 x h 7' },
-  { value: 'historicalDate', label: 'Historical date', example: 'fine XII inizio XIII' },
-  { value: 'calendarDate', label: 'Calendar date', example: '12 06 1990' },
-  { value: 'lot', label: 'Auction lot', example: 'lot 170' },
-  { value: 'money', label: 'Price with currency', example: '£ 7.865' },
-  { value: 'catalogueNumber', label: 'Catalogue number', example: 'W.389' },
-  { value: 'locationCode', label: 'Location code', example: 'MI F3' },
-]
-
-export const fieldLabel = (field: string | null | undefined) => FIELDS.find((f) => f.value === field)?.label ?? field ?? ''
-export const detectorLabel = (detector: string) => DETECTORS.find((d) => d.value === detector)?.label ?? detector
-
 export const STATE_LABELS: Record<ImportJobState, string> = {
   reading: 'Reading',
   awaitingMapping: 'Map columns',
@@ -112,6 +76,42 @@ export const STATUS_LABELS: Record<ImportRowStatus, string> = {
 export const isRunning = (state: ImportJobState) => state === 'reading' || state === 'importing'
 
 export const isEditable = (state: ImportJobState) => state === 'awaitingMapping' || state === 'readyForReview'
+
+/** The fields a column can be mapped to, from the server's field registry, in the order the mapping step offers them. */
+export function useImportFields() {
+  const query = useQuery({
+    queryKey: ['import-fields'],
+    queryFn: async () => unwrap(await api.GET('/api/imports/fields')),
+    staleTime: Infinity,
+  })
+  const fields = (query.data ?? []).filter((f): f is ImportFieldInfo => f.id != null)
+  return { ...query, fields }
+}
+
+/** The detectors a line rule can use, from the server's detector registry (built-in and, later, user-defined). */
+export function useImportDetectors() {
+  const query = useQuery({
+    queryKey: ['import-detectors'],
+    queryFn: async () => unwrap(await api.GET('/api/imports/detectors')),
+    staleTime: Infinity,
+  })
+  return { ...query, detectors: query.data ?? [] }
+}
+
+/** The lookup tables parsing reads (month names, currency words, ...) with the entries users added. */
+export function useImportLookupTables() {
+  const query = useQuery({
+    queryKey: ['import-lookup-tables'],
+    queryFn: async () => unwrap(await api.GET('/api/imports/lookup-tables')),
+  })
+  return { ...query, tables: query.data ?? [] }
+}
+
+/** The label of a field (its identifier until the registry has loaded). */
+export function useFieldLabel() {
+  const { fields } = useImportFields()
+  return (field: string | null | undefined) => fields.find((f) => f.id === field)?.label ?? field ?? ''
+}
 
 export function useImportJob(id: string) {
   return useQuery({

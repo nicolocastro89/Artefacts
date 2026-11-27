@@ -30,6 +30,77 @@ internal static class ImportEndpoints
         g.MapGet("/", async (ImportHandler h, CancellationToken ct) => TypedResults.Ok(await h.ListAsync(ct)))
             .WithName("listImports");
 
+        g.MapGet("/fields", () => TypedResults.Ok(ImportHandler.Fields()))
+            .WithName("listImportFields")
+            .WithSummary("The catalogue fields a workbook column can be mapped to.");
+
+        g.MapGet("/lookup-tables", async (ImportLookupHandler h, CancellationToken ct) => TypedResults.Ok(await h.ListAsync(ct)))
+            .WithName("listImportLookupTables")
+            .WithSummary("The tables of words parsing reads (month names, currency words, measurement labels, spellings of the inch), built-in entries with the user's.");
+
+        g.MapGet("/lookup-tables/{id}", async (string id, ImportLookupHandler h, CancellationToken ct) => TypedResults.Ok(await h.GetAsync(id, ct)))
+            .WithName("getImportLookupTable")
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
+        g.MapPut("/lookup-tables/{id}", async (string id, SaveImportLookupTableRequest request, ImportLookupHandler h, CancellationToken ct) =>
+                TypedResults.Ok(await h.ReplaceAsync(id, request, ct)))
+            .WithName("saveImportLookupTable")
+            .WithSummary("Replaces the user entries of a table; none puts the table back to the built-in entries.")
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
+        g.MapGet("/detectors", async (ImportDetectorHandler h, CancellationToken ct) => TypedResults.Ok(await h.ListAsync(ct)))
+            .WithName("listImportDetectors")
+            .WithSummary("The detectors a line rule can recognise lines with: the built-in ones and the user's own.");
+
+        g.MapPost("/detectors/try", async (TryImportDetectorRequest request, ImportDetectorHandler h, CancellationToken ct) =>
+                TypedResults.Ok(await h.TryAsync(request, ct)))
+            .WithName("tryImportDetector")
+            .WithSummary("Runs a detector definition against sample lines without saving anything, for live feedback while editing.")
+            .ProducesValidationProblem();
+
+        g.MapPost("/detectors", async (SaveImportDetectorRequest request, ImportDetectorHandler h, CancellationToken ct) =>
+            {
+                var detector = await h.CreateAsync(request, ct);
+                return TypedResults.Created($"/api/imports/detectors/{detector.Id}", detector);
+            })
+            .WithName("createImportDetector")
+            .WithSummary("Saves a user detector: a pattern with named captures (value, remainder, item) or a list of keywords.")
+            .ProducesValidationProblem();
+
+        g.MapGet("/detectors/{id}", async (string id, ImportDetectorHandler h, CancellationToken ct) => TypedResults.Ok(await h.GetAsync(id, ct)))
+            .WithName("getImportDetector")
+            .ProducesProblem(StatusCodes.Status404NotFound);
+
+        g.MapPut("/detectors/{id}", async (string id, SaveImportDetectorRequest request, ImportDetectorHandler h, CancellationToken ct) =>
+                TypedResults.Ok(await h.UpdateAsync(id, request, ct)))
+            .WithName("updateImportDetector")
+            .WithSummary("Changes a user detector. Built-in detectors cannot be changed.")
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+
+        g.MapDelete("/detectors/{id}", async (string id, ImportDetectorHandler h, CancellationToken ct) =>
+            {
+                await h.DeleteAsync(id, ct);
+                return TypedResults.NoContent();
+            })
+            .WithName("deleteImportDetector")
+            .WithSummary("Deletes a user detector that no template or unfinished import uses.")
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+
+        g.MapPost("/detectors/{id}/duplicate", async (string id, DuplicateImportDetectorRequest request, ImportDetectorHandler h, CancellationToken ct) =>
+            {
+                var copy = await h.DuplicateAsync(id, request, ct);
+                return TypedResults.Created($"/api/imports/detectors/{copy.Id}", copy);
+            })
+            .WithName("duplicateImportDetector")
+            .WithSummary("Copies a user detector under a new name.")
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+
         g.MapGet("/{id:guid}", async (Guid id, ImportHandler h, CancellationToken ct) => TypedResults.Ok(await h.GetAsync(id, ct)))
             .WithName("getImport")
             .ProducesProblem(StatusCodes.Status404NotFound);

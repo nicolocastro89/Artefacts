@@ -362,6 +362,127 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/imports/fields": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The catalogue fields a workbook column can be mapped to. */
+        get: operations["listImportFields"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/imports/lookup-tables": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The tables of words parsing reads (month names, currency words, measurement labels, spellings of the inch), built-in entries with the user's. */
+        get: operations["listImportLookupTables"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/imports/lookup-tables/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getImportLookupTable"];
+        /** Replaces the user entries of a table; none puts the table back to the built-in entries. */
+        put: operations["saveImportLookupTable"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/imports/detectors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The detectors a line rule can recognise lines with: the built-in ones and the user's own. */
+        get: operations["listImportDetectors"];
+        put?: never;
+        /** Saves a user detector: a pattern with named captures (value, remainder, item) or a list of keywords. */
+        post: operations["createImportDetector"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/imports/detectors/try": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Runs a detector definition against sample lines without saving anything, for live feedback while editing. */
+        post: operations["tryImportDetector"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/imports/detectors/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getImportDetector"];
+        /** Changes a user detector. Built-in detectors cannot be changed. */
+        put: operations["updateImportDetector"];
+        post?: never;
+        /** Deletes a user detector that no template or unfinished import uses. */
+        delete: operations["deleteImportDetector"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/imports/detectors/{id}/duplicate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Copies a user detector under a new name. */
+        post: operations["duplicateImportDetector"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/imports/{id}": {
         parameters: {
             query?: never;
@@ -1017,6 +1138,23 @@ export interface components {
         DescribeDocumentRequest: {
             document: null | string;
         };
+        DetectorDefinition: {
+            kind: components["schemas"]["DetectorKind"];
+            pattern?: null | string;
+            /** @default true */
+            ignoreCase: boolean;
+            parse?: components["schemas"]["DetectorParse"];
+            keywords?: null | string[];
+            match?: components["schemas"]["KeywordMatch"];
+            example?: null | string;
+        };
+        /** @enum {unknown} */
+        DetectorKind: "regex" | "keywords";
+        /**
+         * @default none
+         * @enum {unknown}
+         */
+        DetectorParse: "none" | "number" | "calendarDate" | "historicalDate" | "money";
         DimensionResolution: {
             text: string;
             /** @default false */
@@ -1034,6 +1172,9 @@ export interface components {
         DocumentDescriptionDto: {
             description: null | components["schemas"]["QueryDescriptionDto"];
             problems: components["schemas"]["QueryProblemDto"][];
+        };
+        DuplicateImportDetectorRequest: {
+            name: null | string;
         };
         DuplicateStoredPageRequest: {
             name: null | string;
@@ -1102,8 +1243,6 @@ export interface components {
         };
         ImportColumnsDto: {
             columns: components["schemas"]["ColumnSummary"][];
-            fields: string[];
-            detectors: string[];
         };
         ImportCountsDto: {
             /** Format: int32 */
@@ -1128,6 +1267,16 @@ export interface components {
             lists: components["schemas"]["ListDecision"][];
             dimensions?: null | components["schemas"]["DimensionResolution"][];
         };
+        ImportDetectorDto: {
+            id: string;
+            label: string;
+            example: null | string;
+            /** @default true */
+            isSystem: boolean;
+            definition?: null | components["schemas"]["DetectorDefinition"];
+            /** Format: date-time */
+            updatedAt?: null | string;
+        };
         ImportDimensionsDto: {
             text: string;
             sheetRows: number[];
@@ -1135,6 +1284,12 @@ export interface components {
         };
         /** @enum {unknown} */
         ImportField: "title" | "itemNumber" | "groupNumber" | "catalogueNumber" | "inventoryNumber" | "dimensions" | "medium" | "maker" | "description" | "placeOfProduction" | "creationDate" | "dynasty" | "acquisitionSource" | "acquisitionDate" | "acquisitionLot" | "acquisitionPrice" | "acquisitionNote" | "exhibitions" | "catalogueEntry" | "holder" | "storageLocation" | "valuation" | "collectionGroup" | null;
+        ImportFieldDto: {
+            id: components["schemas"]["ImportField"];
+            label: string;
+            singleValued: boolean;
+            curated: boolean;
+        };
         ImportJobDto: {
             /** Format: uuid */
             id: string;
@@ -1189,6 +1344,21 @@ export interface components {
             decision: null | components["schemas"]["ListDecision"];
             decided: boolean;
             suggestions: components["schemas"]["ListSuggestionDto"][];
+        };
+        ImportLookupEntryDto: {
+            word: string;
+            value: string;
+            isUser: boolean;
+            builtInValue: null | string;
+        };
+        ImportLookupEntryInput: {
+            word: null | string;
+            value: null | string;
+        };
+        ImportLookupTableDto: {
+            id: string;
+            label: string;
+            entries: components["schemas"]["ImportLookupEntryDto"][];
         };
         ImportMapping: {
             columns: components["schemas"]["ColumnRule"][];
@@ -1251,6 +1421,11 @@ export interface components {
             prefer?: null | components["schemas"]["ImportField"];
         };
         JsonElement: unknown;
+        /**
+         * @default contains
+         * @enum {unknown}
+         */
+        KeywordMatch: "contains" | "startsWith" | "equals";
         LanguageDto: {
             code: string;
             name: string;
@@ -1487,6 +1662,13 @@ export interface components {
             text: null | string;
             reason: string;
         };
+        SaveImportDetectorRequest: {
+            name: null | string;
+            definition: null | components["schemas"]["DetectorDefinition"];
+        };
+        SaveImportLookupTableRequest: {
+            entries: null | components["schemas"]["ImportLookupEntryInput"][];
+        };
         SaveImportTemplateRequest: {
             name: null | string;
             /** Format: uuid */
@@ -1560,6 +1742,22 @@ export interface components {
             kind: components["schemas"]["StoredQueryKind"];
             /** Format: date-time */
             updatedAt: string;
+        };
+        TryImportDetectorLine: {
+            line: string;
+            matched: boolean;
+            text: null | string;
+            parsed: unknown;
+            remainder: null | string;
+            itemNumber: null | string;
+            guessed: boolean;
+        };
+        TryImportDetectorRequest: {
+            definition: null | components["schemas"]["DetectorDefinition"];
+            lines: null | string[];
+        };
+        TryImportDetectorResult: {
+            lines: components["schemas"]["TryImportDetectorLine"][];
         };
         UnitOfMeasureDto: {
             /** Format: uuid */
@@ -3034,6 +3232,382 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+        };
+    };
+    listImportFields: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportFieldDto"][];
+                };
+            };
+        };
+    };
+    listImportLookupTables: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportLookupTableDto"][];
+                };
+            };
+        };
+    };
+    getImportLookupTable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportLookupTableDto"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    saveImportLookupTable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveImportLookupTableRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportLookupTableDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    listImportDetectors: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportDetectorDto"][];
+                };
+            };
+        };
+    };
+    createImportDetector: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveImportDetectorRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportDetectorDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+        };
+    };
+    tryImportDetector: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TryImportDetectorRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TryImportDetectorResult"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+        };
+    };
+    getImportDetector: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportDetectorDto"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    updateImportDetector: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveImportDetectorRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportDetectorDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    deleteImportDetector: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    duplicateImportDetector: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DuplicateImportDetectorRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportDetectorDto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetails"];
                 };
             };
         };

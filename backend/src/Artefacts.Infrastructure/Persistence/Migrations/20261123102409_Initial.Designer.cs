@@ -115,6 +115,48 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                     b.ToTable("object_types", (string)null);
                 });
 
+            modelBuilder.Entity("Artefacts.Domain.Imports.ImportDetector", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Definition")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("definition");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("NormalizedName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("normalized_name");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_import_detectors");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasDatabaseName("ux_import_detectors_normalized_name");
+
+                    b.ToTable("import_detectors", (string)null);
+                });
+
             modelBuilder.Entity("Artefacts.Domain.Imports.ImportJob", b =>
                 {
                     b.Property<Guid>("Id")
@@ -237,6 +279,28 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_import_jobs_state_created_at");
 
                     b.ToTable("import_jobs", (string)null);
+                });
+
+            modelBuilder.Entity("Artefacts.Domain.Imports.ImportLookupTable", b =>
+                {
+                    b.Property<string>("TableId")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("table_id");
+
+                    b.Property<string>("Entries")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("entries");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("TableId")
+                        .HasName("pk_import_lookup_tables");
+
+                    b.ToTable("import_lookup_tables", (string)null);
                 });
 
             modelBuilder.Entity("Artefacts.Domain.Imports.ImportRow", b =>

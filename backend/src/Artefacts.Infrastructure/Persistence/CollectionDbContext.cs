@@ -23,6 +23,7 @@ public sealed class CollectionDbContext(DbContextOptions<CollectionDbContext> op
     public const string ObjectTypeNameIndex = "ux_object_type_names_language_normalized_name";
     public const string LanguageForeignKeyPrefix = "fk_language_";
     public const string ImportTemplateNameIndex = "ux_import_templates_normalized_name";
+    public const string ImportDetectorNameIndex = "ux_import_detectors_normalized_name";
     public const string ReferenceEntryNameIndex = "ux_reference_entry_names_kind_language_normalized_name";
     public const string ReferenceEntrySingleNameIndex = "ux_reference_entries_kind_normalized_name";
     public const string PartyNameIndex = "ux_parties_normalized_name";
@@ -42,6 +43,8 @@ public sealed class CollectionDbContext(DbContextOptions<CollectionDbContext> op
     public DbSet<ImportJob> ImportJobs => Set<ImportJob>();
     public DbSet<ImportRow> ImportRows => Set<ImportRow>();
     public DbSet<ImportTemplate> ImportTemplates => Set<ImportTemplate>();
+    public DbSet<ImportDetector> ImportDetectors => Set<ImportDetector>();
+    public DbSet<ImportLookupTable> ImportLookupTables => Set<ImportLookupTable>();
     public DbSet<StoredQuery> StoredQueries => Set<StoredQuery>();
     public DbSet<StoredPage> StoredPages => Set<StoredPage>();
     public DbSet<UnitOfMeasure> UnitsOfMeasure => Set<UnitOfMeasure>();
@@ -359,6 +362,24 @@ public sealed class CollectionDbContext(DbContextOptions<CollectionDbContext> op
             b.HasIndex(t => t.NormalizedName).IsUnique().HasDatabaseName(ImportTemplateNameIndex);
             b.Property(t => t.Mapping).HasColumnType("jsonb");
             b.Property(t => t.Decisions).HasColumnType("jsonb");
+        });
+
+        model.Entity<ImportDetector>(b =>
+        {
+            b.ToTable("import_detectors");
+            b.HasKey(d => d.Id);
+            b.Property(d => d.Name).HasMaxLength(ImportDetector.MaxNameLength).IsRequired();
+            b.Property(d => d.NormalizedName).HasMaxLength(ImportDetector.MaxNameLength).IsRequired();
+            b.HasIndex(d => d.NormalizedName).IsUnique().HasDatabaseName(ImportDetectorNameIndex);
+            b.Property(d => d.Definition).HasColumnType("jsonb");
+        });
+
+        model.Entity<ImportLookupTable>(b =>
+        {
+            b.ToTable("import_lookup_tables");
+            b.HasKey(t => t.TableId);
+            b.Property(t => t.TableId).HasMaxLength(ImportLookupTable.MaxTableIdLength);
+            b.Property(t => t.Entries).HasColumnType("jsonb");
         });
     }
 

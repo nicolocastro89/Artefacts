@@ -76,3 +76,25 @@ internal sealed class ImportSignal : IImportSignal
 
     public async Task WaitAsync(TimeSpan timeout, CancellationToken ct) => await _signal.WaitAsync(timeout, ct);
 }
+
+internal sealed class ImportDetectorRepository(CollectionDbContext db) : IImportDetectorRepository
+{
+    public Task<ImportDetector?> GetAsync(Guid id, CancellationToken ct) => db.ImportDetectors.SingleOrDefaultAsync(d => d.Id == id, ct);
+
+    public async Task<IReadOnlyList<ImportDetector>> ListAsync(CancellationToken ct) => await db.ImportDetectors.ToListAsync(ct);
+
+    public void Add(ImportDetector detector) => db.ImportDetectors.Add(detector);
+
+    public void Remove(ImportDetector detector) => db.ImportDetectors.Remove(detector);
+}
+
+internal sealed class ImportLookupRepository(CollectionDbContext db) : IImportLookupRepository
+{
+    public Task<ImportLookupTable?> GetAsync(string tableId, CancellationToken ct) => db.ImportLookupTables.SingleOrDefaultAsync(t => t.TableId == tableId, ct);
+
+    public async Task<IReadOnlyList<ImportLookupTable>> ListAsync(CancellationToken ct) => await db.ImportLookupTables.ToListAsync(ct);
+
+    public void Add(ImportLookupTable table) => db.ImportLookupTables.Add(table);
+
+    public void Remove(ImportLookupTable table) => db.ImportLookupTables.Remove(table);
+}

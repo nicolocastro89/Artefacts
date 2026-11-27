@@ -33,7 +33,40 @@ public sealed record ImportJobDto(
 
 // ---------- Mapping ----------
 
-public sealed record ImportColumnsDto(IReadOnlyList<ColumnSummary> Columns, IReadOnlyList<string> Fields, IReadOnlyList<string> Detectors);
+public sealed record ImportColumnsDto(IReadOnlyList<ColumnSummary> Columns);
+
+/// <summary>
+/// A detector a line rule can use: built-in ones (<see cref="IsSystem"/>, written in code, read-only, no definition) and
+/// the user's stored ones, with the definition they were saved with. <see cref="Id"/> is what a line rule stores.
+/// </summary>
+public sealed record ImportDetectorDto(string Id, string Label, string? Example, bool IsSystem = true, DetectorDefinition? Definition = null, DateTimeOffset? UpdatedAt = null);
+
+/// <summary>A detector to save: its name and what it recognises.</summary>
+public sealed record SaveImportDetectorRequest(string? Name, DetectorDefinition? Definition);
+
+public sealed record DuplicateImportDetectorRequest(string? Name);
+
+/// <summary>A detector definition (not stored) and sample lines to run it against.</summary>
+public sealed record TryImportDetectorRequest(DetectorDefinition? Definition, IReadOnlyList<string>? Lines);
+
+/// <summary>What the detector made of one sample line: <see cref="Matched"/> false when it does not recognise the line.</summary>
+public sealed record TryImportDetectorLine(string Line, bool Matched, string? Text, object? Parsed, string? Remainder, string? ItemNumber, bool Guessed);
+
+public sealed record TryImportDetectorResult(IReadOnlyList<TryImportDetectorLine> Lines);
+
+/// <summary>One entry of a lookup table: <see cref="IsUser"/> when a user added or changed it; <see cref="BuiltInValue"/> is what a changed built-in entry says without the change.</summary>
+public sealed record ImportLookupEntryDto(string Word, string Value, bool IsUser, string? BuiltInValue);
+
+/// <summary>A lookup table of words the parsers read (month names, currency words, measurement labels, spellings of the inch), built-in entries with the user's.</summary>
+public sealed record ImportLookupTableDto(string Id, string Label, IReadOnlyList<ImportLookupEntryDto> Entries);
+
+public sealed record ImportLookupEntryInput(string? Word, string? Value);
+
+/// <summary>The user entries of a table; saving replaces them all, and none puts the table back to the built-in entries.</summary>
+public sealed record SaveImportLookupTableRequest(IReadOnlyList<ImportLookupEntryInput>? Entries);
+
+/// <summary>A field a column can be mapped to, from the field registry: <see cref="SingleValued"/> fields take one value per row, <see cref="Curated"/> ones are linked to a managed list.</summary>
+public sealed record ImportFieldDto(ImportField Id, string Label, bool SingleValued, bool Curated);
 
 /// <summary>A mapping saved on a job, with the warnings it raises (for example a line-rule column without a rest field).</summary>
 public sealed record ImportMappingResult(ImportJobDto Job, IReadOnlyList<string> Warnings);

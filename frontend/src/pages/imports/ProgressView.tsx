@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 import { api } from '../../api/client'
 import { unwrap } from '../../api/problem'
-import { fieldLabel, type ImportJob, type ImportRowStatus } from './importApi'
+import { useFieldLabel, type ImportJob, type ImportRowStatus } from './importApi'
 import { StatusChip } from './parts'
 
 /**
@@ -12,6 +12,7 @@ import { StatusChip } from './parts'
  * reopened), then the report of imported, skipped and problem rows.
  */
 export function ProgressView({ job }: { job: ImportJob }) {
+  const fieldLabel = useFieldLabel()
   const finished = job.state === 'finished'
   const fraction = job.totalRows > 0 ? job.processedRows / job.totalRows : 0
   const [filter, setFilter] = useState<ImportRowStatus | null>(null)

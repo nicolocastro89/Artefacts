@@ -311,6 +311,8 @@ internal sealed class UnitOfWork(CollectionDbContext db) : IUnitOfWork
                     new DomainValidationException("names", "Another region already has this name in the same language."),
                 { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: CollectionDbContext.ImportTemplateNameIndex } =>
                     new DomainValidationException("name", "Another import template already has this name."),
+                { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: CollectionDbContext.ImportDetectorNameIndex } =>
+                    new DomainValidationException("name", "Another import detector already has this name."),
                 { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: CollectionDbContext.ObjectTypeNameIndex } =>
                     new DomainValidationException("names", "Another object type already has this name in the same language."),
                 { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: CollectionDbContext.ReferenceEntryNameIndex } =>

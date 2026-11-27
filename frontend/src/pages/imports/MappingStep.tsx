@@ -6,10 +6,7 @@ import { unwrap } from '../../api/problem'
 import { useUnits } from '../../api/units'
 import { useContentLanguages } from '../../app/languages'
 import {
-  DETECTORS,
   errorMessage,
-  fieldLabel,
-  FIELDS,
   type ColumnRule,
   type ColumnSummary,
   type ImportField,
@@ -20,6 +17,9 @@ import {
   type MeasureKind,
   orderLabel,
   UNLABELLED_ORDERS,
+  useFieldLabel,
+  useImportDetectors,
+  useImportFields,
 } from './importApi'
 import { StatusChip, DiscardedLines } from './parts'
 
@@ -156,6 +156,7 @@ export function MappingStep({ job, onDone }: { job: ImportJob; onDone: () => voi
 function ColumnEditor({ column, rule, onChange }: { column: ColumnSummary; rule: ColumnRule | undefined; onChange: (rule: ColumnRule) => void }) {
   const useId_ = useId()
   const restId = useId()
+  const { fields } = useImportFields()
   const name = clean(column.heading) || `Column ${column.column}`
   const use = ruleUse(rule)
   const { data: languages = [] } = useContentLanguages()
@@ -206,8 +207,8 @@ function ColumnEditor({ column, rule, onChange }: { column: ColumnSummary; rule:
             <option value="ignore">Ignore this column</option>
             <option value="lines">Split into lines…</option>
             <optgroup label="Whole cell to one field">
-              {FIELDS.map((f) => (
-                <option key={f.value} value={f.value}>
+              {fields.map((f) => (
+                <option key={f.id} value={f.id}>
                   {f.label}
                 </option>
               ))}
@@ -250,8 +251,8 @@ function ColumnEditor({ column, rule, onChange }: { column: ColumnSummary; rule:
                 onChange={(e) => onChange({ ...base, lines, rest: (e.target.value || null) as ColumnRule['rest'] })}
               >
                 <option value="">Nowhere: not imported</option>
-                {FIELDS.map((f) => (
-                  <option key={f.value} value={f.value}>
+                {fields.map((f) => (
+                  <option key={f.id} value={f.id}>
                     {f.label}
                   </option>
                 ))}
@@ -281,6 +282,8 @@ function RuleRow({
 }) {
   const matchId = useId()
   const targetId = useId()
+  const { fields } = useImportFields()
+  const { detectors } = useImportDetectors()
   const rate = line.detector ? hitRates[line.detector] : undefined
   return (
     <li className="imports__rule">
@@ -290,9 +293,10 @@ function RuleRow({
         </label>
         <select id={matchId} className="select" value={matcherOf(line)} onChange={(e) => onChange(withMatcher(line, e.target.value))}>
           <optgroup label="Recognised by content">
-            {DETECTORS.map((d) => (
-              <option key={d.value} value={`d:${d.value}`}>
-                {d.label} (“{d.example}”)
+            {detectors.map((d) => (
+              <option key={d.id} value={`d:${d.id}`}>
+                {d.label}
+                {d.example && ` (“${d.example}”)`}
               </option>
             ))}
           </optgroup>
@@ -317,8 +321,8 @@ function RuleRow({
           onChange={(e) => onChange(e.target.value ? { ...line, target: e.target.value as ImportField } : { ...line, target: null, continues: false })}
         >
           <option value="">Discard: not imported</option>
-          {FIELDS.map((f) => (
-            <option key={f.value} value={f.value}>
+          {fields.map((f) => (
+            <option key={f.id} value={f.id}>
               {f.label}
             </option>
           ))}
@@ -415,6 +419,7 @@ function InventoryAndLanguage({
   const preferId = useId()
   const languageId = useId()
   const methodId = useId()
+  const { fields } = useImportFields()
   return (
     <section className="plate imports__section" aria-labelledby="numbers-heading">
       <h2 id="numbers-heading" className="imports__section-title">
@@ -449,8 +454,8 @@ function InventoryAndLanguage({
             }
           >
             <option value="">Always use the pattern</option>
-            {FIELDS.filter((f) => ['catalogueNumber', 'inventoryNumber', 'itemNumber'].includes(f.value)).map((f) => (
-              <option key={f.value} value={f.value}>
+            {fields.filter((f) => ['catalogueNumber', 'inventoryNumber', 'itemNumber'].includes(f.id)).map((f) => (
+              <option key={f.id} value={f.id}>
                 {f.label}
               </option>
             ))}
@@ -527,6 +532,7 @@ function Preview({ job, mapping }: { job: ImportJob; mapping: ImportMapping }) {
 }
 
 export function PreviewRows({ review }: { review: ImportReview }) {
+  const fieldLabel = useFieldLabel()
   return (
     <ol className="imports__preview">
       {review.rows.map((row) => (

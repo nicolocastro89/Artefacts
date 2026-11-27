@@ -16,6 +16,35 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "import_lookup_tables",
+                columns: table => new
+                {
+                    table_id = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    entries = table.Column<string>(type: "jsonb", nullable: false),
+                    updated_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_import_lookup_tables", x => x.table_id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "import_detectors",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    normalized_name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    definition = table.Column<string>(type: "jsonb", nullable: false),
+                    created_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    updated_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_import_detectors", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "import_templates",
                 columns: table => new
                 {
@@ -829,6 +858,12 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                 unique: true);
 
             // The name-resolving functions and the read view.
+            migrationBuilder.CreateIndex(
+                name: "ux_import_detectors_normalized_name",
+                table: "import_detectors",
+                column: "normalized_name",
+                unique: true);
+
             migrationBuilder.Sql(ViewSql.Load("localized_names"));
             migrationBuilder.Sql(ViewSql.Load("v_artefact"));
             migrationBuilder.Sql(ViewSql.Load("v_artefact_lists"));
@@ -837,6 +872,9 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "import_lookup_tables");
+
             migrationBuilder.Sql("DROP VIEW IF EXISTS v_artefact_catalogue_entry; DROP VIEW IF EXISTS v_artefact_description; DROP VIEW IF EXISTS v_artefact_exhibition; " +
                                  "DROP VIEW IF EXISTS v_artefact_image; DROP VIEW IF EXISTS v_artefact_provenance;");
             migrationBuilder.Sql("DROP VIEW IF EXISTS v_artefact;");
@@ -844,6 +882,9 @@ namespace Artefacts.Infrastructure.Persistence.Migrations
                                  "DROP FUNCTION IF EXISTS unit_of_measure_name(uuid, text[]); " +
                                  "DROP FUNCTION IF EXISTS reference_entry_name(uuid, text[]); DROP FUNCTION IF EXISTS reference_entry_matches(uuid, text); " +
                                  "DROP FUNCTION IF EXISTS party_name(uuid);");
+            migrationBuilder.DropTable(
+                name: "import_detectors");
+
             migrationBuilder.DropTable(
                 name: "artefact_exhibitions");
 

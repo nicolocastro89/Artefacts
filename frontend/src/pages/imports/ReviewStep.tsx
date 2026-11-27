@@ -3,7 +3,7 @@ import { Play } from 'lucide-react'
 import { useState } from 'react'
 import { api } from '../../api/client'
 import { unwrap } from '../../api/problem'
-import { errorMessage, fieldLabel, type ImportJob, type ImportRowStatus, type ReviewRow } from './importApi'
+import { errorMessage, useFieldLabel, type ImportJob, type ImportRowStatus, type ReviewRow } from './importApi'
 import { TemplateSaver } from './MappingStep'
 import { StatusChip, DiscardedLines } from './parts'
 
@@ -155,6 +155,7 @@ export function ReviewStep({ job }: { job: ImportJob }) {
 }
 
 function ReviewTableRow({ row }: { row: ReviewRow }) {
+  const fieldLabel = useFieldLabel()
   return (
     <tr className={row.status === 'problem' ? 'imports__row--problem' : undefined}>
       <td className="imports__num" data-label="Row">

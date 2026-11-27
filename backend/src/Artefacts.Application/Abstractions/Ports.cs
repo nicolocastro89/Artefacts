@@ -253,6 +253,22 @@ public interface IImportTemplateRepository
     void Remove(ImportTemplate template);
 }
 
+public interface IImportDetectorRepository
+{
+    Task<ImportDetector?> GetAsync(Guid id, CancellationToken ct);
+    Task<IReadOnlyList<ImportDetector>> ListAsync(CancellationToken ct);
+    void Add(ImportDetector detector);
+    void Remove(ImportDetector detector);
+}
+
+public interface IImportLookupRepository
+{
+    Task<ImportLookupTable?> GetAsync(string tableId, CancellationToken ct);
+    Task<IReadOnlyList<ImportLookupTable>> ListAsync(CancellationToken ct);
+    void Add(ImportLookupTable table);
+    void Remove(ImportLookupTable table);
+}
+
 /// <summary>Wakes the import worker when there is new work, instead of waiting for its next poll.</summary>
 public interface IImportSignal
 {

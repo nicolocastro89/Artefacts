@@ -721,6 +721,121 @@ export const responseFieldTypes = {
     "[].updatedAt": "date",
     "[].warnings[]": "text"
   },
+  "listImportFields": {
+    "[]": "list",
+    "[].curated": "boolean",
+    "[].id": "text",
+    "[].label": "text",
+    "[].singleValued": "boolean"
+  },
+  "listImportLookupTables": {
+    "[]": "list",
+    "[].entries[]": "list",
+    "[].entries[].builtInValue": "text",
+    "[].entries[].isUser": "boolean",
+    "[].entries[].value": "text",
+    "[].entries[].word": "text",
+    "[].id": "text",
+    "[].label": "text"
+  },
+  "getImportLookupTable": {
+    "entries[]": "list",
+    "entries[].builtInValue": "text",
+    "entries[].isUser": "boolean",
+    "entries[].value": "text",
+    "entries[].word": "text",
+    "id": "text",
+    "label": "text"
+  },
+  "saveImportLookupTable": {
+    "entries[]": "list",
+    "entries[].builtInValue": "text",
+    "entries[].isUser": "boolean",
+    "entries[].value": "text",
+    "entries[].word": "text",
+    "id": "text",
+    "label": "text"
+  },
+  "listImportDetectors": {
+    "[]": "list",
+    "[].definition.example": "text",
+    "[].definition.ignoreCase": "boolean",
+    "[].definition.keywords[]": "text",
+    "[].definition.kind": "text",
+    "[].definition.match": "text",
+    "[].definition.parse": "text",
+    "[].definition.pattern": "text",
+    "[].example": "text",
+    "[].id": "text",
+    "[].isSystem": "boolean",
+    "[].label": "text",
+    "[].updatedAt": "date"
+  },
+  "createImportDetector": {
+    "definition.example": "text",
+    "definition.ignoreCase": "boolean",
+    "definition.keywords[]": "text",
+    "definition.kind": "text",
+    "definition.match": "text",
+    "definition.parse": "text",
+    "definition.pattern": "text",
+    "example": "text",
+    "id": "text",
+    "isSystem": "boolean",
+    "label": "text",
+    "updatedAt": "date"
+  },
+  "tryImportDetector": {
+    "lines[]": "list",
+    "lines[].guessed": "boolean",
+    "lines[].itemNumber": "text",
+    "lines[].line": "text",
+    "lines[].matched": "boolean",
+    "lines[].remainder": "text",
+    "lines[].text": "text"
+  },
+  "getImportDetector": {
+    "definition.example": "text",
+    "definition.ignoreCase": "boolean",
+    "definition.keywords[]": "text",
+    "definition.kind": "text",
+    "definition.match": "text",
+    "definition.parse": "text",
+    "definition.pattern": "text",
+    "example": "text",
+    "id": "text",
+    "isSystem": "boolean",
+    "label": "text",
+    "updatedAt": "date"
+  },
+  "updateImportDetector": {
+    "definition.example": "text",
+    "definition.ignoreCase": "boolean",
+    "definition.keywords[]": "text",
+    "definition.kind": "text",
+    "definition.match": "text",
+    "definition.parse": "text",
+    "definition.pattern": "text",
+    "example": "text",
+    "id": "text",
+    "isSystem": "boolean",
+    "label": "text",
+    "updatedAt": "date"
+  },
+  "duplicateImportDetector": {
+    "definition.example": "text",
+    "definition.ignoreCase": "boolean",
+    "definition.keywords[]": "text",
+    "definition.kind": "text",
+    "definition.match": "text",
+    "definition.parse": "text",
+    "definition.pattern": "text",
+    "example": "text",
+    "id": "text",
+    "isSystem": "boolean",
+    "label": "text",
+    "updatedAt": "date"
+  },
   "getImport": {
     "committedAt": "date",
     "createdAt": "date",
@@ -762,9 +877,7 @@ export const responseFieldTypes = {
     "columns[].filledRows": "number",
     "columns[].heading": "text",
     "columns[].hitRates": "map",
-    "columns[].samples[]": "text",
-    "detectors[]": "text",
-    "fields[]": "text"
+    "columns[].samples[]": "text"
   },
   "setImportMapping": {
     "job.committedAt": "date",
@@ -1386,6 +1499,50 @@ export const operations = {
   "listImports": {
     "method": "GET",
     "path": "/api/imports"
+  },
+  "listImportFields": {
+    "method": "GET",
+    "path": "/api/imports/fields"
+  },
+  "listImportLookupTables": {
+    "method": "GET",
+    "path": "/api/imports/lookup-tables"
+  },
+  "getImportLookupTable": {
+    "method": "GET",
+    "path": "/api/imports/lookup-tables/{id}"
+  },
+  "saveImportLookupTable": {
+    "method": "PUT",
+    "path": "/api/imports/lookup-tables/{id}"
+  },
+  "listImportDetectors": {
+    "method": "GET",
+    "path": "/api/imports/detectors"
+  },
+  "createImportDetector": {
+    "method": "POST",
+    "path": "/api/imports/detectors"
+  },
+  "tryImportDetector": {
+    "method": "POST",
+    "path": "/api/imports/detectors/try"
+  },
+  "getImportDetector": {
+    "method": "GET",
+    "path": "/api/imports/detectors/{id}"
+  },
+  "updateImportDetector": {
+    "method": "PUT",
+    "path": "/api/imports/detectors/{id}"
+  },
+  "deleteImportDetector": {
+    "method": "DELETE",
+    "path": "/api/imports/detectors/{id}"
+  },
+  "duplicateImportDetector": {
+    "method": "POST",
+    "path": "/api/imports/detectors/{id}/duplicate"
   },
   "getImport": {
     "method": "GET",

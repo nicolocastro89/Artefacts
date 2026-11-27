@@ -29,6 +29,8 @@ public static class DependencyInjection
         services.AddScoped<ImageHandler>();
         services.AddScoped<ImportHandler>();
         services.AddScoped<ImportTemplateHandler>();
+        services.AddScoped<ImportDetectorHandler>();
+        services.AddScoped<ImportLookupHandler>();
         services.AddScoped<StoredQueryHandler>();
         services.AddScoped<StoredPageValidator>();
         services.AddScoped<StoredPageHandler>();

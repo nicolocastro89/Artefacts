@@ -1908,6 +1908,479 @@
         }
       }
     },
+    "/api/imports/fields": {
+      "get": {
+        "tags": [
+          "Imports"
+        ],
+        "summary": "The catalogue fields a workbook column can be mapped to.",
+        "operationId": "listImportFields",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ImportFieldDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/imports/lookup-tables": {
+      "get": {
+        "tags": [
+          "Imports"
+        ],
+        "summary": "The tables of words parsing reads (month names, currency words, measurement labels, spellings of the inch), built-in entries with the user's.",
+        "operationId": "listImportLookupTables",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ImportLookupTableDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/imports/lookup-tables/{id}": {
+      "get": {
+        "tags": [
+          "Imports"
+        ],
+        "operationId": "getImportLookupTable",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportLookupTableDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Imports"
+        ],
+        "summary": "Replaces the user entries of a table; none puts the table back to the built-in entries.",
+        "operationId": "saveImportLookupTable",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveImportLookupTableRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportLookupTableDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/imports/detectors": {
+      "get": {
+        "tags": [
+          "Imports"
+        ],
+        "summary": "The detectors a line rule can recognise lines with: the built-in ones and the user's own.",
+        "operationId": "listImportDetectors",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ImportDetectorDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Imports"
+        ],
+        "summary": "Saves a user detector: a pattern with named captures (value, remainder, item) or a list of keywords.",
+        "operationId": "createImportDetector",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveImportDetectorRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportDetectorDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/imports/detectors/try": {
+      "post": {
+        "tags": [
+          "Imports"
+        ],
+        "summary": "Runs a detector definition against sample lines without saving anything, for live feedback while editing.",
+        "operationId": "tryImportDetector",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TryImportDetectorRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TryImportDetectorResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/imports/detectors/{id}": {
+      "get": {
+        "tags": [
+          "Imports"
+        ],
+        "operationId": "getImportDetector",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportDetectorDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Imports"
+        ],
+        "summary": "Changes a user detector. Built-in detectors cannot be changed.",
+        "operationId": "updateImportDetector",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveImportDetectorRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportDetectorDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Imports"
+        ],
+        "summary": "Deletes a user detector that no template or unfinished import uses.",
+        "operationId": "deleteImportDetector",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/imports/detectors/{id}/duplicate": {
+      "post": {
+        "tags": [
+          "Imports"
+        ],
+        "summary": "Copies a user detector under a new name.",
+        "operationId": "duplicateImportDetector",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DuplicateImportDetectorRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportDetectorDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/imports/{id}": {
       "get": {
         "tags": [
@@ -4896,6 +5369,64 @@
           }
         }
       },
+      "DetectorDefinition": {
+        "required": [
+          "kind"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/DetectorKind"
+          },
+          "pattern": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "ignoreCase": {
+            "type": "boolean",
+            "default": true
+          },
+          "parse": {
+            "$ref": "#/components/schemas/DetectorParse"
+          },
+          "keywords": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "match": {
+            "$ref": "#/components/schemas/KeywordMatch"
+          },
+          "example": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "DetectorKind": {
+        "enum": [
+          "regex",
+          "keywords"
+        ]
+      },
+      "DetectorParse": {
+        "enum": [
+          "none",
+          "number",
+          "calendarDate",
+          "historicalDate",
+          "money"
+        ],
+        "default": "none"
+      },
       "DimensionResolution": {
         "required": [
           "text"
@@ -4994,6 +5525,20 @@
             "items": {
               "$ref": "#/components/schemas/QueryProblemDto"
             }
+          }
+        }
+      },
+      "DuplicateImportDetectorRequest": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -5277,9 +5822,7 @@
       },
       "ImportColumnsDto": {
         "required": [
-          "columns",
-          "fields",
-          "detectors"
+          "columns"
         ],
         "type": "object",
         "properties": {
@@ -5287,18 +5830,6 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ColumnSummary"
-            }
-          },
-          "fields": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "detectors": {
-            "type": "array",
-            "items": {
-              "type": "string"
             }
           }
         }
@@ -5402,6 +5933,49 @@
           }
         }
       },
+      "ImportDetectorDto": {
+        "required": [
+          "id",
+          "label",
+          "example"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "example": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isSystem": {
+            "type": "boolean",
+            "default": true
+          },
+          "definition": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/DetectorDefinition"
+              }
+            ]
+          },
+          "updatedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
       "ImportDimensionsDto": {
         "required": [
           "text",
@@ -5459,6 +6033,29 @@
           "collectionGroup",
           null
         ]
+      },
+      "ImportFieldDto": {
+        "required": [
+          "id",
+          "label",
+          "singleValued",
+          "curated"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/ImportField"
+          },
+          "label": {
+            "type": "string"
+          },
+          "singleValued": {
+            "type": "boolean"
+          },
+          "curated": {
+            "type": "boolean"
+          }
+        }
       },
       "ImportJobDto": {
         "required": [
@@ -5682,6 +6279,75 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ListSuggestionDto"
+            }
+          }
+        }
+      },
+      "ImportLookupEntryDto": {
+        "required": [
+          "word",
+          "value",
+          "isUser",
+          "builtInValue"
+        ],
+        "type": "object",
+        "properties": {
+          "word": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "isUser": {
+            "type": "boolean"
+          },
+          "builtInValue": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "ImportLookupEntryInput": {
+        "required": [
+          "word",
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "word": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "value": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "ImportLookupTableDto": {
+        "required": [
+          "id",
+          "label",
+          "entries"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportLookupEntryDto"
             }
           }
         }
@@ -5942,6 +6608,14 @@
         }
       },
       "JsonElement": { },
+      "KeywordMatch": {
+        "enum": [
+          "contains",
+          "startsWith",
+          "equals"
+        ],
+        "default": "contains"
+      },
       "LanguageDto": {
         "required": [
           "code",
@@ -6845,6 +7519,48 @@
           }
         }
       },
+      "SaveImportDetectorRequest": {
+        "required": [
+          "name",
+          "definition"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "definition": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/DetectorDefinition"
+              }
+            ]
+          }
+        }
+      },
+      "SaveImportLookupTableRequest": {
+        "required": [
+          "entries"
+        ],
+        "type": "object",
+        "properties": {
+          "entries": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ImportLookupEntryInput"
+            }
+          }
+        }
+      },
       "SaveImportTemplateRequest": {
         "required": [
           "name"
@@ -7160,6 +7876,90 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "TryImportDetectorLine": {
+        "required": [
+          "line",
+          "matched",
+          "text",
+          "parsed",
+          "remainder",
+          "itemNumber",
+          "guessed"
+        ],
+        "type": "object",
+        "properties": {
+          "line": {
+            "type": "string"
+          },
+          "matched": {
+            "type": "boolean"
+          },
+          "text": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "parsed": { },
+          "remainder": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "itemNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "guessed": {
+            "type": "boolean"
+          }
+        }
+      },
+      "TryImportDetectorRequest": {
+        "required": [
+          "definition",
+          "lines"
+        ],
+        "type": "object",
+        "properties": {
+          "definition": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/DetectorDefinition"
+              }
+            ]
+          },
+          "lines": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "TryImportDetectorResult": {
+        "required": [
+          "lines"
+        ],
+        "type": "object",
+        "properties": {
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TryImportDetectorLine"
+            }
           }
         }
       },

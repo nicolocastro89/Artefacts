@@ -20,27 +20,15 @@ public sealed record ParsedDimensions(IReadOnlyDictionary<MeasureKind, Measureme
 /// </summary>
 public static partial class DimensionsParser
 {
-    private static readonly Dictionary<string, MeasureKind> Labels = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ["h"] = MeasureKind.Height, ["alt"] = MeasureKind.Height, ["altezza"] = MeasureKind.Height, ["height"] = MeasureKind.Height,
-        ["l"] = MeasureKind.Length, ["lung"] = MeasureKind.Length, ["lungh"] = MeasureKind.Length, ["lunghezza"] = MeasureKind.Length,
-        ["length"] = MeasureKind.Length,
-        ["w"] = MeasureKind.Width, ["larg"] = MeasureKind.Width, ["largh"] = MeasureKind.Width, ["larghezza"] = MeasureKind.Width,
-        ["width"] = MeasureKind.Width,
-        ["diam"] = MeasureKind.Diameter, ["diametro"] = MeasureKind.Diameter, ["diameter"] = MeasureKind.Diameter, ["ø"] = MeasureKind.Diameter,
-    };
-
-    /// <summary>Further spellings of the inch, accepted when a unit with the abbreviation "in" exists.</summary>
-    private static readonly string[] InchAliases = ["\"", "''", "inch", "inches", "pollice", "pollici"];
-
     /// <summary>Words that join values without meaning anything ("x", "per").</summary>
     private static readonly HashSet<string> Joiners = new(StringComparer.OrdinalIgnoreCase) { "x", "per", "by" };
 
     /// <summary>The measurements of <paramref name="text"/>, or null when the text is unclear.</summary>
-    public static ParsedDimensions? Parse(string? text, IReadOnlyList<ParserUnit> units, DimensionsOptions? options)
+    public static ParsedDimensions? Parse(string? text, IReadOnlyList<ParserUnit> units, DimensionsOptions? options, LookupTables? tables = null)
     {
         if (string.IsNullOrWhiteSpace(text)) return null;
-        var unitWords = UnitWords(units);
+        tables ??= LookupTables.BuiltIn;
+        var unitWords = UnitWords(units, tables);
 
         var values = new List<(decimal Value, MeasureKind? Kind, Guid? Unit)>();
         MeasureKind? pendingLabel = null;
@@ -60,7 +48,7 @@ public static partial class DimensionsParser
             var word = t.TrimEnd('.').ToLowerInvariant();
             if (Joiners.Contains(word)) continue;
 
-            if (Labels.TryGetValue(word, out var kind))
+            if (tables.MeasureLabel(word) is { } kind)
             {
                 // Two labels in a row ("h l 7") cannot be told apart.
                 if (pendingLabel is not null) return null;
@@ -104,7 +92,7 @@ public static partial class DimensionsParser
         return new ParsedDimensions(result);
     }
 
-    private static Dictionary<string, Guid> UnitWords(IReadOnlyList<ParserUnit> units)
+    private static Dictionary<string, Guid> UnitWords(IReadOnlyList<ParserUnit> units, LookupTables tables)
     {
         var words = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase);
         foreach (var unit in units)
@@ -114,7 +102,7 @@ public static partial class DimensionsParser
         }
 
         if (units.FirstOrDefault(u => string.Equals(u.Abbreviation, "in", StringComparison.OrdinalIgnoreCase)) is { } inch)
-            foreach (var alias in InchAliases) words.TryAdd(alias, inch.Id);
+            foreach (var alias in tables.InchAliases) words.TryAdd(alias, inch.Id);
         return words;
     }
 
